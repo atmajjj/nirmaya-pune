@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../database/drizzle';
-import { users, type User } from './user.schema';
+import { users, type User, type NewUser } from './user.schema';
 
 /**
  * Find user by ID (excluding deleted users)
@@ -28,4 +28,17 @@ export const findUserByEmail = async (email: string): Promise<User | undefined> 
     .limit(1);
 
   return user;
+};
+
+/**
+ * Create a new user
+ * Shared query used across services
+ */
+export const createUser = async (userData: NewUser): Promise<User> => {
+  const [newUser] = await db
+    .insert(users)
+    .values(userData)
+    .returning();
+
+  return newUser;
 };

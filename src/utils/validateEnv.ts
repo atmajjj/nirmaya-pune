@@ -31,6 +31,7 @@ export const validateEnv = () => {
     // Email configuration
     EMAIL_USER: str(),
     EMAIL_PASSWORD: str(),
+    APP_NAME: str({ default: 'Nirmaya' }),
 
     // Security configuration
     ALLOWED_ORIGINS: str(),

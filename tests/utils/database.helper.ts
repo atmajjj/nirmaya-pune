@@ -36,6 +36,7 @@ export class DatabaseTestHelper {
   // Clean all test tables
   public async cleanup(): Promise<void> {
     try {
+      await this.db.execute(sql`TRUNCATE TABLE invitation CASCADE`);
       await this.db.execute(sql`TRUNCATE TABLE uploads CASCADE`);
       await this.db.execute(sql`TRUNCATE TABLE users CASCADE`);
     } catch (error) {
@@ -51,6 +52,7 @@ export class DatabaseTestHelper {
   // Reset sequences
   public async resetSequences(): Promise<void> {
     try {
+      await this.db.execute(sql`ALTER SEQUENCE invitation_invitation_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE uploads_id_seq RESTART WITH 1`);
     } catch (error) {

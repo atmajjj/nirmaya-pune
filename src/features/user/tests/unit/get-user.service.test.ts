@@ -20,7 +20,7 @@ describe('GetUserService', () => {
       email: 'test@example.com',
       password: 'hashed',
       phone_number: '1234567890',
-      role: 'user' as const,
+      role: 'scientist' as const,
       created_by: 1,
       created_at: new Date(),
       updated_by: null,

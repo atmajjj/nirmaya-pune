@@ -28,7 +28,7 @@ describe('LoginService', () => {
       email: validEmail,
       password: '$2b$10$hashedpassword',
       phone_number: '1234567890',
-      role: 'user' as const,
+      role: 'scientist' as const,
       created_by: 1,
       created_at: new Date(),
       updated_by: null,

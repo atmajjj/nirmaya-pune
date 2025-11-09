@@ -6,7 +6,7 @@ import { users } from '../../src/features/user/user.schema';
 import { UserRole } from '../../src/features/user/user.schema';
 
 export class AuthTestHelper {
-  static generateJwtToken(userId: number, email: string, role: string = 'user'): string {
+  static generateJwtToken(userId: number, email: string, role: string = 'scientist'): string {
     const secret = process.env.JWT_SECRET || 'test-jwt-secret';
     return jwt.sign({ id: userId, email, role }, secret, { expiresIn: '24h' });
   }
@@ -28,7 +28,7 @@ export class AuthTestHelper {
         email: userData.email,
         name: userData.name,
         password: hashedPassword,
-        role: (userData.role || 'user') as UserRole,
+        role: (userData.role || 'scientist') as UserRole,
         created_by: 1,
       })
       .returning();

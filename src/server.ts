@@ -4,6 +4,7 @@ import { validateEnv } from './utils/validateEnv';
 import UserRoute from './features/user/user.route';
 import AuthRoute from './features/auth/auth.route';
 import UploadRoute from './features/upload/upload.route';
+import AdminInviteRoute from './features/admin-invite/admin-invite.route';
 import { checkDatabaseHealth } from './database/health';
 import { pool } from './database/drizzle';
 import { redisClient } from './utils/redis';
@@ -29,7 +30,7 @@ async function bootstrap() {
     // await testRedisConnection();
 
     // Start Express app
-    const app = new App([new AuthRoute(), new UserRoute(), new UploadRoute()]);
+    const app = new App([new AuthRoute(), new UserRoute(), new UploadRoute(), new AdminInviteRoute()]);
 
     server = app.listen();
 

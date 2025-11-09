@@ -31,7 +31,7 @@ describe('RegisterService', () => {
       email: 'test@example.com',
       password: 'password123',
       phone_number: '1234567890',
-      role: 'user' as const,
+      role: 'scientist' as const,
       created_by: 1,
     };
 

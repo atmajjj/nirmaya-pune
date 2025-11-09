@@ -1,0 +1,14 @@
+Option 1: Use a New Gmail Account (Recommended for Testing/Development)
+Create a New Gmail Account:
+
+Go to accounts.google.com and sign up for a new Gmail account (e.g., yourprojectemails@gmail.com).
+Enable 2-Step Verification (2FA) in your Google Account settings (Security > 2-Step Verification). This is required for app passwords.
+Generate an App Password:
+
+In your Google Account settings, go to Security > App passwords.
+Select "Mail" as the app and "Other (custom name)" as the device (e.g., name it "MMV Backend").
+Google will generate a 16-character password (e.g., abcd efgh ijkl mnop). This is what you'll use as EMAIL_PASSWORD.
+Update Your .env File:
+
+Replace the existing values:
+Restart your backend server to pick up the changes.
