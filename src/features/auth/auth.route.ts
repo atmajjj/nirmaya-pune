@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import Route from '../../interfaces/route.interface';
 import validationMiddleware from '../../middlewares/validation.middleware';
+import { requireAuth } from '../../middlewares/auth.middleware';
+import { requireRole } from '../../middlewares/role.middleware';
 import AuthController from './auth.controller';
 import { createUserSchema, loginSchema, refreshTokenSchema } from './auth.validation';
 
@@ -28,11 +30,18 @@ class AuthRoute implements Route {
 
     this.router.post(
       `${this.path}/refresh-token`,
+      requireAuth,
+      requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
       validationMiddleware(refreshTokenSchema),
       this.authController.refreshToken
     );
 
-    this.router.post(`${this.path}/logout`, this.authController.logout);
+    this.router.post(
+      `${this.path}/logout`,
+      requireAuth,
+      requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
+      this.authController.logout
+    );
   }
 }
 

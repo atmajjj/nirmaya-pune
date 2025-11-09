@@ -8,7 +8,7 @@ export const createUserSchema = z.object({
   email: z.string().email('Invalid email format'),
   phone_number: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
-  role: z.enum(userRoles).default('user').optional(),
+  role: z.enum(userRoles).default('scientist').optional(),
   created_by: z.number().optional(),
   updated_by: z.number().optional(),
   is_deleted: z.boolean().optional(),

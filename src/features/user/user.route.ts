@@ -23,11 +23,17 @@ class UserRoute implements Route {
       this.userController.getAllUsers
     );
 
-    this.router.get(`${this.path}/:id`, requireAuth, this.userController.getUserById);
+    this.router.get(
+      `${this.path}/:id`,
+      requireAuth,
+      requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
+      this.userController.getUserById
+    );
 
     this.router.put(
       `${this.path}/:id`,
       requireAuth,
+      requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
       validationMiddleware(updateUserSchema),
       this.userController.updateUser
     );
