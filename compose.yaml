@@ -1,0 +1,18 @@
+
+services:
+  server:
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    depends_on: []
+    volumes:
+      - ./logs:/usr/src/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+

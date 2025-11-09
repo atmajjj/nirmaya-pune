@@ -1,0 +1,104 @@
+import cookieParser from 'cookie-parser';
+import express from 'express';
+import hpp from 'hpp';
+import compression from 'compression';
+import { authRateLimit, apiRateLimit } from './middlewares/rate-limit.middleware';
+import { requestIdMiddleware } from './middlewares/request-id.middleware';
+import { securityMiddleware } from './middlewares/security.middleware';
+import { corsMiddleware } from './middlewares/cors.middleware';
+import { requestLoggerMiddleware } from './middlewares/request-logger.middleware';
+import Routes from './interfaces/route.interface';
+import errorMiddleware from './middlewares/error.middleware';
+import { logger } from './utils/logger';
+
+class App {
+  public app: express.Application;
+  public port: string | number;
+  public env: string;
+
+  constructor(routes: Routes[]) {
+    // Initialize the express app
+    this.app = express();
+    this.port = process.env.PORT || 8000;
+    this.env = process.env.NODE_ENV || 'development';
+
+    this.app.use(cookieParser());
+    this.initializeMiddlewares();
+    this.initializeRoutes(routes);
+    this.initializeErrorHandling();
+
+    this.app.get('/', (req, res) => {
+      res.send('Welcome to Nirmaya Backend API');
+    });
+
+    // Health check endpoint
+    this.app.get('/health', (req, res) => {
+      res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        environment: this.env,
+        uptime: process.uptime(),
+        memory: {
+          used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+          total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
+        },
+        version: process.env.npm_package_version || '1.0.0',
+      });
+    });
+  }
+
+  public listen() {
+    const port = Number(this.port);
+    const server = this.app.listen(port, '0.0.0.0', () => {
+      logger.info(
+        `🚀 Nirmaya Backend API listening on port ${port}. Environment: ${this.env}.`
+      );
+    });
+    return server;
+  }
+
+  public getServer() {
+    return this.app;
+  }
+
+  private initializeMiddlewares() {
+    // Request ID middleware (must be first)
+    this.app.use(requestIdMiddleware);
+
+    // Security middlewares
+    this.app.use(securityMiddleware);
+    this.app.use(corsMiddleware);
+    this.app.use(hpp());
+
+    // Logging middleware
+    this.app.use(requestLoggerMiddleware);
+
+    // Compression
+    this.app.use(compression());
+
+    // Rate limiting
+    this.app.use('/api/v1/users/login', authRateLimit);
+    this.app.use('/api/v1/users/register', authRateLimit);
+    this.app.use('/api/v1/', apiRateLimit);
+
+    // Body parsing
+    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
+    this.app.use(cookieParser());
+
+    // All middleware initialized
+  }
+
+  private initializeRoutes(routes: Routes[]) {
+    // Routes now handle auth individually with requireAuth
+    routes.forEach(route => {
+      this.app.use('/api/v1/', route.router);
+    });
+  }
+
+  private initializeErrorHandling() {
+    this.app.use(errorMiddleware);
+  }
+}
+
+export default App;
