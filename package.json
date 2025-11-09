@@ -24,7 +24,7 @@
     "db:test": "ts-node src/database/health.ts",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
-    "prepare": "husky",
+    "create-admin": "tsx scripts/create-admin.ts",
     "pre-commit": "lint-staged"
   },
   "keywords": [
