@@ -1,3 +1,21 @@
+CREATE TABLE "invitation" (
+	"invitation_id" serial PRIMARY KEY NOT NULL,
+	"first_name" text NOT NULL,
+	"last_name" text NOT NULL,
+	"email" text NOT NULL,
+	"invite_token" text NOT NULL,
+	"status" text DEFAULT 'pending' NOT NULL,
+	"assigned_role" text,
+	"password" text,
+	"invited_by" integer NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"accepted_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	CONSTRAINT "invitation_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
 CREATE TABLE "uploads" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
@@ -24,7 +42,7 @@ CREATE TABLE "users" (
 	"email" text NOT NULL,
 	"password" text NOT NULL,
 	"phone_number" text,
-	"role" text DEFAULT 'user' NOT NULL,
+	"role" text DEFAULT 'scientist' NOT NULL,
 	"created_by" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_by" integer,

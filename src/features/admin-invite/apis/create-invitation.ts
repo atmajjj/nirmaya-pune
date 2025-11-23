@@ -15,12 +15,10 @@ import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, getUserId } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
 import { sendInvitationEmail } from '../../../utils/sendInvitationEmail';
-import { validateEnv } from '../../../utils/validateEnv';
+import { config } from '../../../utils/validateEnv';
 import { userRoles } from '../../user/shared/schema';
 import { createInvitation, findInvitationByEmail } from '../shared/queries';
 import { ICreateInvitation, IInvitation } from '../shared/interface';
-
-const env = validateEnv();
 
 const schema = z.object({
   first_name: z.string().min(1, 'First name is required').max(255, 'First name too long'),
@@ -57,7 +55,7 @@ async function handleCreateInvitation(
   });
 
   try {
-    const inviteLink = `${env.ALLOWED_ORIGINS}/accept-invitation?token=${inviteToken}`;
+    const inviteLink = `${config.ALLOWED_ORIGINS}/accept-invitation?token=${inviteToken}`;
     await sendInvitationEmail({
       to: invitationData.email,
       firstName: invitationData.first_name,

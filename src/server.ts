@@ -1,6 +1,5 @@
 import App from './app';
 import { logger } from './utils/logger';
-import { validateEnv } from './utils/validateEnv';
 import UserRoute from './features/user';
 import AuthRoute from './features/auth';
 import UploadRoute from './features/upload';
@@ -9,8 +8,6 @@ import { checkDatabaseHealth } from './database/health';
 import { pool } from './database/drizzle';
 import { redisClient } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
-
-validateEnv();
 
 let server: import('http').Server;
 

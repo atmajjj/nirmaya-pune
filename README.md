@@ -1,8 +1,6 @@
 # Nirmaya Backend
 
-A robust, production-ready Nirmaya backend with TypeScript, featuring user authentication with role-based access, file upload management, and modern tooling with 100% test coverage.
-
-![API Documentation Screenshot](./Screenshot.png)
+A production-ready Node.js backend API with authentication, file management, and role-based access control.
 
 ## 🚀 Quick Start
 
@@ -10,9 +8,13 @@ A robust, production-ready Nirmaya backend with TypeScript, featuring user authe
 # Install dependencies
 npm install
 
-# Setup environment files
+# Setup environment
 cp .env.example .env.dev
-# Edit .env.dev with your local database settings
+# Edit .env.dev with your database and AWS credentials
+
+# Setup database
+npm run db:migrate
+npm run db:seed
 
 # Start development server
 npm run dev
@@ -20,156 +22,220 @@ npm run dev
 
 ## 📋 Features
 
-- **Authentication**: JWT-based user registration/login with role-based access
-- **File Management**: PDF, DOC, DOCX upload with S3 storage
-- **User Management**: CRUD operations for users with admin controls
-- **Database**: PostgreSQL with Drizzle ORM migrations
-- **Storage**: AWS S3 compatible (Supabase)
-- **Caching**: Optional Redis integration
-- **Security**: Rate limiting, CORS, input validation, helmet
-- **Testing**: Jest with unit/integration tests (104 tests)
-- **Docker**: Multi-stage builds for dev/prod
+- **🔐 Authentication**: JWT-based login/registration with role-based access
+- **📁 File Upload**: PDF, DOC, DOCX upload with AWS S3 storage
+- **👥 User Management**: CRUD operations with admin controls
+- **🗄️ Database**: PostgreSQL with Drizzle ORM and migrations
+- **🔒 Security**: Rate limiting, input validation, CORS, helmet
+- **🧪 Testing**: Jest with 100% coverage (unit + integration tests)
+- **🐳 Docker**: Multi-stage builds for development and production
 
-## 🗂️ API Endpoints
+## 🛠️ Tech Stack
 
-### Public
+- **Runtime**: Node.js 18+, Express.js 5.x, TypeScript 5.7+
+- **Database**: PostgreSQL + Drizzle ORM
+- **Auth**: JWT + bcrypt + role-based access control
+- **Storage**: AWS S3 SDK v3 (Supabase compatible)
+- **Testing**: Jest + SWC + Supertest
+- **DevOps**: Docker, Winston logging, PM2
 
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-- `POST /auth/refresh-token` - Refresh JWT token
-- `POST /auth/logout` - User logout
+## 📋 Prerequisites
 
-### Protected
-
-- `GET /users` - List all users (admin only)
-- `GET /users/:id` - Get user by ID
-- `PUT /users/:id` - Update user
-- `DELETE /users/:id` - Delete user (admin only)
-- `GET /uploads` - List user uploads
-- `GET /uploads/stats` - Get upload statistics
-- `GET /uploads/status/:status` - Get uploads by status
-- `POST /uploads` - Upload file
-- `GET /uploads/:id` - Get upload by ID
-- `GET /uploads/:id/download` - Download file
-- `PUT /uploads/:id` - Update upload
-- `DELETE /uploads/:id` - Delete upload
-
-### System
-
-- `GET /health` - Health check
-
-## 🗄️ Database Schema
-
-```sql
-users (id, name, email, password, phone_number, role, audit_fields)
-uploads (id, user_id, filename, original_filename, mime_type, file_size, file_path, file_url, status, error_message, audit_fields)
-```
-
-**Features**: Audit fields, soft deletes, referential integrity, role-based access, upload status tracking.
+- Node.js 18+
+- PostgreSQL 13+
+- Git
 
 ## ⚙️ Environment Setup
 
-Create environment files for development and production:
+Copy `.env.example` to `.env.dev` and configure:
 
 ```bash
-# Copy the example file
-cp .env.example .env.dev
-cp .env.example .env.prod
+# Required
+JWT_SECRET=your-256-bit-secret-key
+DATABASE_URL=postgresql://user:pass@localhost:5432/nirmaya_dev
+PORT=8000
 
-# Edit with your settings
-# .env.dev - for local development
-# .env.prod - for production deployment
+# AWS S3 (for file uploads)
+AWS_ACCESS_KEY=your-access-key
+AWS_SECRET_KEY=your-secret-key
+AWS_BUCKET_NAME=your-bucket
+AWS_REGION=your-region
+AWS_ENDPOINT=https://your-project.supabase.co/storage/v1/s3
+
+# Email (for admin invites)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
 ```
 
-**Required Variables:**
+## 🗄️ Database Setup
+
+### Local PostgreSQL
 ```bash
-JWT_SECRET=your-256-bit-secret
-DATABASE_URL=postgresql://user:password@host:port/dbname
-AWS_ACCESS_KEY=key
-AWS_SECRET_KEY=secret
-AWS_BUCKET_NAME=bucket
-EMAIL_USER=your-email@example.com
-EMAIL_PASSWORD=your-email-password
+# Using Docker
+docker run --name postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15
+
+# Or using Homebrew (macOS)
+brew install postgresql
+brew services start postgresql
+createdb nirmaya_dev
 ```
 
-**Files**: `.env.dev` (development), `.env.prod` (production), `.env.example` (template)
+### Database Commands
+```bash
+npm run db:generate    # Generate migrations from schema changes
+npm run db:migrate     # Run migrations
+npm run db:seed        # Seed with test data
+npm run db:studio      # Open Drizzle Studio GUI
+```
 
-## 🏗️ Project Structure
+## 💻 Development
 
+### Project Structure
 ```
 src/
-├── app.ts, server.ts     # App setup and bootstrap
-├── features/             # Feature-based modules (auth, user, upload)
-├── middlewares/          # Auth, validation, security, CORS, rate-limit
-├── utils/               # Logger, JWT, Redis, S3 upload, validators
-├── interfaces/          # TypeScript definitions
-└── database/            # Drizzle schemas, migrations, seed, health
+├── features/          # Feature modules (auth, user, upload, admin-invite)
+├── middlewares/       # Auth, validation, security, rate limiting
+├── utils/            # JWT, logger, S3 upload, database connection
+├── database/         # Migrations, seed, health checks
+└── interfaces/       # TypeScript definitions
 
-build/                   # Compiled TypeScript output
-tests/                   # Unit and integration tests
-logs/                    # Application logs (error, info)
-scripts/                 # Utility scripts
+tests/
+├── unit/             # Unit tests
+└── integration/      # API integration tests
 ```
 
-## 🛠️ Commands
-
+### Development Commands
 ```bash
-# Development
-npm run dev              # Start dev server with nodemon
-npm run build           # Build for production
-npm start               # Start production server
-
-# Database
-npm run db:generate     # Generate Drizzle migrations
-npm run db:migrate      # Run database migrations
-npm run db:push         # Push schema changes to database
-npm run db:studio       # Open Drizzle Studio
-npm run db:seed         # Seed database with test data
-npm run db:test         # Test database connection
-npm run db:check        # Check schema drift
-npm run db:up           # Update schema to latest
-
-# Testing
-npm test                # Run all tests (104 tests)
-npm run test:unit       # Run unit tests only
-npm run test:integration # Run integration tests only
-npm run test:coverage   # Run tests with coverage
-
-# Quality
-npm run lint            # Lint code with ESLint
-npm run lint:fix        # Fix linting issues
+npm run dev           # Start dev server with hot reload
+npm run build         # Build for production
+npm run lint          # Check code quality
+npm run lint:fix      # Auto-fix linting issues
 ```
 
-## Deployment
-
-### Docker
+## 🧪 Testing
 
 ```bash
+npm test              # Run all tests
+npm run test:unit     # Unit tests only
+npm run test:integration # Integration tests only
+npm run test:coverage # Generate coverage report
+```
+
+Tests include:
+- Unit tests for utilities (JWT, validation, etc.)
+- Integration tests for all API endpoints
+- Database cleanup between tests
+- 100% coverage requirement
+
+## 📚 API Documentation
+
+**Base URL**: `http://localhost:8000/api/v1`
+
+### Authentication
+All protected endpoints require: `Authorization: Bearer <jwt-token>`
+
+### Endpoints
+
+#### Public
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/refresh-token` - Refresh JWT token
+- `GET /health` - Health check
+
+#### Protected (Authenticated Users)
+- `GET /users/:id` - Get user profile
+- `PUT /users/:id` - Update user profile
+- `GET /uploads` - List user uploads
+- `POST /uploads` - Upload file
+- `GET /uploads/:id/download` - Download file
+- `DELETE /uploads/:id` - Delete upload
+
+#### Admin Only
+- `GET /users` - List all users
+- `DELETE /users/:id` - Delete user
+- `POST /admin/invitations` - Send user invitations
+
+### Response Format
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation successful",
+  "meta": {
+    "timestamp": "2024-01-01T00:00:00.000Z",
+    "requestId": "req-123"
+  }
+}
+```
+
+### File Upload
+```bash
+curl -X POST http://localhost:8000/api/v1/uploads \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@document.pdf"
+```
+
+## 🚀 Deployment
+
+### Docker Deployment
+```bash
 # Development
-docker-compose up -d
+docker-compose up --build
 
 # Production
-docker-compose -f docker-compose.prod.yml up -d
+docker build -t nirmaya-backend .
+docker run --env-file .env.prod -p 8000:8000 nirmaya-backend
+```
+
+### Manual Production Deployment
+```bash
+# Install dependencies
+npm ci --only=production
+npm run build
+
+# Setup environment
+cp .env.example .env.prod
+# Configure production variables
+
+# Run migrations
+NODE_ENV=production npm run db:migrate
+
+# Start with PM2
+npm install -g pm2
+pm2 start build/src/server.js --name nirmaya-backend
 ```
 
 ### Production Checklist
-
-- [ ] Configure `.env.prod`
-- [ ] Run database migrations: `npm run db:migrate`
+- [ ] Configure production environment variables
+- [ ] Run database migrations
 - [ ] Setup SSL certificates
-- [ ] Configure monitoring
+- [ ] Configure reverse proxy (nginx)
+- [ ] Setup monitoring and logging
+- [ ] Configure backups
 
-## 🔧 Tech Stack
+## 🔒 Security
 
-- **Runtime**: Node.js 18+, Express 5.x, TypeScript 5.7+
-- **Database**: PostgreSQL + Drizzle ORM
-- **Auth**: JWT + bcrypt + role-based access
-- **Validation**: Zod schemas
-- **Storage**: AWS S3 SDK v3
-- **Testing**: Jest + SWC + V8 coverage (104 tests)
-- **Linting**: ESLint 9 + Prettier 3
-- **Docker**: Multi-stage Alpine builds
+- **JWT Authentication**: 24-hour token expiration
+- **Password Hashing**: bcrypt with salt rounds
+- **Rate Limiting**: 100 req/min per IP, 5/min for auth
+- **Input Validation**: Zod schemas for all inputs
+- **SQL Injection Prevention**: Parameterized queries
+- **CORS**: Configured allowed origins
+- **Security Headers**: Helmet.js protection
+
+## 👥 User Roles
+
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| `admin` | System administrator | Full access, user management |
+| `scientist` | Research scientist | Data access, file uploads |
+| `researcher` | Research assistant | Limited data access |
+| `policymaker` | Policy maker | Read-only access |
+
+## 📄 License
+
+ISC License
 
 ---
 
-**Built with ❤️ for modern Node.js development**
+**Built with modern Node.js best practices**

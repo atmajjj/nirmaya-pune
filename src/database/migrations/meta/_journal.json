@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762007560077,
-      "tag": "0000_adorable_skrulls",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1762678815395,
-      "tag": "0001_glamorous_hedge_knight",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1762714720489,
-      "tag": "0002_gigantic_omega_red",
+      "when": 1763907189973,
+      "tag": "0000_harsh_riptide",
       "breakpoints": true
     }
   ]
