@@ -51,10 +51,10 @@ export const getInvitations = async (
   const { status } = filters;
   const { page = 1, limit = 10 } = pagination;
 
-  let whereClause = eq(invitations.is_deleted, false);
+  let whereClause: ReturnType<typeof eq> = eq(invitations.is_deleted, false);
 
   if (status) {
-    whereClause = and(whereClause, eq(invitations.status, status));
+    whereClause = and(whereClause, eq(invitations.status, status))!;
   }
 
   const offset = (page - 1) * limit;

@@ -4,10 +4,11 @@ import { Request, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
 import { redisClient } from '../utils/redis';
 import { RequestWithId } from '../interfaces/request.interface';
+import { isProduction, isDevelopment, isTest, config } from '../utils/validateEnv';
 
 // Create Redis store for production, in-memory for dev/test
 const createStore = () =>
-  process.env.NODE_ENV === 'production' && process.env.REDIS_URL
+  isProduction && config.REDIS_URL
     ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) })
     : undefined;
 
@@ -41,13 +42,13 @@ const createRateLimitHandler =
       .status(429)
       .json(createRateLimitResponse(message, retryAfter, requestWithId.requestId || 'unknown'));
   };
-const skipTest = () => process.env.NODE_ENV === 'test';
+const skipTest = () => isTest;
 
 // Skip logic for development localhost or test
 const skipDevOrTest = (req: Request) =>
-  (process.env.NODE_ENV === 'development' &&
+  (isDevelopment &&
     (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) ||
-  process.env.NODE_ENV === 'test';
+  isTest;
 
 // Auth endpoints - strict rate limiting (5 requests per 15 minutes)
 export const authRateLimit: RequestHandler = rateLimit({

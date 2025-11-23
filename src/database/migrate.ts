@@ -5,13 +5,14 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import { logger } from '../utils/logger';
+import { config } from '../utils/validateEnv';
 
 /**
  * Run database migrations
  * This applies all pending migrations to the database
  */
 async function runMigrations() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = config.DATABASE_URL;
 
   if (!connectionString) {
     logger.error('DATABASE_URL environment variable is not set');

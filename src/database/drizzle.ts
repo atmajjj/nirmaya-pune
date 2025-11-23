@@ -4,6 +4,7 @@ dotenv.config({ quiet: true });
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { logger } from '../utils/logger';
+import { config, isProduction, isDevelopment } from '../utils/validateEnv';
 
 // Import all schemas
 import { users } from '../features/user/shared/schema';
@@ -13,7 +14,7 @@ import { invitations } from '../features/admin-invite/shared/schema';
 /**
  * Database connection configuration
  */
-const connectionString = process.env.DATABASE_URL;
+const connectionString = config.DATABASE_URL;
 
 if (!connectionString) {
   logger.error('DATABASE_URL environment variable is required for database connection');
@@ -29,7 +30,7 @@ export const pool = new Pool({
   max: 10, // Maximum number of connections in pool
   idleTimeoutMillis: 20000, // Close idle connections after 20 seconds
   connectionTimeoutMillis: 10000, // Connection timeout in milliseconds
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+  ssl: isProduction ? { rejectUnauthorized: false } : undefined,
 });
 
 /**
@@ -47,7 +48,7 @@ export const schema = {
  */
 export const db = drizzle(pool, {
   schema,
-  logger: process.env.NODE_ENV === 'development',
+  logger: isDevelopment,
 });
 
 /**

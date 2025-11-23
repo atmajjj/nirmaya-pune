@@ -10,17 +10,18 @@ import { requestLoggerMiddleware } from './middlewares/request-logger.middleware
 import Routes from './interfaces/route.interface';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger } from './utils/logger';
+import { config } from './utils/validateEnv';
 
 class App {
   public app: express.Application;
-  public port: string | number;
+  public port: number;
   public env: string;
 
   constructor(routes: Routes[]) {
     // Initialize the express app
     this.app = express();
-    this.port = process.env.PORT || 8000;
-    this.env = process.env.NODE_ENV || 'development';
+    this.port = config.PORT;
+    this.env = config.NODE_ENV;
 
     this.app.use(cookieParser());
     this.initializeMiddlewares();
@@ -42,7 +43,7 @@ class App {
           used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
           total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
         },
-        version: process.env.npm_package_version || '1.0.0',
+        version: '1.0.0',
       });
     });
   }

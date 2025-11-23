@@ -1,16 +1,13 @@
 import cors from 'cors';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { config } from '../utils/validateEnv';
 
 /**
  * Get allowed origins from environment or use defaults
  */
 const getAllowedOrigins = (): string[] => {
-  const envOrigins = process.env.ALLOWED_ORIGINS;
-  if (envOrigins) {
-    return envOrigins.split(',').map(origin => origin.trim());
-  }
-  return ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+  return config.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
 };
 
 /**
@@ -28,7 +25,7 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction):
       allowedOrigins,
       ip: req.ip,
       userAgent: req.get('User-Agent'),
-      requestId: (req as { requestId?: string }).requestId,
+      requestId: req.requestId,
     });
   }
 

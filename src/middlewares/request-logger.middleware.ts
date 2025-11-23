@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
 import { stream } from '../utils/logger';
-import { RequestWithContext } from '../interfaces/request.interface';
+import { isProduction } from '../utils/validateEnv';
 
 /**
  * Unified request logging middleware using Morgan with custom tokens
@@ -11,22 +11,15 @@ import { RequestWithContext } from '../interfaces/request.interface';
 
 // Custom Morgan tokens for enhanced logging
 morgan.token('request-id', (req: Request) => {
-  const requestWithContext = req as RequestWithContext;
-  return requestWithContext.requestId || 'unknown';
+  return req.requestId || 'unknown';
 });
 
 morgan.token('user-id', (req: Request) => {
-  const requestWithContext = req as RequestWithContext;
-  // Standardize: prefer userId, fallback to user?.id
-  return (
-    requestWithContext.userId?.toString() || requestWithContext.user?.id?.toString() || 'anonymous'
-  );
+  return req.userId?.toString() || 'anonymous';
 });
 
 morgan.token('user-role', (req: Request) => {
-  const requestWithContext = req as RequestWithContext;
-  // Standardize: prefer userRole, fallback to user?.role
-  return requestWithContext.userRole || requestWithContext.user?.role || 'anonymous';
+  return req.userRole || 'anonymous';
 });
 
 /**
@@ -34,9 +27,7 @@ morgan.token('user-role', (req: Request) => {
  * Uses Morgan with custom tokens for consistent, structured logging
  */
 export const requestLoggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const env = process.env.NODE_ENV || 'development';
-
-  if (env === 'production') {
+  if (isProduction) {
     // JSON format for production with comprehensive structured data
     return morgan(
       (tokens: morgan.TokenIndexer, req: Request, res: Response) => {
@@ -54,7 +45,6 @@ export const requestLoggerMiddleware = (req: Request, res: Response, next: NextF
           ip: tokens['remote-addr'](req, res),
           contentLength: tokens.res(req, res, 'content-length') || '0',
           service: 'nirmaya-backend',
-          version: process.env.npm_package_version || '1.0.0',
         });
       },
       { stream }

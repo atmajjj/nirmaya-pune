@@ -1,6 +1,7 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import HttpException from './httpException';
 import { logger } from './logger';
+import { config } from './validateEnv';
 
 // Cache JWT secret for performance
 let jwtSecret: string;
@@ -10,7 +11,7 @@ let jwtSecret: string;
  */
 const getJWTSecret = (): string => {
   if (!jwtSecret) {
-    jwtSecret = process.env.JWT_SECRET || '';
+    jwtSecret = config.JWT_SECRET;
     if (!jwtSecret) {
       logger.error('JWT_SECRET environment variable is not configured');
       throw new Error('JWT_SECRET environment variable is required');

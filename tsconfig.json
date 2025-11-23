@@ -1,22 +1,55 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["es2017", "esnext.asynciterable", "dom"],
-    "typeRoots": ["./node_modules/@types"],
-    "allowSyntheticDefaultImports": true,
+    /* Language and Environment */
+    "target": "ES2022",
+    "lib": ["ES2022"],
     "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+
+    /* Modules */
     "module": "commonjs",
-    "pretty": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    
+    /* Type Checking - Production-ready strict settings for Express/Node */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": false,  // Must be false for Express middleware compatibility
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,  // Express handlers often don't use all params
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    
+    /* Emit */
     "sourceMap": true,
     "outDir": "./build",
-    "allowJs": true,
-    "noEmit": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true
+    "rootDir": "./src",
+    "removeComments": false,
+    "downlevelIteration": true,
+    "preserveConstEnums": true,
+    
+    /* Interop Constraints */
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    /* Skip Checking - Essential for node_modules compatibility */
+    "skipLibCheck": true,
+    
+    /* Path Mapping */
+    "baseUrl": "./src",
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": ["./src/**/*", ".env"],
-
-  "exclude": ["node_modules", "dist", "**/*.njk"]
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["node_modules", "build", "**/*.test.ts", "**/*.spec.ts", "coverage"]
 }

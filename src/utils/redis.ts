@@ -1,11 +1,12 @@
 import { createClient } from 'redis';
 import { logger } from './logger';
+import { config } from './validateEnv';
 
 // Redis configuration from environment variables
 const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
+  host: config.REDIS_HOST,
+  port: config.REDIS_PORT,
+  password: config.REDIS_PASSWORD || undefined,
 };
 
 // Create Redis client instance

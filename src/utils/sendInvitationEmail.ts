@@ -55,6 +55,6 @@ export const sendInvitationEmail = async ({
         console.log(`Invitation email sent successfully to ${to}. Message ID: ${info.messageId}`);
     } catch (error) {
         console.error('Failed to send invitation email:', error);
-        throw new Error(`Email service error: ${error.message}`);
+        throw new Error(`Email service error: ${error instanceof Error ? error.message : String(error)}`);
     }
 };

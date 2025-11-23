@@ -66,12 +66,13 @@ async function handleCreateInvitation(
       inviteLink,
     });
   } catch (emailError) {
-    console.error('Failed to send invitation email:', emailError);
+    const { logger } = await import('../../../utils/logger');
+    logger.error('Failed to send invitation email', { error: emailError });
   }
 
   // Exclude password from response
-  const invitationResponse = { ...newInvitation };
-  delete invitationResponse.password;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _, ...invitationResponse } = newInvitation;
   return invitationResponse as IInvitation;
 }
 

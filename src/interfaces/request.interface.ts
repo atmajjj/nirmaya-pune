@@ -2,26 +2,45 @@ import { Request } from 'express';
 import { UserRole } from '../features/user/shared/schema';
 
 /**
- * Extended Request interfaces for middleware-specific properties
- * Central location for all Express Request interface extensions
+ * Extended Request interfaces for type-safe middleware handling
+ * 
+ * Note: Base Express.Request is augmented in src/interfaces/express.d.ts
+ * These interfaces provide stricter typing for specific middleware contexts
  */
 
+/**
+ * Request with guaranteed requestId (after request-id middleware)
+ */
 export interface RequestWithId extends Request {
   requestId: string;
 }
 
+/**
+ * Request with guaranteed user authentication (after auth middleware)
+ * Use this type in handlers that require authentication
+ */
 export interface RequestWithUser extends Request {
-  user?: IAuthUser;
-  userId?: number;
-  userRole?: UserRole;
+  userId: number;
+  userRole: UserRole;
   userAgent?: string;
   clientIP?: string;
-  schema?: string;
 }
 
-// Combined interface for requests with both user and request ID context
-export interface RequestWithContext extends Request, RequestWithId, RequestWithUser {}
+/**
+ * Request with both requestId and user context
+ * Use when both middleware have been applied
+ */
+export interface RequestWithContext extends Request {
+  requestId: string;
+  userId: number;
+  userRole: UserRole;
+  userAgent?: string;
+  clientIP?: string;
+}
 
+/**
+ * Authenticated user data structure
+ */
 export interface IAuthUser {
   id: number;
   name: string;
@@ -32,11 +51,17 @@ export interface IAuthUser {
   updated_at: Date;
 }
 
+/**
+ * User data with authentication tokens
+ */
 export interface IAuthUserWithToken extends IAuthUser {
   token: string;
   refreshToken?: string;
 }
 
+/**
+ * JWT token payload structure
+ */
 export interface DataStoredInToken {
   id: number;
   email?: string;
@@ -44,6 +69,9 @@ export interface DataStoredInToken {
   role?: UserRole;
 }
 
+/**
+ * Token generation result
+ */
 export interface TokenData {
   token: string;
   expiresIn: number;

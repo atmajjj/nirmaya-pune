@@ -1,15 +1,16 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import HttpException from './httpException';
 import { logger } from './logger';
+import { config } from './validateEnv';
 
 // Initialize S3 client
 export const s3Client = new S3Client({
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY || '',
-    secretAccessKey: process.env.AWS_SECRET_KEY || '',
+    accessKeyId: config.AWS_ACCESS_KEY,
+    secretAccessKey: config.AWS_SECRET_KEY,
   },
-  region: process.env.AWS_REGION || 'us-east-1',
-  endpoint: process.env.AWS_ENDPOINT,
+  region: config.AWS_REGION,
+  endpoint: config.AWS_ENDPOINT,
   forcePathStyle: true, // Required for some S3-compatible services
 });
 
@@ -56,8 +57,8 @@ export async function uploadToS3(
     // For standard AWS S3: https://bucket-name.s3.region.amazonaws.com/key
     // For S3-compatible services (like Supabase): endpoint/bucket/key
     let url: string;
-    const endpoint = process.env.AWS_ENDPOINT || '';
-    const region = process.env.AWS_REGION || '';
+    const endpoint = config.AWS_ENDPOINT;
+    const region = config.AWS_REGION;
 
     if (endpoint) {
       // For S3-compatible services with custom endpoint
@@ -79,8 +80,8 @@ export async function uploadToS3(
       contentType: mimetype,
     };
   } catch (error) {
-    logger.error(`S3 upload error: ${error.message}`);
-    throw new HttpException(500, `Failed to upload file to S3: ${error.message}`);
+    logger.error(`S3 upload error: ${error instanceof Error ? error.message : String(error)}`);
+    throw new HttpException(500, `Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -97,8 +98,8 @@ export async function uploadMultipleToS3(
     );
     return await Promise.all(uploadPromises);
   } catch (error) {
-    logger.error(`Multiple S3 upload error: ${error.message}`);
-    throw new HttpException(500, `Failed to upload files to S3: ${error.message}`);
+    logger.error(`Multiple S3 upload error: ${error instanceof Error ? error.message : String(error)}`);
+    throw new HttpException(500, `Failed to upload files to S3: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -110,7 +111,7 @@ export async function downloadFromS3(
   key: string
 ): Promise<{ stream: unknown; contentType: string; contentLength: number }> {
   try {
-    const bucket = process.env.AWS_BUCKET_NAME;
+    const bucket = config.AWS_BUCKET_NAME;
     if (!bucket) {
       throw new HttpException(500, 'S3 bucket not configured');
     }
@@ -134,8 +135,8 @@ export async function downloadFromS3(
       contentLength: response.ContentLength || 0,
     };
   } catch (error) {
-    logger.error(`S3 download error: ${error.message}`);
+    logger.error(`S3 download error: ${error instanceof Error ? error.message : String(error)}`);
     if (error instanceof HttpException) throw error;
-    throw new HttpException(500, `Failed to download file from S3: ${error.message}`);
+    throw new HttpException(500, `Failed to download file from S3: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

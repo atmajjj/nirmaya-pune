@@ -3,9 +3,9 @@
  * Upload file to S3 and create record (Requires auth)
  */
 
-import { Router, Response } from 'express';
-import multer from 'multer';
-import { RequestWithUser } from '../../../interfaces/request.interface';
+import { Router, Response, Request } from 'express';
+// Import to ensure global Express interface extension is loaded
+import '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
 import { requireRole } from '../../../middlewares/role.middleware';
 import { uploadSingleFileMiddleware } from '../../../middlewares/upload.middleware';
@@ -17,7 +17,7 @@ import { db } from '../../../database/drizzle';
 import { uploads } from '../shared/schema';
 import { Upload } from '../shared/interface';
 
-async function handleCreateUpload(file: multer.Multer.File, userId: number): Promise<Upload> {
+async function handleCreateUpload(file: Express.Multer.File, userId: number): Promise<Upload> {
   const s3Result = await uploadToS3(file.buffer, file.originalname, file.mimetype, userId);
 
   const [upload] = await db.insert(uploads).values({
@@ -43,7 +43,7 @@ async function handleCreateUpload(file: multer.Multer.File, userId: number): Pro
   } as Upload;
 }
 
-const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
+const handler = asyncHandler(async (req: Request, res: Response) => {
   const userId = getUserId(req);
   const file = req.file;
 

@@ -1,20 +1,41 @@
 # Nirmaya Backend - AI Assistant Instructions
 
 ## Architecture Overview
-**Feature-based modular structure** with clear separation of concerns:
-- `src/features/` - Business logic grouped by domain (auth, user, upload)
-- `src/middlewares/` - Cross-cutting concerns (auth, validation, security)
-- `src/utils/` - Shared utilities and helpers
-- `src/database/` - Drizzle ORM schemas and migrations
+**Feature-based modular architecture** with API-per-file organization:
+- `src/features/[feature]/apis/*.ts` - Individual route handlers (one endpoint per file)
+- `src/features/[feature]/shared/` - Schema, queries, interfaces shared across APIs
+- `src/features/[feature]/index.ts` - Combines all API routers under feature path
+- `src/middlewares/` - Cross-cutting concerns (auth, validation, security, logging)
+- `src/utils/` - Shared utilities (JWT, S3, email, logger, response formatting)
+- `src/database/` - Drizzle ORM connection, migrations, health checks, seeding
+
+### Feature Structure Pattern
+Each feature module follows this precise structure:
+```
+src/features/[feature]/
+├── apis/
+│   ├── [operation-name].ts      # Single endpoint: router, schema, handler, logic
+│   └── ...
+├── shared/
+│   ├── schema.ts                # Drizzle table definitions + TypeScript types
+│   ├── queries.ts               # Reusable database queries
+│   └── interface.ts             # TypeScript interfaces
+├── tests/
+│   ├── unit/                    # Unit tests
+│   └── integration/             # API integration tests
+└── index.ts                     # Combines all APIs into feature router
+```
+
+**Example**: `src/features/user/apis/get-all-users.ts` exports a configured router with middleware already attached
 
 ## Key Patterns & Conventions
 
 ### Database & Schema
-- **Drizzle ORM** with PostgreSQL - schemas in `src/features/*/user.schema.ts`
-- **Connection**: Uses `DATABASE_URL` env var with connection pooling (max 10 connections)
-- **Audit fields pattern**: `created_by`, `created_at`, `updated_by`, `updated_at`, `is_deleted`, `deleted_by`, `deleted_at`
+- **Drizzle ORM** with PostgreSQL - schemas in `src/features/*/shared/schema.ts`
+- **Connection**: `import { db } from './database/drizzle'` - singleton with pooling (max 10)
+- **Audit fields pattern** (required on ALL tables): `created_by`, `created_at`, `updated_by`, `updated_at`, `is_deleted`, `deleted_by`, `deleted_at`
 - **Role system**: `['admin', 'scientist', 'researcher', 'policymaker']` - default `'scientist'`
-- **Soft deletes**: All tables use `is_deleted` boolean flag instead of hard deletes
+- **Soft deletes**: All operations use `is_deleted` boolean flag, never hard delete records
 
 #### Database Commands & Workflow:
 ```bash
@@ -90,40 +111,159 @@ await db.select()
   .where(eq(usersTable.id, userId));
 ```
 
-### Authentication & Authorization
-- **JWT-based auth** with `requireAuth` middleware
-- **Role-based access**: `requireRole(['admin', 'scientist', 'researcher', 'policymaker'])` for user operations
-- **Admin-only**: `requireRole('admin')` for sensitive operations
-- **User context**: `req.userId`, `req.userRole` attached by auth middleware
-
-### Controller Patterns
-- **Helper functions**: Use `parseIdParam(req)`, `getUserId(req)`, `asyncHandler()` from `src/utils/controllerHelpers.ts`
-- **Error handling**: Throw `HttpException(status, message)` - caught by global error middleware
-- **Response format**: Controllers return data, formatting handled by response utilities
-
-### Route Structure
+### API-Per-File Pattern
+Each endpoint is self-contained in its own file with all components:
 ```typescript
-// Feature routes follow this pattern:
-class FeatureRoute implements Route {
-  router = Router();
-  path = '/feature';
+// src/features/user/apis/get-all-users.ts
+import { Router, Response } from 'express';
+import { requireAuth } from '../../../middlewares/auth.middleware';
+import { requireRole } from '../../../middlewares/role.middleware';
+import { ResponseFormatter } from '../../../utils/responseFormatter';
+import { asyncHandler } from '../../../utils/controllerHelpers';
+import { db } from '../../../database/drizzle';
+import { users } from '../shared/schema';
 
-  private initializeRoutes() {
-    this.router.get(`${this.path}`, requireAuth, requireRole('admin'), controller.method);
-    this.router.get(`${this.path}/:id`, requireAuth, requireRole([...]), controller.method);
-  }
+// 1. Business logic function (testable)
+async function getAllUsers() {
+  return await db.select().from(users).where(eq(users.is_deleted, false));
 }
+
+// 2. Request handler with asyncHandler wrapper
+const handler = asyncHandler(async (req: Request, res: Response) => {
+  const usersList = await getAllUsers();
+  ResponseFormatter.success(res, usersList, 'Users retrieved');
+});
+
+// 3. Router with middleware chain
+const router = Router();
+router.get('/', requireAuth, requireRole('admin'), handler);
+
+export default router;
+```
+
+**Key principles**:
+- Export configured router (not controller class)
+- Middleware attached at route level: `requireAuth`, `requireRole([...])`, `validationMiddleware(schema)`
+- Use `asyncHandler()` wrapper for automatic error handling
+- Business logic in separate function for testing
+- Validation schemas inline using Zod
+
+### Authentication & Authorization
+- **JWT tokens**: Bearer token in Authorization header (24h expiry)
+- **requireAuth middleware**: Attaches `req.userId`, `req.userRole`, `req.userAgent`, `req.clientIP`
+- **requireRole middleware**: Pass single role or array: `requireRole('admin')` or `requireRole(['admin', 'scientist'])`
+- **User context helpers**: `getUserId(req)` throws if missing, `parseIdParam(req)` for route params
+
+### Response Formatting
+**Always use `ResponseFormatter`** from `src/utils/responseFormatter.ts`:
+```typescript
+// Success (200)
+ResponseFormatter.success(res, data, 'Operation successful');
+
+// Created (201)
+ResponseFormatter.created(res, data, 'Resource created');
+
+// No content (204)
+ResponseFormatter.noContent(res, 'Resource deleted');
+
+// Errors: throw HttpException instead
+throw new HttpException(404, 'User not found');
+throw new HttpException(409, 'Email already exists');
 ```
 
 ### Validation & Types
-- **Zod schemas** in `*.validation.ts` files
-- **TypeScript types** auto-generated from Drizzle schemas: `User`, `NewUser`
-- **Request interfaces**: `RequestWithUser` extends Express.Request with auth context
+- **Zod schemas** defined inline in API files (no separate validation files)
+- **TypeScript types** auto-generated from Drizzle schemas: `User`, `NewUser`, `Invitation`
+- **Request interfaces**: `RequestWithUser` extends Express.Request with `userId`, `userRole`
+- **Validation middleware**: `validationMiddleware(zodSchema)` - validates `req.body`
 
-### Testing
-- **Jest + SWC** for fast TypeScript testing
-- **Test structure**: `tests/unit/`, `tests/integration/`
-- **Commands**: `npm run test:unit`, `npm run test:integration`, `npm run test:coverage`
+### Shared Queries Pattern
+Reusable database queries in `shared/queries.ts` for cross-API usage:
+```typescript
+// src/features/user/shared/queries.ts
+export const findUserById = async (id: number): Promise<User | undefined> => {
+  const [user] = await db.select().from(users)
+    .where(and(eq(users.id, id), eq(users.is_deleted, false)))
+    .limit(1);
+  return user;
+};
+
+export const createUser = async (userData: NewUser): Promise<User> => {
+  const [newUser] = await db.insert(users).values(userData).returning();
+  return newUser;
+};
+```
+- Import from feature's shared queries: `import { findUserById } from '../../user/shared/queries'`
+- Always filter by `is_deleted = false` for soft delete safety
+- Use `.returning()` on inserts/updates to get full record back
+
+### Environment & Configuration
+- **Validation**: `validateEnv()` runs at startup - fails fast if missing vars
+- **Required vars**: `JWT_SECRET` (min 32 chars), `DATABASE_URL`, AWS S3 credentials, email config
+- **Optional**: Redis connection (app starts without it)
+- **Access config**: `const env = validateEnv()` then use `env.JWT_SECRET`, etc.
+
+### Email System
+- **Nodemailer** with Gmail SMTP configured in `src/utils/emailConfig.ts`
+- **Invitation emails**: See `src/utils/sendInvitationEmail.ts` for pattern
+- **Config**: Uses `EMAIL_USER`, `EMAIL_PASSWORD`, `APP_NAME` from env
+- **Error handling**: Email failures are logged but don't block operations
+
+### Testing Patterns
+- **Structure**: `src/features/[feature]/tests/{unit,integration}/` with Jest + SWC + Supertest
+- **API Integration Tests**: Use `ApiTestHelper` for HTTP requests, `AuthTestHelper` for tokens, `TestDataFactory` for data
+- **Database Cleanup**: `dbHelper.cleanup()` and `dbHelper.resetSequences()` in `beforeEach`
+- **Example**:
+```typescript
+describe('User API', () => {
+  let app: Application;
+  let authToken: string;
+
+  beforeAll(async () => {
+    const appInstance = new App([new AuthRoute(), new UserRoute()]);
+    app = appInstance.getServer();
+  });
+
+  beforeEach(async () => {
+    await dbHelper.cleanup();
+    const userData = TestDataFactory.createUser();
+    const response = await apiHelper.post('/api/v1/auth/register', userData);
+    authToken = response.body.data.token;
+  });
+});
+```
+
+### Middleware Execution Order
+Critical sequence (defined in `src/app.ts`):
+1. **Request ID** - Generates unique ID for request tracking
+2. **Security** - Helmet, CORS, HPP
+3. **Request Logger** - Winston logging
+4. **Compression** - Response compression
+5. **Rate Limiting** - Auth endpoints (stricter) vs API endpoints
+6. **Body Parsing** - JSON/URL-encoded (10mb limit)
+7. **Route-specific** - Auth → Role → Validation → Handler
+
+### Graceful Shutdown
+- **Setup**: `setupGracefulShutdown({ server, database, redis })` in `src/server.ts`
+- **Signals**: Handles SIGTERM, SIGINT, uncaughtException, unhandledRejection
+- **Cleanup order**: HTTP server → Database pool → Redis connection
+- **Logging**: Winston logs all shutdown steps
+
+### Project-Specific Conventions
+- **No controller classes**: Use functions exported from API files
+- **Feature routes**: Class-based with `Route` interface, aggregates API routers
+- **Database schemas**: Register in `src/database/drizzle.ts` for migrations
+- **Admin invites**: Separate feature for user onboarding with email workflow
+- **Upload tracking**: Dedicated table with status tracking (`pending`, `completed`, `failed`)
+### Bootstrap Sequence
+Critical startup order in `src/server.ts`:
+1. **Validate Environment**: `validateEnv()` - fails fast if missing vars
+2. **Database Health Check**: `checkDatabaseHealth()` - verifies connection & pool
+3. **Redis Connection**: Optional, skipped if unavailable
+4. **Start Express App**: Initialize routes and middlewares
+5. **Setup Graceful Shutdown**: `setupGracefulShutdown({ server, database, redis })`
+- **Failure Handling**: Exit(1) if critical services (DB) fail
+- **Logging**: Winston logs each step with structured data
 
 ### Development Workflow
 - **Environment**: `.env` validated by `validateEnv()` on startup
@@ -134,14 +274,16 @@ class FeatureRoute implements Route {
 ### File Organization
 ```
 src/features/[feature]/
-├── [feature].controller.ts    # Route handlers
-├── [feature].route.ts         # Express routes & middleware
-├── [feature].schema.ts        # Drizzle table definitions
-├── [feature].validation.ts    # Zod schemas
-├── [feature].queries.ts       # Database operations
-├── [feature].interface.ts     # TypeScript interfaces
-├── services/                  # Business logic
-└── tests/                     # Feature-specific tests
+├── apis/
+│   └── [operation-name].ts     # Complete endpoint with router, handler, validation
+├── shared/
+│   ├── schema.ts               # Drizzle table definitions + TypeScript types
+│   ├── queries.ts              # Reusable database queries
+│   └── interface.ts            # TypeScript interfaces
+├── tests/
+│   ├── unit/                   # Business logic tests
+│   └── integration/            # API endpoint tests
+└── index.ts                    # Feature router aggregator
 ```
 
 ### Key Dependencies
