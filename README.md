@@ -7,8 +7,14 @@ A robust, production-ready Nirmaya backend with TypeScript, featuring user authe
 ## 🚀 Quick Start
 
 ```bash
+# Install dependencies
 npm install
-cp .env.example .env
+
+# Setup environment files
+cp .env.example .env.dev
+# Edit .env.dev with your local database settings
+
+# Start development server
 npm run dev
 ```
 
@@ -63,19 +69,30 @@ uploads (id, user_id, filename, original_filename, mime_type, file_size, file_pa
 
 ## ⚙️ Environment Setup
 
-Create `.env` with:
+Create environment files for development and production:
 
 ```bash
+# Copy the example file
+cp .env.example .env.dev
+cp .env.example .env.prod
+
+# Edit with your settings
+# .env.dev - for local development
+# .env.prod - for production deployment
+```
+
+**Required Variables:**
+```bash
 JWT_SECRET=your-256-bit-secret
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-PORT=8000
-REDIS_HOST=redis-host (optional)
+DATABASE_URL=postgresql://user:password@host:port/dbname
 AWS_ACCESS_KEY=key
 AWS_SECRET_KEY=secret
 AWS_BUCKET_NAME=bucket
+EMAIL_USER=your-email@example.com
+EMAIL_PASSWORD=your-email-password
 ```
 
-**Files**: `.env` (dev), `.env.prod` (prod), `.env.example` (template)
+**Files**: `.env.dev` (development), `.env.prod` (production), `.env.example` (template)
 
 ## 🏗️ Project Structure
 

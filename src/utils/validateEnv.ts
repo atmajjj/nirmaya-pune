@@ -1,6 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config({ quiet: true });
 
+// Load environment-specific .env file
+const nodeEnv = process.env.NODE_ENV || 'development';
+if (nodeEnv === 'development') {
+  dotenv.config({ path: '.env.dev', override: true });
+} else if (nodeEnv === 'production') {
+  dotenv.config({ path: '.env.prod', override: true });
+}
+
 import { cleanEnv, port, str, num } from 'envalid';
 import { logger } from './logger';
 
@@ -11,7 +19,7 @@ import { logger } from './logger';
 export const validateEnv = () => {
   const env = cleanEnv(process.env, {
     // Environment
-    NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
+    NODE_ENV: str({ choices: ['development', 'production'], default: 'development' }),
     
     // Server configuration
     JWT_SECRET: str(),
@@ -70,4 +78,3 @@ export const config = validateEnv();
  */
 export const isDevelopment = config.NODE_ENV === 'development';
 export const isProduction = config.NODE_ENV === 'production';
-export const isTest = config.NODE_ENV === 'test';

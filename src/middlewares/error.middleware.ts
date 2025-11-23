@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
-import { isDevelopment, isTest } from '../utils/validateEnv';
+import { isDevelopment } from '../utils/validateEnv';
 
 const errorMiddleware = (
   error: HttpException,
@@ -28,7 +28,7 @@ const errorMiddleware = (
       message: error.message,
       status: status,
       stack:
-        isDevelopment || isTest
+        isDevelopment
           ? error.stack
           : undefined,
     },
