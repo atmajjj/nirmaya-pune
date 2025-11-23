@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { UserRole } from '../features/user/user.schema';
+import { UserRole } from '../features/user/shared/schema';
 
 /**
  * Extended Request interfaces for middleware-specific properties

@@ -2,7 +2,7 @@ import { NextFunction, Response } from 'express';
 import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
 import { RequestWithUser } from '../interfaces/request.interface';
-import { UserRole } from '../features/user/user.schema';
+import { UserRole } from '../features/user/shared/schema';
 
 /**
  * Role-based authorization middleware factory

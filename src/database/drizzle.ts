@@ -6,8 +6,9 @@ import { Pool } from 'pg';
 import { logger } from '../utils/logger';
 
 // Import all schemas
-import { users } from '../features/user/user.schema';
-import { uploads } from '../features/upload/upload.schema';
+import { users } from '../features/user/shared/schema';
+import { uploads } from '../features/upload/shared/schema';
+import { invitations } from '../features/admin-invite/shared/schema';
 
 /**
  * Database connection configuration
@@ -37,6 +38,7 @@ export const pool = new Pool({
 export const schema = {
   users,
   uploads,
+  invitations,
 };
 
 /**

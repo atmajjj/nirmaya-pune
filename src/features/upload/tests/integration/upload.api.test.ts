@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import App from '../../../../app';
-import UploadRoute from '../../upload.route';
-import AuthRoute from '../../../auth/auth.route';
+import UploadRoute from '../..';
+import AuthRoute from '../../../auth';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
 import { AuthTestHelper } from '../../../../../tests/utils/auth.helper';
 import { ApiTestHelper } from '../../../../../tests/utils/api.helper';

@@ -1,10 +1,10 @@
 import App from './app';
 import { logger } from './utils/logger';
 import { validateEnv } from './utils/validateEnv';
-import UserRoute from './features/user/user.route';
-import AuthRoute from './features/auth/auth.route';
-import UploadRoute from './features/upload/upload.route';
-import AdminInviteRoute from './features/admin-invite/admin-invite.route';
+import UserRoute from './features/user';
+import AuthRoute from './features/auth';
+import UploadRoute from './features/upload';
+import AdminInviteRoute from './features/admin-invite';
 import { checkDatabaseHealth } from './database/health';
 import { pool } from './database/drizzle';
 import { redisClient } from './utils/redis';
