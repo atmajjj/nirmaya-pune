@@ -12,6 +12,21 @@ interface ShutdownResources {
 }
 
 /**
+ * Promisify server.close() for proper async handling
+ */
+function closeServer(server: import('http').Server): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server.close((err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+/**
  * Graceful shutdown handler
  * Ensures all connections are properly closed before exiting
  */
@@ -19,11 +34,11 @@ export async function gracefulShutdown(signal: string, resources: ShutdownResour
   logger.info(`🛑 Received ${signal}. Starting graceful shutdown...`);
 
   try {
-    // Close HTTP server
+    // Close HTTP server first (stop accepting new connections)
     if (resources.server) {
-      resources.server.close(() => {
-        logger.info('✅ HTTP server closed');
-      });
+      logger.info('🔌 Closing HTTP server...');
+      await closeServer(resources.server);
+      logger.info('✅ HTTP server closed');
     }
 
     // Close database connections
@@ -37,6 +52,7 @@ export async function gracefulShutdown(signal: string, resources: ShutdownResour
     if (resources.redis) {
       try {
         if (resources.redis.isOpen) {
+          logger.info('🔌 Closing Redis connection...');
           await resources.redis.quit();
           logger.info('✅ Redis connection closed');
         }

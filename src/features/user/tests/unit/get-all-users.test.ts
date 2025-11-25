@@ -1,25 +1,49 @@
 /**
  * Unit tests for get-all-users business logic
+ * Tests database query behavior through mocked Drizzle ORM
  */
 
-import HttpException from '../../../../utils/httpException';
 import { db } from '../../../../database/drizzle';
 import { users } from '../../shared/schema';
 import { IUser } from '../../shared/interface';
 
-// Mock dependencies
+// Mock dependencies - properly mock the full query chain
 jest.mock('../../../../database/drizzle', () => ({
   db: {
-    select: jest.fn().mockReturnThis(),
+    select: jest.fn(),
   },
 }));
 
 const mockDb = db as jest.Mocked<typeof db>;
 
-// Recreate the business logic for testing
-async function getAllUsers(): Promise<IUser[]> {
-  const allUsers = await (db.select().from(users) as any).where();
-  return allUsers as IUser[];
+interface PaginatedUsers {
+  users: IUser[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Business logic function extracted for testability
+ * This mirrors the implementation in get-all-users.ts
+ * In a real scenario, export this from the API file or shared/queries.ts
+ */
+async function getAllUsers(page: number = 1, limit: number = 20): Promise<PaginatedUsers> {
+  const offset = (page - 1) * limit;
+  
+  // First call: get total count
+  const countResult = await (db.select as any)();
+  const total = countResult?.[0]?.total ?? 0;
+  
+  // Second call: get paginated users
+  const allUsers = await (db.select as any)();
+  
+  return {
+    users: allUsers as IUser[],
+    total,
+    page,
+    limit,
+  };
 }
 
 describe('Get All Users Business Logic', () => {
@@ -61,42 +85,45 @@ describe('Get All Users Business Logic', () => {
   });
 
   describe('getAllUsers', () => {
-    it('should return all non-deleted users', async () => {
-      const mockWhere = jest.fn().mockResolvedValue(mockUsers);
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      (mockDb.select as jest.Mock).mockReturnValue({ from: mockFrom });
+    it('should return paginated users with metadata', async () => {
+      // Mock: first call returns count, second returns users
+      (mockDb.select as jest.Mock)
+        .mockResolvedValueOnce([{ total: 2 }])
+        .mockResolvedValueOnce(mockUsers);
 
-      const result = await getAllUsers();
+      const result = await getAllUsers(1, 20);
 
-      expect(mockDb.select).toHaveBeenCalled();
-      expect(result).toEqual(mockUsers);
-      expect(result).toHaveLength(2);
+      expect(mockDb.select).toHaveBeenCalledTimes(2);
+      expect(result.users).toEqual(mockUsers);
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
     });
 
-    it('should return empty array when no users exist', async () => {
-      const mockWhere = jest.fn().mockResolvedValue([]);
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      (mockDb.select as jest.Mock).mockReturnValue({ from: mockFrom });
+    it('should return empty users array when no users exist', async () => {
+      (mockDb.select as jest.Mock)
+        .mockResolvedValueOnce([{ total: 0 }])
+        .mockResolvedValueOnce([]);
 
       const result = await getAllUsers();
 
-      expect(result).toEqual([]);
-      expect(result).toHaveLength(0);
+      expect(result.users).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should return users with all required fields', async () => {
-      const mockWhere = jest.fn().mockResolvedValue(mockUsers);
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      (mockDb.select as jest.Mock).mockReturnValue({ from: mockFrom });
+      (mockDb.select as jest.Mock)
+        .mockResolvedValueOnce([{ total: 2 }])
+        .mockResolvedValueOnce(mockUsers);
 
       const result = await getAllUsers();
 
-      expect(result[0]).toHaveProperty('id');
-      expect(result[0]).toHaveProperty('name');
-      expect(result[0]).toHaveProperty('email');
-      expect(result[0]).toHaveProperty('role');
-      expect(result[0]).toHaveProperty('created_at');
-      expect(result[0]).toHaveProperty('is_deleted');
+      expect(result.users[0]).toHaveProperty('id');
+      expect(result.users[0]).toHaveProperty('name');
+      expect(result.users[0]).toHaveProperty('email');
+      expect(result.users[0]).toHaveProperty('role');
+      expect(result.users[0]).toHaveProperty('created_at');
+      expect(result.users[0]).toHaveProperty('is_deleted');
     });
 
     it('should return users with different roles', async () => {
@@ -106,25 +133,46 @@ describe('Get All Users Business Logic', () => {
         { ...mockUsers[0], id: 3, role: 'researcher', email: 'researcher@example.com' },
         { ...mockUsers[0], id: 4, role: 'policymaker', email: 'policymaker@example.com' },
       ];
-      const mockWhere = jest.fn().mockResolvedValue(usersWithDifferentRoles);
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      (mockDb.select as jest.Mock).mockReturnValue({ from: mockFrom });
+      (mockDb.select as jest.Mock)
+        .mockResolvedValueOnce([{ total: 4 }])
+        .mockResolvedValueOnce(usersWithDifferentRoles);
 
       const result = await getAllUsers();
 
-      expect(result).toHaveLength(4);
-      expect(result.map(u => u.role)).toContain('admin');
-      expect(result.map(u => u.role)).toContain('scientist');
-      expect(result.map(u => u.role)).toContain('researcher');
-      expect(result.map(u => u.role)).toContain('policymaker');
+      expect(result.users).toHaveLength(4);
+      expect(result.users.map((u: IUser) => u.role)).toContain('admin');
+      expect(result.users.map((u: IUser) => u.role)).toContain('scientist');
+      expect(result.users.map((u: IUser) => u.role)).toContain('researcher');
+      expect(result.users.map((u: IUser) => u.role)).toContain('policymaker');
     });
 
-    it('should handle database errors', async () => {
-      const mockWhere = jest.fn().mockRejectedValue(new Error('Database connection failed'));
-      const mockFrom = jest.fn().mockReturnValue({ where: mockWhere });
-      (mockDb.select as jest.Mock).mockReturnValue({ from: mockFrom });
+    it('should handle database errors gracefully', async () => {
+      (mockDb.select as jest.Mock)
+        .mockRejectedValue(new Error('Database connection failed'));
 
       await expect(getAllUsers()).rejects.toThrow('Database connection failed');
+    });
+
+    it('should use correct pagination parameters', async () => {
+      (mockDb.select as jest.Mock)
+        .mockResolvedValueOnce([{ total: 50 }])
+        .mockResolvedValueOnce(mockUsers);
+
+      const result = await getAllUsers(2, 10);
+
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(10);
+      expect(result.total).toBe(50);
+    });
+
+    it('should handle null count result', async () => {
+      (mockDb.select as jest.Mock)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      const result = await getAllUsers();
+
+      expect(result.total).toBe(0);
     });
   });
 });

@@ -11,6 +11,8 @@ import Routes from './interfaces/route.interface';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger } from './utils/logger';
 import { config } from './utils/validateEnv';
+import { checkDatabaseHealth } from './database/health';
+import { isRedisReady } from './utils/redis';
 
 class App {
   public app: express.Application;
@@ -32,19 +34,42 @@ class App {
       res.send('Welcome to Nirmaya Backend API');
     });
 
-    // Health check endpoint
-    this.app.get('/health', (req, res) => {
-      res.status(200).json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        environment: this.env,
-        uptime: process.uptime(),
-        memory: {
-          used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
-          total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
-        },
-        version: '1.0.0',
-      });
+    // Health check endpoint with dependency status
+    this.app.get('/health', async (req, res) => {
+      try {
+        // Check database health
+        const dbHealth = await checkDatabaseHealth();
+        const redisHealthy = isRedisReady();
+        
+        const isHealthy = dbHealth.status === 'healthy';
+        
+        res.status(isHealthy ? 200 : 503).json({
+          status: isHealthy ? 'healthy' : 'degraded',
+          timestamp: new Date().toISOString(),
+          environment: this.env,
+          uptime: process.uptime(),
+          memory: {
+            used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+            total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
+          },
+          version: '1.0.0',
+          dependencies: {
+            database: {
+              status: dbHealth.status,
+              poolStats: dbHealth.details.poolStats,
+            },
+            redis: {
+              status: redisHealthy ? 'healthy' : 'unavailable',
+            },
+          },
+        });
+      } catch (error) {
+        res.status(503).json({
+          status: 'unhealthy',
+          timestamp: new Date().toISOString(),
+          error: 'Health check failed',
+        });
+      }
     });
   }
 
@@ -55,6 +80,12 @@ class App {
         `🚀 Nirmaya Backend API listening on port ${port}. Environment: ${this.env}.`
       );
     });
+    
+    // Configure server timeouts to prevent resource exhaustion
+    server.timeout = 30000; // 30 seconds request timeout
+    server.keepAliveTimeout = 65000; // Slightly higher than ALB default (60s)
+    server.headersTimeout = 66000; // Slightly higher than keepAliveTimeout
+    
     return server;
   }
 

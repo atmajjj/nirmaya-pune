@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import validationMiddleware from '../../../middlewares/validation.middleware';
+import { authRateLimit } from '../../../middlewares/rate-limit.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
@@ -57,7 +58,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-    throw new Error('Refresh token is required');
+    throw new HttpException(400, 'Refresh token is required');
   }
 
   const result = await handleRefreshToken(refreshToken);
@@ -67,6 +68,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 
 const router = Router();
 // No auth required - the refresh token itself is validated
-router.post('/refresh-token', validationMiddleware(schema), handler);
+// Rate limited to prevent abuse (same as auth endpoints)
+router.post('/refresh-token', authRateLimit, validationMiddleware(schema), handler);
 
 export default router;

@@ -17,19 +17,36 @@ const IV_LENGTH = 16;
 /** Auth tag length for GCM */
 const AUTH_TAG_LENGTH = 16;
 
+/** Cached encryption key to avoid repeated derivation */
+let cachedEncryptionKey: Buffer | null = null;
+
 /**
  * Get encryption key derived from JWT_SECRET
  * Uses PBKDF2 to derive a proper 256-bit key
+ * Salt is derived from JWT_SECRET itself to avoid hardcoding
  */
 function getEncryptionKey(): Buffer {
+  if (cachedEncryptionKey) {
+    return cachedEncryptionKey;
+  }
+  
+  // Derive salt from JWT_SECRET using SHA-256 hash (first 16 bytes)
+  // This avoids hardcoded salt while maintaining deterministic key derivation
+  const derivedSalt = crypto.createHash('sha256')
+    .update(config.JWT_SECRET + '-nirmaya-key-salt')
+    .digest()
+    .subarray(0, 16);
+  
   // Derive a 256-bit key from JWT_SECRET using PBKDF2
-  return crypto.pbkdf2Sync(
+  cachedEncryptionKey = crypto.pbkdf2Sync(
     config.JWT_SECRET,
-    'nirmaya-invitation-salt', // Static salt for key derivation
+    derivedSalt,
     100000, // Iterations
     32, // Key length (256 bits)
     'sha256'
   );
+  
+  return cachedEncryptionKey;
 }
 
 /**

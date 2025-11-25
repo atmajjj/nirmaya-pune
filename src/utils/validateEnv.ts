@@ -1,13 +1,15 @@
 import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
 
-// Load environment-specific .env file
+// Load environment-specific .env file FIRST based on NODE_ENV
+// This ensures correct values before any other imports
 const nodeEnv = process.env.NODE_ENV || 'development';
 if (nodeEnv === 'development') {
-  dotenv.config({ path: '.env.dev', override: true });
+  dotenv.config({ path: '.env.dev' });
 } else if (nodeEnv === 'production') {
-  dotenv.config({ path: '.env.prod', override: true });
+  dotenv.config({ path: '.env.prod' });
 }
+// Fallback to default .env only for missing values
+dotenv.config();
 
 import { cleanEnv, port, str, num } from 'envalid';
 import { logger } from './logger';

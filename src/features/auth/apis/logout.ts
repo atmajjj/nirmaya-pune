@@ -5,7 +5,6 @@
 
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
 import { blacklistToken, getTokenTTL } from '../../../utils/tokenBlacklist';
@@ -48,11 +47,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const router = Router();
-router.post(
-  '/logout',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handler
-);
+// Only requireAuth needed - any authenticated user can logout
+router.post('/logout', requireAuth, handler);
 
 export default router;

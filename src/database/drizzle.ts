@@ -47,6 +47,33 @@ export const pool = new Pool({
 });
 
 /**
+ * Retry database connection with exponential backoff
+ * Useful in containerized environments where DB may not be ready immediately
+ */
+export async function connectWithRetry(maxRetries: number = 5, baseDelayMs: number = 1000): Promise<boolean> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const client = await pool.connect();
+      client.release();
+      logger.info(`Database connected successfully on attempt ${attempt}`);
+      return true;
+    } catch (error) {
+      const delay = baseDelayMs * Math.pow(2, attempt - 1); // Exponential backoff
+      logger.warn(`Database connection attempt ${attempt}/${maxRetries} failed. Retrying in ${delay}ms...`, {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  logger.error(`Failed to connect to database after ${maxRetries} attempts`);
+  return false;
+}
+
+/**
  * Combined schema for Drizzle
  */
 export const schema = {
@@ -71,3 +98,8 @@ export const db = drizzle(pool, {
 export const closeDatabase = async () => {
   await pool.end();
 };
+
+// Note: Only import `db` for queries, `pool` is only needed for:
+// - Health checks (pool stats)
+// - Graceful shutdown
+// - Test utilities

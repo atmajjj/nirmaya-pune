@@ -67,18 +67,14 @@ export class ResponseFormatter {
 
   /**
    * Send a successful response with no content
+   * Note: HTTP 204 must have no response body per RFC 7231
    */
   static noContent(
     res: Response,
-    message: string = 'Operation completed successfully'
-  ): Response<SuccessResponse<null>> {
-    return res.status(204).json({
-      success: true,
-      message,
-      meta: {
-        timestamp: new Date().toISOString(),
-      },
-    });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _message: string = 'Operation completed successfully'
+  ): Response {
+    return res.status(204).end();
   }
 
   /**

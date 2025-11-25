@@ -3,30 +3,19 @@ import HttpException from './httpException';
 import { logger } from './logger';
 import { config } from './validateEnv';
 
-// Cache JWT secret for performance
+// Cache JWT secret for performance (validated by validateEnv at startup)
 let jwtSecret: string;
 
 /**
  * Get cached JWT secret, loading from environment if needed
+ * Note: JWT_SECRET is already validated by validateEnv() at startup
  */
 const getJWTSecret = (): string => {
   if (!jwtSecret) {
     jwtSecret = config.JWT_SECRET;
-    if (!jwtSecret) {
-      logger.error('JWT_SECRET environment variable is not configured');
-      throw new Error('JWT_SECRET environment variable is required');
-    }
   }
   return jwtSecret;
 };
-
-// Validate JWT secret on module load
-try {
-  getJWTSecret();
-} catch (error) {
-  logger.error('JWT utility initialization failed:', (error as Error).message);
-  process.exit(1);
-}
 
 /**
  * Generate a JWT token with the provided payload

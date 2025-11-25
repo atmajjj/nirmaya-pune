@@ -107,8 +107,13 @@ export async function uploadToS3(
       contentType: mimetype,
     };
   } catch (error) {
-    logger.error(`S3 upload error: ${error instanceof Error ? error.message : String(error)}`);
-    throw new HttpException(500, `Failed to upload file to S3: ${error instanceof Error ? error.message : String(error)}`);
+    // Log full error internally for debugging
+    logger.error('S3 upload error', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    // Return generic message to client - don't expose internal details
+    throw new HttpException(500, 'Failed to upload file. Please try again later.');
   }
 }
 
@@ -125,8 +130,11 @@ export async function uploadMultipleToS3(
     );
     return await Promise.all(uploadPromises);
   } catch (error) {
-    logger.error(`Multiple S3 upload error: ${error instanceof Error ? error.message : String(error)}`);
-    throw new HttpException(500, `Failed to upload files to S3: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error('Multiple S3 upload error', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw new HttpException(500, 'Failed to upload files. Please try again later.');
   }
 }
 
@@ -162,8 +170,12 @@ export async function downloadFromS3(
       contentLength: response.ContentLength || 0,
     };
   } catch (error) {
-    logger.error(`S3 download error: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error('S3 download error', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      key
+    });
     if (error instanceof HttpException) throw error;
-    throw new HttpException(500, `Failed to download file from S3: ${error instanceof Error ? error.message : String(error)}`);
+    throw new HttpException(500, 'Failed to download file. Please try again later.');
   }
 }

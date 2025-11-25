@@ -52,15 +52,19 @@ const logger = winston.createLogger({
   ],
 });
 
-logger.add(
-  new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.splat(),
-      winston.format.colorize(),
-      winston.format.simple()
-    ),
-  })
-);
+// Only add console transport in development or if LOG_TO_CONSOLE is set
+const isDev = process.env.NODE_ENV !== 'production';
+if (isDev || process.env.LOG_TO_CONSOLE === 'true') {
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.splat(),
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    })
+  );
+}
 
 const stream = {
   write: (message: string) => {

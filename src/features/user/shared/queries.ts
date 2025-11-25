@@ -42,3 +42,20 @@ export const createUser = async (userData: NewUser): Promise<User> => {
 
   return newUser;
 };
+
+/**
+ * Update user by ID
+ * Shared query used across services
+ */
+export const updateUserById = async (
+  id: number, 
+  data: Partial<Omit<User, 'id'>>
+): Promise<User | undefined> => {
+  const [updatedUser] = await db
+    .update(users)
+    .set({ ...data, updated_at: new Date() })
+    .where(eq(users.id, id))
+    .returning();
+
+  return updatedUser;
+};

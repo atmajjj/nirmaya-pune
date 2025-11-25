@@ -39,7 +39,10 @@ async function bootstrap() {
 
     logger.info('✅ Nirmaya Backend started successfully!');
   } catch (error) {
-    logger.error('App failed to start: ' + (error instanceof Error && error.stack ? error.stack : error));
+    logger.error('App failed to start', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     process.exit(1); // Stop if critical services fail
   }
 }

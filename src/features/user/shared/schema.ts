@@ -42,5 +42,7 @@ export const users = pgTable(
 );
 
 // Export types for TypeScript
+// Note: Use IUser from ./interface.ts as the canonical type for user objects
+// User type is kept for Drizzle internal usage only
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

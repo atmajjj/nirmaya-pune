@@ -42,7 +42,7 @@ export async function blacklistToken(token: string, expiresIn: number): Promise<
 /**
  * Check if a token is blacklisted
  * @param token - JWT token to check
- * @returns true if token is blacklisted, false otherwise
+ * @returns true if token is blacklisted or Redis unavailable (fail-closed for security)
  */
 export async function isTokenBlacklisted(token: string): Promise<boolean> {
   try {
@@ -52,12 +52,12 @@ export async function isTokenBlacklisted(token: string): Promise<boolean> {
     const result = await redisClient.get(key);
     return result !== null;
   } catch (error) {
-    logger.error('Failed to check token blacklist:', {
+    logger.error('Failed to check token blacklist - denying access for security:', {
       error: error instanceof Error ? error.message : String(error),
     });
-    // On Redis error, allow token (fail open) to prevent lockout
-    // In high-security scenarios, you might want to fail closed instead
-    return false;
+    // Fail-closed: On Redis error, treat token as blacklisted for security
+    // This prevents revoked tokens from being used when Redis is down
+    return true;
   }
 }
 

@@ -5,8 +5,8 @@
 
 import { Router, Response } from 'express';
 import { eq, count, sql } from 'drizzle-orm';
-import { Request } from 'express';
 import { z } from 'zod';
+import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
 import { requireRole } from '../../../middlewares/role.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
@@ -62,7 +62,7 @@ async function getAllUsers(page: number, limit: number): Promise<PaginatedUsers>
   };
 }
 
-const handler = asyncHandler(async (req: Request, res: Response) => {
+const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
   // Parse and validate pagination params
   const { page, limit } = paginationSchema.parse(req.query);
   
