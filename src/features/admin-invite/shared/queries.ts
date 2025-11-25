@@ -9,7 +9,7 @@ export const findInvitationById = async (id: number): Promise<Invitation | undef
   const [invitation] = await db
     .select()
     .from(invitations)
-    .where(and(eq(invitations.invitation_id, id), eq(invitations.is_deleted, false)))
+    .where(and(eq(invitations.id, id), eq(invitations.is_deleted, false)))
     .limit(1);
 
   return invitation;
@@ -68,7 +68,7 @@ export const getInvitations = async (
       .limit(limit)
       .offset(offset),
     db
-      .select({ count: invitations.invitation_id })
+      .select({ count: invitations.id })
       .from(invitations)
       .where(whereClause),
   ]);
@@ -101,7 +101,7 @@ export const updateInvitation = async (
   const [updatedInvitation] = await db
     .update(invitations)
     .set(updateData)
-    .where(eq(invitations.invitation_id, id))
+    .where(eq(invitations.id, id))
     .returning();
 
   return updatedInvitation;

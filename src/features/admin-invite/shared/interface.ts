@@ -2,7 +2,7 @@ import { InvitationStatus } from './schema';
 import { UserRole } from '../../user/shared/schema';
 
 export interface IInvitation {
-  invitation_id: number;
+  id: number;
   first_name: string;
   last_name: string;
   email: string;
@@ -16,6 +16,8 @@ export interface IInvitation {
   created_at: Date;
   updated_at: Date;
   is_deleted: boolean;
+  deleted_by?: number;
+  deleted_at?: Date;
 }
 
 export interface ICreateInvitation {

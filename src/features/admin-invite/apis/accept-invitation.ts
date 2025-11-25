@@ -32,7 +32,7 @@ async function handleAcceptInvitation(acceptData: AcceptInvitationDto): Promise<
   }
 
   if (new Date() > invitation.expires_at) {
-    await updateInvitation(invitation.invitation_id, { status: 'expired' });
+    await updateInvitation(invitation.id, { status: 'expired' });
     throw new HttpException(400, 'Invitation has expired');
   }
 
@@ -51,7 +51,7 @@ async function handleAcceptInvitation(acceptData: AcceptInvitationDto): Promise<
     created_by: invitation.invited_by,
   });
 
-  const updatedInvitation = await updateInvitation(invitation.invitation_id, {
+  const updatedInvitation = await updateInvitation(invitation.id, {
     status: 'accepted',
     accepted_at: new Date(),
   });
