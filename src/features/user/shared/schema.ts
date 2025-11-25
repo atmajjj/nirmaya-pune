@@ -23,7 +23,7 @@ export const users = pgTable(
     phone_number: varchar('phone_number', { length: 20 }),
     role: text('role').$type<UserRole>().default('scientist').notNull(),
     // Audit fields - self-referential FKs added via raw SQL migration
-    created_by: integer('created_by').notNull(),
+    created_by: integer('created_by'),
     created_at: timestamp('created_at').defaultNow().notNull(),
     updated_by: integer('updated_by'),
     updated_at: timestamp('updated_at').defaultNow().notNull(),

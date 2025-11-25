@@ -6,7 +6,7 @@ import UploadRoute from './features/upload';
 import AdminInviteRoute from './features/admin-invite';
 import { checkDatabaseHealth } from './database/health';
 import { pool } from './database/drizzle';
-import { redisClient } from './utils/redis';
+import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
 
 let server: import('http').Server;
@@ -22,9 +22,8 @@ async function bootstrap() {
     }
     logger.info('✅ Database connected', { poolStats: health.details.poolStats });
 
-    // Initialize Redis connection (optional - skip for now)
-    logger.info('ℹ️ Redis connection skipped during startup (optional service)');
-    // await testRedisConnection();
+    // Initialize Redis connection
+    await testRedisConnection();
 
     // Start Express app
     const app = new App([new AuthRoute(), new UserRoute(), new UploadRoute(), new AdminInviteRoute()]);

@@ -5,6 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import validationMiddleware from '../../../middlewares/validation.middleware';
 import { hashPassword } from '../../../utils/password';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
@@ -24,10 +25,6 @@ const schema = z.object({
   phone_number: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
   role: z.enum(userRoles).default('scientist').optional(),
-  created_by: z.number().optional(),
-  updated_by: z.number().optional(),
-  is_deleted: z.boolean().optional(),
-  deleted_by: z.number().optional(),
 });
 
 type RegisterDto = z.infer<typeof schema>;
@@ -42,10 +39,16 @@ async function handleRegister(data: RegisterDto): Promise<IAuthUserWithToken> {
   const userData = {
     ...data,
     password: hashedPassword,
-    created_by: data.created_by || 1,
+    // created_by defaults to null (system/self) initially
   };
 
   const [newUser] = await db.insert(users).values(userData).returning();
+
+  // Self-reference: User created themselves
+  await db
+    .update(users)
+    .set({ created_by: newUser.id, updated_by: newUser.id })
+    .where(eq(users.id, newUser.id));
 
   const token = generateToken(
     {
