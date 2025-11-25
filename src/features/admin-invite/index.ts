@@ -7,6 +7,7 @@ import { Router } from 'express';
 import Route from '../../interfaces/route.interface';
 import createInvitationRouter from './apis/create-invitation';
 import getInvitationsRouter from './apis/get-invitations';
+import verifyInvitationRouter from './apis/verify-invitation';
 import acceptInvitationRouter from './apis/accept-invitation';
 
 class AdminInviteRoute implements Route {
@@ -21,7 +22,8 @@ class AdminInviteRoute implements Route {
     // Mount API routes
     this.router.use(this.path, createInvitationRouter);
     this.router.use(this.path, getInvitationsRouter);
-    this.router.use(this.path, acceptInvitationRouter);
+    this.router.use(this.path, verifyInvitationRouter); // POST /verify - public, rate-limited
+    this.router.use(this.path, acceptInvitationRouter); // POST /accept - public, rate-limited
   }
 }
 

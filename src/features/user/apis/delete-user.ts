@@ -1,10 +1,12 @@
 /**
  * DELETE /api/v1/users/:id
  * Soft delete user (Admin only)
+ * - Prevents self-deletion
+ * - Prevents deleting the last admin
  */
 
 import { Router, Response } from 'express';
-import { eq } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
 import { requireRole } from '../../../middlewares/role.middleware';
@@ -15,11 +17,34 @@ import { db } from '../../../database/drizzle';
 import { users } from '../shared/schema';
 import { findUserById } from '../shared/queries';
 
-async function deleteUser(id: number, deletedBy: number): Promise<void> {
-  const existingUser = await findUserById(id);
+/**
+ * Count active admins in the system
+ */
+async function countActiveAdmins(): Promise<number> {
+  const [result] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(and(eq(users.role, 'admin'), eq(users.is_deleted, false)));
+  return result?.count ?? 0;
+}
 
+async function deleteUser(id: number, deletedBy: number): Promise<void> {
+  // Prevent self-deletion
+  if (id === deletedBy) {
+    throw new HttpException(400, 'Cannot delete your own account');
+  }
+
+  const existingUser = await findUserById(id);
   if (!existingUser) {
     throw new HttpException(404, 'User not found');
+  }
+
+  // Prevent deleting the last admin
+  if (existingUser.role === 'admin') {
+    const adminCount = await countActiveAdmins();
+    if (adminCount <= 1) {
+      throw new HttpException(400, 'Cannot delete the last admin account');
+    }
   }
 
   await db

@@ -24,13 +24,26 @@ if (!connectionString) {
 /**
  * PostgreSQL connection pool using node-postgres (pg)
  * More mature and production-ready than postgres-js
+ * 
+ * SSL Configuration:
+ * - Production: Requires SSL with certificate validation
+ * - Set DATABASE_SSL_CA env var for custom CA certificate
+ * - Development: No SSL required
  */
+const sslConfig = isProduction
+  ? {
+      rejectUnauthorized: true, // Always validate certificates in production
+      // If using self-signed certs, set DATABASE_SSL_CA env var
+      ca: process.env.DATABASE_SSL_CA || undefined,
+    }
+  : undefined;
+
 export const pool = new Pool({
   connectionString,
   max: 10, // Maximum number of connections in pool
   idleTimeoutMillis: 20000, // Close idle connections after 20 seconds
   connectionTimeoutMillis: 10000, // Connection timeout in milliseconds
-  ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+  ssl: sslConfig,
 });
 
 /**

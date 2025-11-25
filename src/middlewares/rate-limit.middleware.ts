@@ -100,3 +100,23 @@ export const uploadRateLimit: RequestHandler = rateLimit({
   skip: skipDev,
   handler: createRateLimitHandler('Too many upload requests, please try again later.', '1 minute'),
 });
+
+// Invitation verify/accept endpoints - strict rate limiting (10 requests per 15 minutes)
+// These are public endpoints that return/verify sensitive credentials
+export const invitationRateLimit: RequestHandler = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per IP per 15 minutes
+  message: createRateLimitResponse(
+    'Too many invitation attempts, please try again later.',
+    '15 minutes',
+    'unknown'
+  ),
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: createStore(),
+  skip: () => false, // Never skip - these are security-critical
+  handler: createRateLimitHandler(
+    'Too many invitation attempts, please try again later.',
+    '15 minutes'
+  ),
+});

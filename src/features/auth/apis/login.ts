@@ -5,8 +5,8 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import bcrypt from 'bcrypt';
 import validationMiddleware from '../../../middlewares/validation.middleware';
+import { verifyPassword } from '../../../utils/password';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
@@ -28,12 +28,14 @@ async function handleLogin(email: string, password: string): Promise<IAuthUserWi
 
   const user = await findUserByEmail(email);
   if (!user) {
-    throw new HttpException(404, 'Email not registered');
+    // Generic error to prevent user enumeration
+    throw new HttpException(401, 'Invalid credentials');
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  const isPasswordValid = await verifyPassword(password, user.password);
   if (!isPasswordValid) {
-    throw new HttpException(401, 'Incorrect password');
+    // Same error message for wrong password
+    throw new HttpException(401, 'Invalid credentials');
   }
 
   const token = generateToken(

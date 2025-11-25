@@ -5,8 +5,8 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import bcrypt from 'bcrypt';
 import validationMiddleware from '../../../middlewares/validation.middleware';
+import { hashPassword } from '../../../utils/password';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
@@ -38,7 +38,7 @@ async function handleRegister(data: RegisterDto): Promise<IAuthUserWithToken> {
     throw new HttpException(409, 'Email already registered');
   }
 
-  const hashedPassword = await bcrypt.hash(data.password, 10);
+  const hashedPassword = await hashPassword(data.password);
   const userData = {
     ...data,
     password: hashedPassword,

@@ -48,6 +48,7 @@ export const validateEnv = () => {
 
     // Security configuration
     ALLOWED_ORIGINS: str(),
+    FRONTEND_URL: str({ desc: 'Frontend URL for invitation links' }),
     
     // File upload configuration
     ALLOWED_FILE_TYPES: str({ default: 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),

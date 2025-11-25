@@ -32,8 +32,10 @@ export const invitations = pgTable(
     // Role assignment (will be assigned when user accepts invite)
     assigned_role: text('assigned_role').$type<(typeof userRoles)[number]>(),
 
-    // Security
-    password: varchar('password', { length: 255 }), // Temporary password for invite
+    // Security - stores encrypted temp password (can be decrypted for user verification)
+    temp_password_encrypted: text('temp_password_encrypted'), // AES-256-GCM encrypted
+    password_hash: varchar('password_hash', { length: 255 }), // bcrypt hash for login verification
+    verify_attempts: integer('verify_attempts').default(0).notNull(), // Brute force protection
 
     // Relationships - FK to users table
     invited_by: integer('invited_by')

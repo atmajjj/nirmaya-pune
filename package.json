@@ -39,7 +39,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.856.0",
     "@aws-sdk/lib-storage": "^3.850.0",
-    "@types/pg": "^8.15.6",
+    "@aws-sdk/s3-request-presigner": "^3.939.0",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.0",
@@ -85,6 +85,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.0.10",
     "@types/nodemailer": "^7.0.3",
+    "@types/pg": "^8.15.6",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
     "cpy-cli": "^6.0.0",

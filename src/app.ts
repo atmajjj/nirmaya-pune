@@ -77,15 +77,17 @@ class App {
     // Compression
     this.app.use(compression());
 
-    // Rate limiting
-    this.app.use('/api/v1/users/login', authRateLimit);
-    this.app.use('/api/v1/users/register', authRateLimit);
+    // Rate limiting - auth endpoints (stricter)
+    this.app.use('/api/v1/auth/login', authRateLimit);
+    this.app.use('/api/v1/auth/register', authRateLimit);
+    this.app.use('/api/v1/auth/refresh-token', authRateLimit);
+    // General API rate limiting
     this.app.use('/api/v1/', apiRateLimit);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
-    this.app.use(cookieParser());
+    // cookieParser already initialized at constructor level
 
     // All middleware initialized
   }

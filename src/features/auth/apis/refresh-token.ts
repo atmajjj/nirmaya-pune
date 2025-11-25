@@ -6,8 +6,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import validationMiddleware from '../../../middlewares/validation.middleware';
-import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
@@ -68,12 +66,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const router = Router();
-router.post(
-  '/refresh-token',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  validationMiddleware(schema),
-  handler
-);
+// No auth required - the refresh token itself is validated
+router.post('/refresh-token', validationMiddleware(schema), handler);
 
 export default router;

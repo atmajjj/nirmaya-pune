@@ -1,6 +1,7 @@
 /**
  * POST /api/v1/admin/invitations
- * Create invitation and send email with credentials (Admin only)
+ * Create invitation with auto-generated secure password (Admin only)
+ * User will receive email with invite link, credentials shown on verification
  */
 
 import { Router, Response } from 'express';
@@ -16,61 +17,101 @@ import { asyncHandler, getUserId } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
 import { sendInvitationEmail } from '../../../utils/sendInvitationEmail';
 import { config } from '../../../utils/validateEnv';
+import { logger } from '../../../utils/logger';
+import { encrypt, generateSecurePassword } from '../../../utils/encryption';
 import { userRoles } from '../../user/shared/schema';
 import { createInvitation, findInvitationByEmail } from '../shared/queries';
+import { findUserByEmail } from '../../user/shared/queries';
 import { ICreateInvitation, IInvitation } from '../shared/interface';
 
+/** Standard bcrypt cost factor */
+const BCRYPT_ROUNDS = 12;
+
 const schema = z.object({
-  first_name: z.string().min(1, 'First name is required').max(255, 'First name too long'),
-  last_name: z.string().min(1, 'Last name is required').max(255, 'Last name too long'),
+  first_name: z.string().min(1, 'First name is required').max(100, 'First name too long'),
+  last_name: z.string().min(1, 'Last name is required').max(100, 'Last name too long'),
   email: z.string().email('Invalid email format'),
   assigned_role: z.enum(userRoles),
 });
 
 type CreateInvitationDto = z.infer<typeof schema>;
 
+/** Invitation expiry in hours */
+const INVITATION_EXPIRY_HOURS = 24;
+
 async function handleCreateInvitation(
-  invitationData: ICreateInvitation,
+  invitationData: ICreateInvitation & { first_name: string; last_name: string },
   invitedBy: number
 ): Promise<IInvitation> {
+  // Check if user already exists
+  const existingUser = await findUserByEmail(invitationData.email);
+  if (existingUser) {
+    throw new HttpException(409, 'A user with this email already exists');
+  }
+
+  // Check for existing pending invitation
   const existingInvitation = await findInvitationByEmail(invitationData.email);
   if (existingInvitation && existingInvitation.status === 'pending') {
     throw new HttpException(409, 'An active invitation already exists for this email');
   }
 
+  // Generate secure random token (64 chars hex)
   const inviteToken = randomBytes(32).toString('hex');
-  const tempPassword = randomBytes(12).toString('hex');
-  const hashedPassword = await bcrypt.hash(tempPassword, 12);
+  
+  // Generate secure temporary password
+  const tempPassword = generateSecurePassword(16);
+  
+  // Encrypt temp password (for retrieval during verification)
+  const tempPasswordEncrypted = encrypt(tempPassword);
+  
+  // Hash password (for actual login verification)
+  const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
 
   const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 24);
+  expiresAt.setHours(expiresAt.getHours() + INVITATION_EXPIRY_HOURS);
 
   const newInvitation = await createInvitation({
-    ...invitationData,
+    first_name: invitationData.first_name,
+    last_name: invitationData.last_name,
+    email: invitationData.email,
+    assigned_role: invitationData.assigned_role,
     invite_token: inviteToken,
-    password: hashedPassword,
+    temp_password_encrypted: tempPasswordEncrypted,
+    password_hash: passwordHash,
     invited_by: invitedBy,
     expires_at: expiresAt,
     status: 'pending',
   });
 
+  // Send invitation email (without password)
   try {
-    const inviteLink = `${config.ALLOWED_ORIGINS}/accept-invitation?token=${inviteToken}`;
+    const frontendUrl = config.FRONTEND_URL.replace(/\/+$/, '');
+    const inviteLink = `${frontendUrl}/accept-invitation/${inviteToken}`;
+    
     await sendInvitationEmail({
       to: invitationData.email,
       firstName: invitationData.first_name,
-      email: invitationData.email,
-      password: tempPassword,
+      lastName: invitationData.last_name,
+      assignedRole: invitationData.assigned_role,
       inviteLink,
+      expiresIn: `${INVITATION_EXPIRY_HOURS} hours`,
     });
   } catch (emailError) {
-    const { logger } = await import('../../../utils/logger');
-    logger.error('Failed to send invitation email', { error: emailError });
+    logger.error('Failed to send invitation email', { 
+      email: invitationData.email,
+      error: emailError 
+    });
   }
 
-  // Exclude password from response
+  // Exclude sensitive fields from response
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password: _, ...invitationResponse } = newInvitation;
+  const { 
+    temp_password_encrypted: _enc, 
+    password_hash: _hash, 
+    invite_token: _token, 
+    ...invitationResponse 
+  } = newInvitation;
+  
   return invitationResponse as IInvitation;
 }
 
