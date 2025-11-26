@@ -5,8 +5,8 @@
 
 import { db, pool } from './drizzle';
 import { checkDatabaseHealth } from './health';
-import { users } from '../features/user/user.schema';
-import { uploads } from '../features/upload/upload.schema';
+import { users } from '../features/user/shared/schema';
+import { uploads } from '../features/upload/shared/schema';
 import { eq, and, or, like, desc } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 

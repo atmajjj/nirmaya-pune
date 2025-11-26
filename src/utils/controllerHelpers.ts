@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { RequestWithUser } from '../interfaces/request.interface';
 import HttpException from './httpException';
 
 /**
  * Simple utility functions for common controller operations
  * These solve actual repeated patterns without forcing abstractions
+ * 
+ * Note: Express.Request types are augmented in src/interfaces/express.d.ts
  */
 
 /**
@@ -25,8 +26,8 @@ export function parseIdParam(req: Request, paramName: string = 'id'): number {
  * Extract authenticated user ID from request
  * Used in every controller that needs user context
  */
-export function getUserId(req: RequestWithUser): number {
-  const userId = req.userId || req.user?.id;
+export function getUserId(req: Request): number {
+  const userId = req.userId;
 
   if (!userId) {
     throw new HttpException(401, 'User authentication required');
@@ -40,9 +41,9 @@ export function getUserId(req: RequestWithUser): number {
  * Eliminates the need to write try-catch in every method
  */
 export function asyncHandler(
-  fn: (req: Request | RequestWithUser, res: Response, next: NextFunction) => Promise<void>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
 ) {
-  return (req: Request | RequestWithUser, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 }

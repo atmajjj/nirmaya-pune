@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { dbHelper } from './database.helper';
 import { TestUser } from './factories';
-import { users } from '../../src/features/user/user.schema';
-import { UserRole } from '../../src/features/user/user.schema';
+import { users } from '../../src/features/user/shared/schema';
+import { UserRole } from '../../src/features/user/shared/schema';
 
 export class AuthTestHelper {
   static generateJwtToken(userId: number, email: string, role: string = 'scientist'): string {

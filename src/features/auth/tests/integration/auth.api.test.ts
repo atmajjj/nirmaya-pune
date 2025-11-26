@@ -1,7 +1,7 @@
 import { Application } from 'express';
 import App from '../../../../app';
-import UserRoute from '../../../user/user.route';
-import AuthRoute from '../../auth.route';
+import UserRoute from '../../../user';
+import AuthRoute from '../../index';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
 import { AuthTestHelper } from '../../../../../tests/utils/auth.helper';
 import { ApiTestHelper } from '../../../../../tests/utils/api.helper';
@@ -124,7 +124,8 @@ describe('User Authentication Integration Tests', () => {
       });
 
       expect(response.status).toBe(401);
-      expect(response.body.error.message).toContain('Incorrect password');
+      // Generic error message prevents user enumeration attacks
+      expect(response.body.error.message).toContain('Invalid credentials');
     });
 
     it('should fail login with non-existent email', async () => {
@@ -133,8 +134,9 @@ describe('User Authentication Integration Tests', () => {
         password: 'TestPassword123!',
       });
 
-      expect(response.status).toBe(404);
-      expect(response.body.error.message).toContain('Email not registered');
+      // Returns 401 with generic message to prevent user enumeration attacks
+      expect(response.status).toBe(401);
+      expect(response.body.error.message).toContain('Invalid credentials');
     });
 
     it('should fail login with missing fields', async () => {

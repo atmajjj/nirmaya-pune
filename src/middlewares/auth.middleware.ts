@@ -1,13 +1,16 @@
-import { NextFunction, Response } from 'express';
+import { NextFunction, Response, Request } from 'express';
 import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
-import { DataStoredInToken, RequestWithUser } from '../interfaces/request.interface';
+import { DataStoredInToken } from '../interfaces/request.interface';
 import { verifyToken } from '../utils/jwt';
+import { isTokenBlacklisted } from '../utils/tokenBlacklist';
+import { isRedisReady } from '../utils/redis';
 
 /**
  * Authentication middleware - requires valid JWT token
+ * Checks token blacklist if Redis is available
  */
-export const requireAuth = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers['authorization'];
     const userAgent = req.headers['user-agent'] || 'Unknown';
@@ -33,6 +36,20 @@ export const requireAuth = async (req: RequestWithUser, res: Response, next: Nex
         method: req.method,
       });
       return next(new HttpException(401, 'Authentication required. No token provided.'));
+    }
+
+    // Check if token is blacklisted (only if Redis is available)
+    if (isRedisReady()) {
+      const blacklisted = await isTokenBlacklisted(token);
+      if (blacklisted) {
+        logger.warn('Authentication failed: Token is blacklisted (logged out)', {
+          ip: clientIP,
+          userAgent,
+          url: req.originalUrl,
+          method: req.method,
+        });
+        return next(new HttpException(401, 'Token has been revoked. Please login again.'));
+      }
     }
 
     const verificationResponse = verifyToken(token);
@@ -81,8 +98,8 @@ export const requireAuth = async (req: RequestWithUser, res: Response, next: Nex
     next();
   } catch (error) {
     logger.error('Auth middleware error:', {
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       ip: req.ip || req.connection?.remoteAddress || 'Unknown',
       userAgent: req.headers['user-agent'] || 'Unknown',
       url: req.originalUrl,
@@ -95,15 +112,15 @@ export const requireAuth = async (req: RequestWithUser, res: Response, next: Nex
     }
 
     // Handle specific JWT errors
-    if (error.name === 'TokenExpiredError') {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
       return next(new HttpException(401, 'Token expired'));
     }
 
-    if (error.name === 'JsonWebTokenError') {
+    if (error instanceof Error && error.name === 'JsonWebTokenError') {
       return next(new HttpException(401, 'Invalid token'));
     }
 
-    if (error.name === 'NotBeforeError') {
+    if (error instanceof Error && error.name === 'NotBeforeError') {
       return next(new HttpException(401, 'Token not active'));
     }
 

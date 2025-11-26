@@ -3,19 +3,27 @@ import { Pool } from 'pg';
 import { config } from 'dotenv';
 import { sql } from 'drizzle-orm';
 import { logger } from '../../src/utils/logger';
-import { pool as mainPool } from '../../src/database/drizzle';
+import { pool as mainPool, db as mainDb } from '../../src/database/drizzle';
 
 config();
 
+/**
+ * Database Test Helper
+ * Provides utilities for test database setup, cleanup, and management.
+ * Uses singleton pattern to reuse connections across test suites.
+ */
 export class DatabaseTestHelper {
   private static instance: DatabaseTestHelper;
   private pool: Pool;
   private db: ReturnType<typeof drizzle>;
+  private isConnected: boolean = false;
 
   private constructor() {
     // Reuse the existing database connection from drizzle.ts
+    // This ensures we use the same pool configuration (max connections, etc.)
     this.pool = mainPool;
-    this.db = drizzle(this.pool);
+    this.db = mainDb;
+    this.isConnected = true;
   }
 
   public static getInstance(): DatabaseTestHelper {
@@ -33,25 +41,74 @@ export class DatabaseTestHelper {
     return this.pool;
   }
 
-  // Clean all test tables
-  public async cleanup(): Promise<void> {
+  /**
+   * Check if database connection is healthy
+   */
+  public async checkConnection(): Promise<boolean> {
     try {
-      await this.db.execute(sql`TRUNCATE TABLE invitation CASCADE`);
-      await this.db.execute(sql`TRUNCATE TABLE uploads CASCADE`);
-      await this.db.execute(sql`TRUNCATE TABLE users CASCADE`);
+      await this.db.execute(sql`SELECT 1`);
+      this.isConnected = true;
+      return true;
     } catch (error) {
-      logger.warn(`Database cleanup warning: ${error}`);
+      this.isConnected = false;
+      logger.error('Database connection check failed:', error);
+      return false;
     }
   }
 
-  // Close database connection
+  // Clean all test tables
+  public async cleanup(): Promise<void> {
+    if (!this.isConnected) {
+      logger.warn('Database not connected, skipping cleanup');
+      return;
+    }
+    try {
+      // Use transaction for atomic cleanup
+      await this.db.execute(sql`
+        BEGIN;
+        TRUNCATE TABLE invitation CASCADE;
+        TRUNCATE TABLE uploads CASCADE;
+        TRUNCATE TABLE users CASCADE;
+        COMMIT;
+      `);
+    } catch (error) {
+      logger.warn(`Database cleanup warning: ${error}`);
+      // Fallback to individual truncates if transaction fails
+      try {
+        await this.db.execute(sql`TRUNCATE TABLE invitation CASCADE`);
+        await this.db.execute(sql`TRUNCATE TABLE uploads CASCADE`);
+        await this.db.execute(sql`TRUNCATE TABLE users CASCADE`);
+      } catch (fallbackError) {
+        logger.error(`Database cleanup fallback failed: ${fallbackError}`);
+      }
+    }
+  }
+
+  // Close database connection - only call at end of all tests
   public async close(): Promise<void> {
-    await this.pool.end();
+    // Don't actually close the main pool during tests
+    // as it would affect other test suites running in parallel
+    logger.info('Database helper close called - pool remains open for other tests');
+    this.isConnected = false;
+  }
+
+  /**
+   * Force close the pool - use only in jest globalTeardown
+   */
+  public async forceClose(): Promise<void> {
+    try {
+      await this.pool.end();
+      this.isConnected = false;
+      logger.info('Database pool closed successfully');
+    } catch (error) {
+      logger.error(`Error closing database pool: ${error}`);
+    }
   }
 
   // Reset sequences
   public async resetSequences(): Promise<void> {
     try {
+      // Note: invitation sequence is named invitation_invitation_id_seq due to column name
       await this.db.execute(sql`ALTER SEQUENCE invitation_invitation_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE uploads_id_seq RESTART WITH 1`);

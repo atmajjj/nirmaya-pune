@@ -1,8 +1,9 @@
-import { NextFunction, Response } from 'express';
+import { NextFunction, Response, Request } from 'express';
 import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
-import { RequestWithUser } from '../interfaces/request.interface';
-import { UserRole } from '../features/user/user.schema';
+// Import to ensure global Express interface extension is loaded
+import '../interfaces/request.interface';
+import { UserRole } from '../features/user/shared/schema';
 
 /**
  * Role-based authorization middleware factory
@@ -11,7 +12,7 @@ import { UserRole } from '../features/user/user.schema';
 export const requireRole = (allowedRoles: UserRole | UserRole[]) => {
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-  return async (req: RequestWithUser, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.userId) {
         return next(new HttpException(401, 'Authentication required'));

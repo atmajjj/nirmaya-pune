@@ -1,16 +1,12 @@
 import App from './app';
 import { logger } from './utils/logger';
-import { validateEnv } from './utils/validateEnv';
-import UserRoute from './features/user/user.route';
-import AuthRoute from './features/auth/auth.route';
-import UploadRoute from './features/upload/upload.route';
-import AdminInviteRoute from './features/admin-invite/admin-invite.route';
-import { checkDatabaseHealth } from './database/health';
-import { pool } from './database/drizzle';
-import { redisClient } from './utils/redis';
+import UserRoute from './features/user';
+import AuthRoute from './features/auth';
+import UploadRoute from './features/upload';
+import AdminInviteRoute from './features/admin-invite';
+import { connectWithRetry, pool } from './database/drizzle';
+import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
-
-validateEnv();
 
 let server: import('http').Server;
 
@@ -18,16 +14,15 @@ async function bootstrap() {
   try {
     logger.info('🚀 Starting Nirmaya Backend...');
 
-    // Check DB connection
-    const health = await checkDatabaseHealth();
-    if (health.status === 'unhealthy') {
-      throw new Error(`Database health check failed: ${health.message}`);
+    // Connect to database with retry (useful in containerized environments)
+    const dbConnected = await connectWithRetry(5, 1000);
+    if (!dbConnected) {
+      throw new Error('Failed to connect to database after multiple retries');
     }
-    logger.info('✅ Database connected', { poolStats: health.details.poolStats });
+    logger.info('✅ Database connected');
 
-    // Initialize Redis connection (optional - skip for now)
-    logger.info('ℹ️ Redis connection skipped during startup (optional service)');
-    // await testRedisConnection();
+    // Initialize Redis connection
+    await testRedisConnection();
 
     // Start Express app
     const app = new App([new AuthRoute(), new UserRoute(), new UploadRoute(), new AdminInviteRoute()]);
@@ -43,7 +38,10 @@ async function bootstrap() {
 
     logger.info('✅ Nirmaya Backend started successfully!');
   } catch (error) {
-    logger.error('App failed to start: ' + (error && error.stack ? error.stack : error));
+    logger.error('App failed to start', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     process.exit(1); // Stop if critical services fail
   }
 }

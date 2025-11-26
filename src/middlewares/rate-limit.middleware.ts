@@ -4,12 +4,16 @@ import { Request, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
 import { redisClient } from '../utils/redis';
 import { RequestWithId } from '../interfaces/request.interface';
+import { isProduction, isDevelopment, isTest, config } from '../utils/validateEnv';
 
-// Create Redis store for production, in-memory for dev/test
+// Create Redis store for production, in-memory for development
 const createStore = () =>
-  process.env.NODE_ENV === 'production' && process.env.REDIS_URL
+  isProduction && config.REDIS_URL
     ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) })
     : undefined;
+
+// Skip rate limiting in test environment for integration tests
+const skipTest = () => isTest;
 
 // Consistent error response matching error middleware structure
 const createRateLimitResponse = (message: string, retryAfter: string, requestId: string) => ({
@@ -41,13 +45,10 @@ const createRateLimitHandler =
       .status(429)
       .json(createRateLimitResponse(message, retryAfter, requestWithId.requestId || 'unknown'));
   };
-const skipTest = () => process.env.NODE_ENV === 'test';
-
-// Skip logic for development localhost or test
-const skipDevOrTest = (req: Request) =>
-  (process.env.NODE_ENV === 'development' &&
-    (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) ||
-  process.env.NODE_ENV === 'test';
+// Skip logic for development localhost
+const skipDev = (req: Request) =>
+  isDevelopment &&
+  (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
 
 // Auth endpoints - strict rate limiting (5 requests per 15 minutes)
 export const authRateLimit: RequestHandler = rateLimit({
@@ -61,7 +62,7 @@ export const authRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipTest,
+  skip: skipTest, // Skip rate limiting in test environment
   handler: createRateLimitHandler(
     'Too many authentication attempts, please try again later.',
     '15 minutes'
@@ -80,7 +81,7 @@ export const apiRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipDevOrTest,
+  skip: skipDev,
   handler: createRateLimitHandler(
     'Too many requests from this IP, please try again later.',
     '1 minute'
@@ -99,6 +100,26 @@ export const uploadRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipDevOrTest,
+  skip: skipDev,
   handler: createRateLimitHandler('Too many upload requests, please try again later.', '1 minute'),
+});
+
+// Invitation verify/accept endpoints - strict rate limiting (10 requests per 15 minutes)
+// These are public endpoints that return/verify sensitive credentials
+export const invitationRateLimit: RequestHandler = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per IP per 15 minutes
+  message: createRateLimitResponse(
+    'Too many invitation attempts, please try again later.',
+    '15 minutes',
+    'unknown'
+  ),
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: createStore(),
+  skip: skipTest, // Skip rate limiting in test environment
+  handler: createRateLimitHandler(
+    'Too many invitation attempts, please try again later.',
+    '15 minutes'
+  ),
 });

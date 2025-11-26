@@ -1,10 +1,4 @@
-import HttpException, {
-  ValidationException,
-  AuthenticationException,
-  AuthorizationException,
-  NotFoundError,
-  ConflictError,
-} from '../../src/utils/httpException';
+import HttpException from '../../src/utils/httpException';
 
 describe('HttpException', () => {
   it('should create basic exception', () => {
@@ -25,50 +19,17 @@ describe('HttpException', () => {
     const cases = [
       [400, 'BAD_REQUEST'],
       [401, 'UNAUTHORIZED'],
+      [403, 'FORBIDDEN'],
       [404, 'NOT_FOUND'],
+      [409, 'CONFLICT'],
+      [429, 'TOO_MANY_REQUESTS'],
       [500, 'INTERNAL_SERVER_ERROR'],
+      [418, 'UNKNOWN_ERROR'], // Unknown status code
     ];
 
     cases.forEach(([status, expectedCode]) => {
       const exception = new HttpException(status as number, 'Test');
       expect(exception.code).toBe(expectedCode);
     });
-  });
-
-  it('should create ValidationException', () => {
-    const exception = new ValidationException('Email required');
-
-    expect(exception.status).toBe(400);
-    expect(exception.message).toBe('Email required');
-    expect(exception.code).toBe('VALIDATION_ERROR');
-  });
-
-  it('should create AuthenticationException', () => {
-    const exception = new AuthenticationException('Invalid token');
-
-    expect(exception.status).toBe(401);
-    expect(exception.message).toBe('Invalid token');
-    expect(exception.code).toBe('AUTHENTICATION_ERROR');
-  });
-
-  it('should create AuthorizationException', () => {
-    const exception = new AuthorizationException('Access denied');
-
-    expect(exception.status).toBe(403);
-    expect(exception.message).toBe('Access denied');
-  });
-
-  it('should create NotFoundError', () => {
-    const exception = new NotFoundError('User');
-
-    expect(exception.status).toBe(404);
-    expect(exception.message).toBe('User not found');
-  });
-
-  it('should create ConflictError', () => {
-    const exception = new ConflictError('Email exists');
-
-    expect(exception.status).toBe(409);
-    expect(exception.message).toBe('Email exists');
   });
 });

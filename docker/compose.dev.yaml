@@ -1,0 +1,81 @@
+# Development Docker Compose
+# Usage: docker compose -f docker/compose.dev.yaml up
+#
+# Features:
+# - Hot reload with nodemon
+# - Source code mounted as volume
+# - Run migrations manually: npm run db:migrate:dev
+
+name: nirmaya-dev
+
+services:
+  # Backend API
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: nirmaya-api-dev
+    env_file: ../.env.dev
+    environment:
+      NODE_ENV: development
+      RUNNING_IN_DOCKER: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../src:/app/src:ro
+      - ../logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nirmaya-dev
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nirmaya-postgres-dev
+    environment:
+      POSTGRES_DB: nirmaya_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d nirmaya_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - nirmaya-dev
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: nirmaya-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - nirmaya-dev
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  nirmaya-dev:
+    driver: bridge

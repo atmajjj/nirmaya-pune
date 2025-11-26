@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
+import { isDevelopment } from '../utils/validateEnv';
 
 const errorMiddleware = (
   error: HttpException,
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  next: NextFunction // Required by Express error middleware signature
+  next: NextFunction
 ) => {
-  const requestId = (req as { requestId?: string }).requestId || 'unknown';
+  const requestId = req.requestId || 'unknown';
   const status: number = error.status || 500;
   const message: string = error.message || 'Something went wrong';
 
@@ -20,14 +21,14 @@ const errorMiddleware = (
     url: req.url,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
-    userId: (req as { userId?: string }).userId,
+    userId: req.userId,
     timestamp: new Date().toISOString(),
     error: {
       name: error.name,
       message: error.message,
       status: status,
       stack:
-        process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+        isDevelopment
           ? error.stack
           : undefined,
     },

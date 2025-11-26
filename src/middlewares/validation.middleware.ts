@@ -30,7 +30,7 @@ const validationMiddleware = (
           target,
           path: req.path,
           errors: result.error.issues,
-          requestId: (req as { requestId?: string }).requestId,
+          requestId: req.requestId,
         });
 
         return next(new HttpException(400, errorMessages));
@@ -57,7 +57,7 @@ const validationMiddleware = (
         stack: error instanceof Error ? error.stack : undefined,
         target,
         path: req.path,
-        requestId: (req as { requestId?: string }).requestId,
+        requestId: req.requestId,
       });
 
       next(new HttpException(500, 'Validation error occurred'));

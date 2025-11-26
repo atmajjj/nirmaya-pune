@@ -1,5 +1,17 @@
 import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
+
+// Load environment-specific .env file FIRST based on NODE_ENV
+// This ensures correct values before any other imports
+const nodeEnv = process.env.NODE_ENV || 'development';
+if (nodeEnv === 'development') {
+  dotenv.config({ path: '.env.dev' });
+} else if (nodeEnv === 'production') {
+  dotenv.config({ path: '.env.prod' });
+} else if (nodeEnv === 'test') {
+  dotenv.config({ path: '.env.test' });
+}
+// Fallback to default .env only for missing values
+dotenv.config();
 
 import { cleanEnv, port, str, num } from 'envalid';
 import { logger } from './logger';
@@ -10,21 +22,26 @@ import { logger } from './logger';
  */
 export const validateEnv = () => {
   const env = cleanEnv(process.env, {
+    // Environment
+    NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
+    
+    // Server configuration
     JWT_SECRET: str(),
-    PORT: port(),
+    PORT: port({ default: 8000 }),
 
     // Database configuration - using DATABASE_URL for connection
     DATABASE_URL: str(),
 
     // Redis configuration (optional)
-    REDIS_HOST: str({ default: '' }),
+    REDIS_HOST: str({ default: 'localhost' }),
     REDIS_PORT: num({ default: 6379 }),
     REDIS_PASSWORD: str({ default: '' }),
+    REDIS_URL: str({ default: '' }),
 
     // AWS S3 configuration
     AWS_ACCESS_KEY: str(),
     AWS_SECRET_KEY: str(),
-    AWS_REGION: str(),
+    AWS_REGION: str({ default: 'us-east-1' }),
     AWS_ENDPOINT: str(),
     AWS_BUCKET_NAME: str(),
 
@@ -35,6 +52,10 @@ export const validateEnv = () => {
 
     // Security configuration
     ALLOWED_ORIGINS: str(),
+    FRONTEND_URL: str({ desc: 'Frontend URL for invitation links' }),
+    
+    // File upload configuration
+    ALLOWED_FILE_TYPES: str({ default: 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),
   });
 
   // Additional JWT secret validation
@@ -45,3 +66,21 @@ export const validateEnv = () => {
   logger.info('✅ Environment variables validated.');
   return env;
 };
+
+/**
+ * Singleton validated environment configuration
+ * Import and use this instead of process.env for type safety and validation
+ * 
+ * @example
+ * import { config } from '@utils/validateEnv';
+ * const port = config.PORT;
+ * const isDev = config.isDevelopment;
+ */
+export const config = validateEnv();
+
+/**
+ * Environment helper utilities
+ */
+export const isDevelopment = config.NODE_ENV === 'development';
+export const isProduction = config.NODE_ENV === 'production';
+export const isTest = config.NODE_ENV === 'test';

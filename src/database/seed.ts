@@ -2,8 +2,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { db, closeDatabase } from './drizzle';
-import { users } from '../features/user/user.schema';
-import { uploads } from '../features/upload/upload.schema';
+import { users } from '../features/user/shared/schema';
+import { uploads } from '../features/upload/shared/schema';
 import { logger } from '../utils/logger';
 import bcrypt from 'bcrypt';
 
