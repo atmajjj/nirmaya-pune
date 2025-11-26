@@ -23,7 +23,8 @@ RUN npm ci --ignore-scripts
 FROM base AS prod-deps
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
 
 # ============================================
 # Build Stage - Compile TypeScript
