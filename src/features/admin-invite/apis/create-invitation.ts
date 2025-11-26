@@ -7,7 +7,6 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import { randomBytes } from 'crypto';
-import bcrypt from 'bcrypt';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
 import { requireRole } from '../../../middlewares/role.middleware';
@@ -19,13 +18,11 @@ import { sendInvitationEmail } from '../../../utils/sendInvitationEmail';
 import { config } from '../../../utils/validateEnv';
 import { logger } from '../../../utils/logger';
 import { encrypt, generateSecurePassword } from '../../../utils/encryption';
+import { hashPassword } from '../../../utils/password';
 import { userRoles } from '../../user/shared/schema';
 import { createInvitation, findInvitationByEmail } from '../shared/queries';
 import { findUserByEmail } from '../../user/shared/queries';
 import { ICreateInvitation, IInvitation } from '../shared/interface';
-
-/** Standard bcrypt cost factor */
-const BCRYPT_ROUNDS = 12;
 
 const schema = z.object({
   first_name: z.string().min(1, 'First name is required').max(100, 'First name too long'),
@@ -65,7 +62,7 @@ async function handleCreateInvitation(
   const tempPasswordEncrypted = encrypt(tempPassword);
   
   // Hash password (for actual login verification)
-  const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
+  const passwordHash = await hashPassword(tempPassword);
 
   const expiresAt = new Date();
   expiresAt.setHours(expiresAt.getHours() + INVITATION_EXPIRY_HOURS);
@@ -103,16 +100,23 @@ async function handleCreateInvitation(
     });
   }
 
-  // Exclude sensitive fields from response
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { 
-    temp_password_encrypted: _enc, 
-    password_hash: _hash, 
-    invite_token: _token, 
-    ...invitationResponse 
-  } = newInvitation;
-  
-  return invitationResponse as IInvitation;
+  // Return response without sensitive fields
+  return {
+    id: newInvitation.id,
+    first_name: newInvitation.first_name,
+    last_name: newInvitation.last_name,
+    email: newInvitation.email,
+    status: newInvitation.status,
+    assigned_role: newInvitation.assigned_role,
+    invited_by: newInvitation.invited_by,
+    expires_at: newInvitation.expires_at,
+    accepted_at: newInvitation.accepted_at,
+    created_at: newInvitation.created_at,
+    updated_at: newInvitation.updated_at,
+    is_deleted: newInvitation.is_deleted,
+    deleted_by: newInvitation.deleted_by,
+    deleted_at: newInvitation.deleted_at,
+  };
 }
 
 const handler = asyncHandler(async (req: RequestWithUser, res: Response): Promise<void> => {

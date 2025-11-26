@@ -17,38 +17,16 @@ import { db } from '../../../database/drizzle';
 import { users } from '../shared/schema';
 import { findUserById } from '../shared/queries';
 
-/** Cache for admin count to avoid repeated queries */
-let cachedAdminCount: number | null = null;
-let adminCountLastUpdated: number = 0;
-const ADMIN_COUNT_CACHE_TTL = 60000; // 1 minute cache
-
 /**
- * Count active admins in the system (with caching)
+ * Count active admins in the system
  */
 async function countActiveAdmins(): Promise<number> {
-  const now = Date.now();
-  
-  // Return cached value if still valid
-  if (cachedAdminCount !== null && (now - adminCountLastUpdated) < ADMIN_COUNT_CACHE_TTL) {
-    return cachedAdminCount;
-  }
-  
   const [result] = await db
     .select({ count: count() })
     .from(users)
     .where(and(eq(users.role, 'admin'), eq(users.is_deleted, false)));
   
-  cachedAdminCount = result?.count ?? 0;
-  adminCountLastUpdated = now;
-  
-  return cachedAdminCount;
-}
-
-/**
- * Invalidate admin count cache (call after admin role changes)
- */
-export function invalidateAdminCountCache(): void {
-  cachedAdminCount = null;
+  return result?.count ?? 0;
 }
 
 async function deleteUser(id: number, deletedBy: number): Promise<void> {
@@ -78,11 +56,6 @@ async function deleteUser(id: number, deletedBy: number): Promise<void> {
       deleted_at: new Date(),
     })
     .where(eq(users.id, id));
-  
-  // Invalidate admin count cache if deleting an admin
-  if (existingUser.role === 'admin') {
-    invalidateAdminCountCache();
-  }
 }
 
 const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {

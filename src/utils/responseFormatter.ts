@@ -69,11 +69,7 @@ export class ResponseFormatter {
    * Send a successful response with no content
    * Note: HTTP 204 must have no response body per RFC 7231
    */
-  static noContent(
-    res: Response,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _message: string = 'Operation completed successfully'
-  ): Response {
+  static noContent(res: Response): Response {
     return res.status(204).end();
   }
 

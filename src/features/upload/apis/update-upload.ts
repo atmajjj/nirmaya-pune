@@ -8,14 +8,13 @@ import { z } from 'zod';
 import { eq, and } from 'drizzle-orm';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import validationMiddleware from '../../../middlewares/validation.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, getUserId, parseIdParam } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
 import { db } from '../../../database/drizzle';
 import { uploads } from '../shared/schema';
-import { Upload, UploadUpdateInput } from '../shared/interface';
+import { Upload, UploadUpdateInput, convertUpload } from '../shared/interface';
 import { findUploadById } from '../shared/queries';
 
 const uploadStatusSchema = z.enum(['pending', 'processing', 'completed', 'failed']);
@@ -25,15 +24,6 @@ const updateUploadSchema = z.object({
   status: uploadStatusSchema.optional(),
   error_message: z.string().optional(),
 });
-
-function convertUpload(upload: typeof uploads.$inferSelect): Upload {
-  return {
-    ...upload,
-    created_at: upload.created_at.toISOString(),
-    updated_at: upload.updated_at.toISOString(),
-    deleted_at: upload.deleted_at?.toISOString(),
-  } as Upload;
-}
 
 async function handleUpdateUpload(
   uploadId: number,
@@ -75,12 +65,6 @@ const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
 });
 
 const router = Router();
-router.put(
-  '/:id',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  validationMiddleware(updateUploadSchema),
-  handler
-);
+router.put('/:id', requireAuth, validationMiddleware(updateUploadSchema), handler);
 
 export default router;

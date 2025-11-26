@@ -202,7 +202,8 @@ describe('Register Business Logic', () => {
       const mockValues = jest.fn().mockReturnValue({ returning: mockReturning });
       (mockDb.insert as jest.Mock).mockReturnValue({ values: mockValues });
 
-      const { phone_number, ...dataWithoutPhone } = validRegisterData;
+      const { phone_number: _unusedPhone, ...dataWithoutPhone } = validRegisterData;
+      void _unusedPhone;
       const result = await handleRegister(dataWithoutPhone);
 
       expect(result.phone_number).toBeUndefined();

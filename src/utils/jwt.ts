@@ -3,20 +3,6 @@ import HttpException from './httpException';
 import { logger } from './logger';
 import { config } from './validateEnv';
 
-// Cache JWT secret for performance (validated by validateEnv at startup)
-let jwtSecret: string;
-
-/**
- * Get cached JWT secret, loading from environment if needed
- * Note: JWT_SECRET is already validated by validateEnv() at startup
- */
-const getJWTSecret = (): string => {
-  if (!jwtSecret) {
-    jwtSecret = config.JWT_SECRET;
-  }
-  return jwtSecret;
-};
-
 /**
  * Generate a JWT token with the provided payload
  * @param payload - Data to encode in the token
@@ -25,8 +11,7 @@ const getJWTSecret = (): string => {
  */
 export const generateToken = (payload: object, expiresIn: string = '1d'): string => {
   try {
-    const secret = getJWTSecret();
-    return jwt.sign(payload, secret, { expiresIn } as SignOptions);
+    return jwt.sign(payload, config.JWT_SECRET, { expiresIn } as SignOptions);
   } catch (error) {
     const err = error as Error;
     logger.error('Error generating token:', err);
@@ -54,13 +39,12 @@ export const generateRefreshToken = (payload: object): string => {
 
 /**
  * Verify and decode a JWT token
- * @param payload - JWT token string to verify
+ * @param token - JWT token string to verify
  * @returns Decoded token payload
  */
 export const verifyToken = (token: string): string | jwt.JwtPayload => {
   try {
-    const secret = getJWTSecret();
-    return jwt.verify(token, secret);
+    return jwt.verify(token, config.JWT_SECRET);
   } catch (error) {
     const err = error as Error;
     logger.error('Token verification error:', err);

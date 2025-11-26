@@ -1,4 +1,4 @@
-import { UploadStatus } from './schema';
+import { UploadStatus, uploads } from './schema';
 
 // Upload entity interfaces
 export interface Upload {
@@ -21,34 +21,12 @@ export interface Upload {
   deleted_at?: string;
 }
 
-// Input interface for creating an upload
-export interface UploadInput {
-  user_id: number;
-  filename: string;
-  original_filename: string;
-  mime_type: string;
-  file_size: number;
-  file_path: string;
-  file_url: string;
-  created_by: number;
-}
-
 // Input interface for updating an upload
 export interface UploadUpdateInput {
   filename?: string;
   status?: UploadStatus;
   error_message?: string;
   updated_by?: number;
-}
-
-// Raw upload statistics from database query
-export interface UploadStatsRaw {
-  total_uploads: string | number;
-  total_size: string | number;
-  pending_count: string | number;
-  processing_count: string | number;
-  completed_count: string | number;
-  failed_count: string | number;
 }
 
 // Upload statistics interface
@@ -62,4 +40,17 @@ export interface UploadStats {
     failed: number;
   };
   uploads_by_type: Record<string, number>;
+}
+
+/**
+ * Convert Drizzle upload record to API response format
+ * Centralizes date-to-ISO conversion
+ */
+export function convertUpload(upload: typeof uploads.$inferSelect): Upload {
+  return {
+    ...upload,
+    created_at: upload.created_at.toISOString(),
+    updated_at: upload.updated_at.toISOString(),
+    deleted_at: upload.deleted_at?.toISOString(),
+  } as Upload;
 }

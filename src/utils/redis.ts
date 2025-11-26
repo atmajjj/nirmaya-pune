@@ -39,22 +39,6 @@ redisClient.on('end', () => {
  */
 export const isRedisReady = (): boolean => isRedisConnected && redisClient.isReady;
 
-/**
- * Connect to Redis if not already connected
- */
-export const connectRedis = async (): Promise<boolean> => {
-  try {
-    if (redisClient.isReady) {
-      return true;
-    }
-    await redisClient.connect();
-    return true;
-  } catch (error) {
-    logger.error('❌ Failed to connect to Redis:', error);
-    return false;
-  }
-};
-
 // Test Redis connectivity on startup
 export const testRedisConnection = async (): Promise<boolean> => {
   try {
@@ -72,28 +56,6 @@ export const testRedisConnection = async (): Promise<boolean> => {
   } catch (error) {
     logger.error('❌ Redis connection test failed:', error);
     return false;
-  }
-};
-
-// Test Redis connectivity (for manual testing)
-export const pingRedisConnection = async (): Promise<boolean> => {
-  try {
-    const result = await redisClient.ping();
-    logger.info('✅ Redis ping successful:', result);
-    return true;
-  } catch (error) {
-    logger.error('❌ Redis ping failed:', error);
-    return false;
-  }
-};
-
-// Graceful shutdown
-export const closeRedisConnection = async (): Promise<void> => {
-  try {
-    await redisClient.disconnect();
-    logger.info('✅ Redis connection closed gracefully');
-  } catch (error) {
-    logger.error('❌ Error closing Redis connection:', error);
   }
 };
 

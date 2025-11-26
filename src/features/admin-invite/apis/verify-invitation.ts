@@ -12,7 +12,6 @@
 import { Router, Request, Response } from 'express';
 import { sql, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import crypto from 'crypto';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
@@ -32,27 +31,11 @@ const verifySchema = z.object({
 // Max verification attempts before lockout (brute force protection)
 const MAX_VERIFY_ATTEMPTS = 5;
 
-/**
- * Timing-safe comparison of two strings to prevent timing attacks
- */
-function timingSafeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
-}
-
 async function handleVerifyInvitation(token: string): Promise<IInvitationVerifyResponse> {
   const invitation = await findInvitationByToken(token);
   
   if (!invitation) {
     logger.warn('Invitation not found for token', { tokenPrefix: token.substring(0, 8) });
-    throw new HttpException(404, 'Invalid or expired invitation token');
-  }
-  
-  // Use timing-safe comparison to prevent timing attacks
-  if (!timingSafeCompare(token, invitation.invite_token)) {
-    logger.warn('Token mismatch (timing-safe)', { tokenPrefix: token.substring(0, 8) });
     throw new HttpException(404, 'Invalid or expired invitation token');
   }
 

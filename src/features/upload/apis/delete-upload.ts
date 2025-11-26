@@ -7,7 +7,6 @@ import { Router, Response } from 'express';
 import { eq } from 'drizzle-orm';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, getUserId, parseIdParam } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
@@ -47,11 +46,6 @@ const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
 });
 
 const router = Router();
-router.delete(
-  '/:id',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handler
-);
+router.delete('/:id', requireAuth, handler);
 
 export default router;

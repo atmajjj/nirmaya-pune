@@ -1,5 +1,5 @@
 /**
- * Enhanced HTTP Exception with error codes
+ * HTTP Exception with error codes
  * Provides structured error handling with status codes and custom error codes
  */
 class HttpException extends Error {
@@ -37,48 +37,3 @@ class HttpException extends Error {
 }
 
 export default HttpException;
-
-/**
- * Validation error for invalid request data
- */
-export class ValidationException extends HttpException {
-  constructor(message: string = 'Validation failed') {
-    super(400, message, 'VALIDATION_ERROR');
-  }
-}
-
-/**
- * Authentication error for missing or invalid credentials
- */
-export class AuthenticationException extends HttpException {
-  constructor(message: string = 'Authentication required') {
-    super(401, message, 'AUTHENTICATION_ERROR');
-  }
-}
-
-/**
- * Authorization error for insufficient permissions
- */
-export class AuthorizationException extends HttpException {
-  constructor(message: string = 'Access denied') {
-    super(403, message, 'AUTHORIZATION_ERROR');
-  }
-}
-
-/**
- * Resource not found error
- */
-export class NotFoundError extends HttpException {
-  constructor(resource: string = 'Resource') {
-    super(404, `${resource} not found`, 'NOT_FOUND');
-  }
-}
-
-/**
- * Resource conflict error for duplicate resources
- */
-export class ConflictError extends HttpException {
-  constructor(message: string = 'Resource conflict') {
-    super(409, message, 'CONFLICT');
-  }
-}

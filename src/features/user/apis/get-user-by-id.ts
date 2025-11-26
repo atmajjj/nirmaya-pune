@@ -3,10 +3,8 @@
  * Get user by ID (Requires auth)
  */
 
-import { Router, Response } from 'express';
-import { Request } from 'express';
+import { Router, Request, Response } from 'express';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, parseIdParam } from '../../../utils/controllerHelpers';
 import { sanitizeUser } from '../../../utils/sanitizeUser';
@@ -33,11 +31,6 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const router = Router();
-router.get(
-  '/:id',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handler
-);
+router.get('/:id', requireAuth, handler);
 
 export default router;

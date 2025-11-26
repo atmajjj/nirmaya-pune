@@ -9,49 +9,25 @@ import { z } from 'zod';
 import { eq, and, count, desc, asc } from 'drizzle-orm';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import validationMiddleware from '../../../middlewares/validation.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, getUserId, parseIdParam } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
 import { db } from '../../../database/drizzle';
 import { uploads } from '../shared/schema';
-import { Upload } from '../shared/interface';
+import { convertUpload } from '../shared/interface';
 import { findUploadById } from '../shared/queries';
 
-const supportedMimeTypes = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-  'text/plain',
-  'text/csv',
-  'application/json',
-  'application/xml',
-  'text/xml',
-] as const;
-
 const uploadStatusSchema = z.enum(['pending', 'processing', 'completed', 'failed']);
-const mimeTypeSchema = z.enum(supportedMimeTypes);
 
 const uploadQuerySchema = z.object({
   status: uploadStatusSchema.optional(),
-  mime_type: mimeTypeSchema.optional(),
+  mime_type: z.string().optional(), // Allow any mime type string for filtering
   page: z.string().regex(/^\d+$/).transform(Number).optional(),
   limit: z.string().regex(/^\d+$/).transform(Number).optional(),
   sort_by: z.enum(['created_at', 'file_size', 'original_filename']).optional(),
   sort_order: z.enum(['asc', 'desc']).optional(),
 });
-
-function convertUpload(upload: typeof uploads.$inferSelect): Upload {
-  return {
-    ...upload,
-    created_at: upload.created_at.toISOString(),
-    updated_at: upload.updated_at.toISOString(),
-    deleted_at: upload.deleted_at?.toISOString(),
-  } as Upload;
-}
 
 async function getUserUploadsWithPagination(
   userId: number,
@@ -150,26 +126,8 @@ const handleGetUploadsByStatus = asyncHandler(async (req: RequestWithUser, res: 
 
 const router = Router();
 
-router.get(
-  '/',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  validationMiddleware(uploadQuerySchema, 'query'),
-  handleGetAllUploads
-);
-
-router.get(
-  '/status/:status',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handleGetUploadsByStatus
-);
-
-router.get(
-  '/:id',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handleGetUploadById
-);
+router.get('/', requireAuth, validationMiddleware(uploadQuerySchema, 'query'), handleGetAllUploads);
+router.get('/status/:status', requireAuth, handleGetUploadsByStatus);
+router.get('/:id', requireAuth, handleGetUploadById);
 
 export default router;

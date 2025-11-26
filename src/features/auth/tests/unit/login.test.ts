@@ -20,11 +20,6 @@ const mockUserQueries = userQueries as jest.Mocked<typeof userQueries>;
 // We need to extract the business logic for testing
 // Since it's not exported, we'll test through a helper
 
-interface LoginParams {
-  email: string;
-  password: string;
-}
-
 // Recreate the business logic for testing (mirrors login.ts handleLogin)
 async function handleLogin(email: string, password: string) {
   if (!email || !password) {

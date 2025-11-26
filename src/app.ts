@@ -1,4 +1,3 @@
-import cookieParser from 'cookie-parser';
 import express from 'express';
 import hpp from 'hpp';
 import compression from 'compression';
@@ -25,7 +24,6 @@ class App {
     this.port = config.PORT;
     this.env = config.NODE_ENV;
 
-    this.app.use(cookieParser());
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
@@ -63,7 +61,7 @@ class App {
             },
           },
         });
-      } catch (error) {
+      } catch {
         res.status(503).json({
           status: 'unhealthy',
           timestamp: new Date().toISOString(),
@@ -118,9 +116,6 @@ class App {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
-    // cookieParser already initialized at constructor level
-
-    // All middleware initialized
   }
 
   private initializeRoutes(routes: Routes[]) {

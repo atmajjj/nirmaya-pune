@@ -4,8 +4,7 @@ import UserRoute from './features/user';
 import AuthRoute from './features/auth';
 import UploadRoute from './features/upload';
 import AdminInviteRoute from './features/admin-invite';
-import { checkDatabaseHealth } from './database/health';
-import { pool } from './database/drizzle';
+import { connectWithRetry, pool } from './database/drizzle';
 import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
 
@@ -15,12 +14,12 @@ async function bootstrap() {
   try {
     logger.info('🚀 Starting Nirmaya Backend...');
 
-    // Check DB connection
-    const health = await checkDatabaseHealth();
-    if (health.status === 'unhealthy') {
-      throw new Error(`Database health check failed: ${health.message}`);
+    // Connect to database with retry (useful in containerized environments)
+    const dbConnected = await connectWithRetry(5, 1000);
+    if (!dbConnected) {
+      throw new Error('Failed to connect to database after multiple retries');
     }
-    logger.info('✅ Database connected', { poolStats: health.details.poolStats });
+    logger.info('✅ Database connected');
 
     // Initialize Redis connection
     await testRedisConnection();

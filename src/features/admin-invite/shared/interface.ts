@@ -39,11 +39,3 @@ export interface IInvitationVerifyResponse {
   last_name: string;
   assigned_role: UserRole;
 }
-
-export interface IInvitationWithDetails extends IInvitation {
-  invited_by_user?: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}

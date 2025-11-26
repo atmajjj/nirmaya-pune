@@ -4,7 +4,6 @@
  */
 
 import { db } from '../../../../database/drizzle';
-import { users } from '../../shared/schema';
 import { IUser } from '../../shared/interface';
 
 // Mock dependencies - properly mock the full query chain
@@ -29,7 +28,8 @@ interface PaginatedUsers {
  * In a real scenario, export this from the API file or shared/queries.ts
  */
 async function getAllUsers(page: number = 1, limit: number = 20): Promise<PaginatedUsers> {
-  const offset = (page - 1) * limit;
+  const _offset = (page - 1) * limit;
+  void _offset;
   
   // First call: get total count
   const countResult = await (db.select as any)();

@@ -66,9 +66,3 @@ export const requestLoggerMiddleware = (req: Request, res: Response, next: NextF
     )(req, res, next);
   }
 };
-
-/**
- * @deprecated Use requestLoggerMiddleware instead
- * This function is kept for backward compatibility but will be removed in future versions
- */
-export const apiRequestLoggerMiddleware = requestLoggerMiddleware;

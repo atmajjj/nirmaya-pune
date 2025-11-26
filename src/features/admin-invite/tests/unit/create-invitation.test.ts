@@ -7,6 +7,7 @@ import HttpException from '../../../../utils/httpException';
 import * as inviteQueries from '../../shared/queries';
 import * as sendEmail from '../../../../utils/sendInvitationEmail';
 import { ICreateInvitation, IInvitation } from '../../shared/interface';
+import { Invitation } from '../../shared/schema';
 
 // Mock dependencies - order matters! Mock database before importing queries
 jest.mock('../../../../database/drizzle', () => ({
@@ -56,7 +57,8 @@ async function handleCreateInvitation(
   const newInvitation = await inviteQueries.createInvitation({
     ...invitationData,
     invite_token: inviteToken,
-    password: hashedPassword,
+    password_hash: hashedPassword,
+    temp_password_encrypted: 'encrypted_temp_password',
     invited_by: invitedBy,
     expires_at: expiresAt,
     status: 'pending',
@@ -67,16 +69,23 @@ async function handleCreateInvitation(
     await sendEmail.sendInvitationEmail({
       to: invitationData.email,
       firstName: invitationData.first_name,
-      email: invitationData.email,
-      password: tempPassword,
+      lastName: invitationData.last_name,
+      assignedRole: invitationData.assigned_role,
       inviteLink,
+      expiresIn: '24 hours',
     });
   } catch {
     // Email errors are logged but don't block operation
   }
 
-  // Exclude password from response
-  const { password: _, ...invitationResponse } = newInvitation;
+  // Exclude sensitive fields from response
+  const { 
+    temp_password_encrypted: _enc, 
+    password_hash: _hash, 
+    invite_token: _token, 
+    ...invitationResponse 
+  } = newInvitation;
+  void _enc; void _hash; void _token;
   return invitationResponse as IInvitation;
 }
 
@@ -88,15 +97,17 @@ describe('Create Invitation Business Logic', () => {
     assigned_role: 'scientist',
   };
 
-  const mockCreatedInvitation = {
+  const mockCreatedInvitation: Invitation = {
     id: 1,
     first_name: 'John',
     last_name: 'Doe',
     email: 'john.doe@example.com',
     invite_token: 'a'.repeat(64),
-    status: 'pending' as const,
-    assigned_role: 'scientist' as const,
-    password: 'hashedPassword123',
+    status: 'pending',
+    assigned_role: 'scientist',
+    temp_password_encrypted: 'encrypted_temp_password',
+    password_hash: 'hashedPassword123',
+    verify_attempts: 0,
     invited_by: 1,
     expires_at: new Date('2024-01-02'),
     accepted_at: null,
@@ -125,7 +136,8 @@ describe('Create Invitation Business Logic', () => {
       expect(mockInviteQueries.createInvitation).toHaveBeenCalled();
       expect(result.first_name).toBe('John');
       expect(result.email).toBe('john.doe@example.com');
-      expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('password_hash');
+      expect(result).not.toHaveProperty('temp_password_encrypted');
     });
 
     it('should throw 409 if pending invitation exists for email', async () => {
@@ -231,7 +243,9 @@ describe('Create Invitation Business Logic', () => {
 
       const result = await handleCreateInvitation(mockInvitationData, 1);
 
-      expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('password_hash');
+      expect(result).not.toHaveProperty('temp_password_encrypted');
+      expect(result).not.toHaveProperty('invite_token');
     });
 
     it('should set expires_at to 24 hours from now', async () => {

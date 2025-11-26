@@ -27,18 +27,6 @@ export interface RequestWithUser extends Request {
 }
 
 /**
- * Request with both requestId and user context
- * Use when both middleware have been applied
- */
-export interface RequestWithContext extends Request {
-  requestId: string;
-  userId: number;
-  userRole: UserRole;
-  userAgent?: string;
-  clientIP?: string;
-}
-
-/**
  * Authenticated user data structure
  */
 export interface IAuthUser {
@@ -67,12 +55,4 @@ export interface DataStoredInToken {
   email?: string;
   name?: string;
   role?: UserRole;
-}
-
-/**
- * Token generation result
- */
-export interface TokenData {
-  token: string;
-  expiresIn: number;
 }

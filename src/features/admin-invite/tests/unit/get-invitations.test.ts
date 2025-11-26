@@ -3,7 +3,7 @@
  */
 
 import * as inviteQueries from '../../shared/queries';
-import { InvitationStatus } from '../../shared/schema';
+import { InvitationStatus, Invitation } from '../../shared/schema';
 import { IInvitation } from '../../shared/interface';
 
 // Mock dependencies
@@ -28,16 +28,18 @@ async function handleGetInvitations(
 }
 
 describe('Get Invitations Business Logic', () => {
-  const mockInvitations = [
+  const mockInvitations: Invitation[] = [
     {
       id: 1,
       first_name: 'John',
       last_name: 'Doe',
       email: 'john.doe@example.com',
       invite_token: 'token1',
-      status: 'pending' as const,
-      assigned_role: 'scientist' as const,
-      password: 'hashedPassword1',
+      status: 'pending',
+      assigned_role: 'scientist',
+      temp_password_encrypted: 'encrypted_password_1',
+      password_hash: 'hashedPassword1',
+      verify_attempts: 0,
       invited_by: 1,
       expires_at: new Date('2024-01-02'),
       accepted_at: null,
@@ -53,9 +55,11 @@ describe('Get Invitations Business Logic', () => {
       last_name: 'Smith',
       email: 'jane.smith@example.com',
       invite_token: 'token2',
-      status: 'accepted' as const,
-      assigned_role: 'researcher' as const,
-      password: 'hashedPassword2',
+      status: 'accepted',
+      assigned_role: 'researcher',
+      temp_password_encrypted: 'encrypted_password_2',
+      password_hash: 'hashedPassword2',
+      verify_attempts: 0,
       invited_by: 1,
       expires_at: new Date('2024-01-02'),
       accepted_at: new Date('2024-01-01T12:00:00'),
@@ -181,6 +185,7 @@ describe('Get Invitations Business Logic', () => {
 
       const result = await handleGetInvitations({ status: 'revoked' }, {});
 
+      expect(result).toBeDefined();
       expect(mockInviteQueries.getInvitations).toHaveBeenCalledWith({ status: 'revoked' }, {});
     });
 

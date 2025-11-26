@@ -7,7 +7,6 @@ import { Router, Response, Request } from 'express';
 // Import to ensure global Express interface extension is loaded
 import '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { uploadSingleFileMiddleware } from '../../../middlewares/upload.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, getUserId } from '../../../utils/controllerHelpers';
@@ -57,12 +56,6 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const router = Router();
-router.post(
-  '/',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  uploadSingleFileMiddleware,
-  handler
-);
+router.post('/', requireAuth, uploadSingleFileMiddleware, handler);
 
 export default router;

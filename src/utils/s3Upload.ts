@@ -118,27 +118,6 @@ export async function uploadToS3(
 }
 
 /**
- * Upload multiple files to S3
- */
-export async function uploadMultipleToS3(
-  files: Array<{ buffer: Buffer; filename: string; mimetype: string }>,
-  userId: number
-): Promise<S3UploadResult[]> {
-  try {
-    const uploadPromises = files.map(file =>
-      uploadToS3(file.buffer, file.filename, file.mimetype, userId)
-    );
-    return await Promise.all(uploadPromises);
-  } catch (error) {
-    logger.error('Multiple S3 upload error', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    throw new HttpException(500, 'Failed to upload files. Please try again later.');
-  }
-}
-
-/**
  * Download a file from S3
  * Returns the file as a readable stream
  */

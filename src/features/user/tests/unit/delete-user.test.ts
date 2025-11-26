@@ -6,7 +6,6 @@ import HttpException from '../../../../utils/httpException';
 import * as userQueries from '../../shared/queries';
 import { db } from '../../../../database/drizzle';
 import { users } from '../../shared/schema';
-import { IUser } from '../../shared/interface';
 
 // Mock dependencies
 jest.mock('../../shared/queries');

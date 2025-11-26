@@ -7,7 +7,6 @@ import { Router, Response } from 'express';
 import { eq, and, count, sql } from 'drizzle-orm';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler, getUserId } from '../../../utils/controllerHelpers';
 import { db } from '../../../database/drizzle';
@@ -66,11 +65,6 @@ const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
 });
 
 const router = Router();
-router.get(
-  '/stats',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handler
-);
+router.get('/stats', requireAuth, handler);
 
 export default router;

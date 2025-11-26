@@ -4,7 +4,6 @@
 
 import HttpException from '../../../../utils/httpException';
 import * as uploadQueries from '../../shared/queries';
-import { db } from '../../../../database/drizzle';
 import { Upload } from '../../shared/interface';
 
 // Mock dependencies
@@ -22,7 +21,6 @@ jest.mock('../../../../utils/logger', () => ({
   },
 }));
 
-const mockDb = db as jest.Mocked<typeof db>;
 const mockUploadQueries = uploadQueries as jest.Mocked<typeof uploadQueries>;
 
 function convertUpload(upload: any): Upload {
@@ -65,18 +63,6 @@ describe('Get Uploads Business Logic', () => {
     deleted_by: null,
     deleted_at: null,
   };
-
-  const mockUploads = [
-    mockUpload,
-    {
-      ...mockUpload,
-      id: 2,
-      filename: 'image.png',
-      original_filename: 'image.png',
-      mime_type: 'image/png',
-      status: 'pending' as const,
-    },
-  ];
 
   beforeEach(() => {
     jest.clearAllMocks();

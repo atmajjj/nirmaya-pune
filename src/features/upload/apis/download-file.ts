@@ -7,7 +7,6 @@ import { Router, Response } from 'express';
 import { Readable } from 'stream';
 import { RequestWithUser } from '../../../interfaces/request.interface';
 import { requireAuth } from '../../../middlewares/auth.middleware';
-import { requireRole } from '../../../middlewares/role.middleware';
 import { asyncHandler, getUserId, parseIdParam } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
 import { downloadFromS3 } from '../../../utils/s3Upload';
@@ -29,20 +28,11 @@ const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
   res.setHeader('Content-Length', contentLength);
   res.setHeader('Content-Disposition', `attachment; filename="${upload.original_filename}"`);
 
-  if (stream instanceof Readable) {
-    stream.pipe(res);
-  } else {
-    const readableStream = stream as Readable;
-    readableStream.pipe(res);
-  }
+  // S3 SDK returns a Readable stream
+  (stream as Readable).pipe(res);
 });
 
 const router = Router();
-router.get(
-  '/:id/download',
-  requireAuth,
-  requireRole(['admin', 'scientist', 'researcher', 'policymaker']),
-  handler
-);
+router.get('/:id/download', requireAuth, handler);
 
 export default router;

@@ -22,7 +22,8 @@ jest.mock('../../../../utils/logger', () => ({
 const mockDb = db as jest.Mocked<typeof db>;
 
 // Recreate the business logic for testing
-async function getUserUploadStats(userId: number): Promise<UploadStats> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function getUserUploadStats(_userId: number): Promise<UploadStats> {
   const [stats] = await (db.select({
     total_uploads: {},
     total_size: {},
