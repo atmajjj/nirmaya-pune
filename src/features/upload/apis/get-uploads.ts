@@ -81,7 +81,12 @@ const handleGetAllUploads = asyncHandler(async (req: RequestWithUser, res: Respo
 
   const result = await getUserUploadsWithPagination(userId, filters);
 
-  ResponseFormatter.success(res, result, 'Uploads retrieved successfully');
+  ResponseFormatter.paginated(
+    res,
+    result.uploads,
+    { page: result.page, limit: result.limit, total: result.total },
+    'Uploads retrieved successfully'
+  );
 });
 
 const handleGetUploadById = asyncHandler(async (req: RequestWithUser, res: Response) => {

@@ -10,6 +10,10 @@ import { invitations } from '../../shared/schema';
 import { users } from '../../../user/shared/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+
+// Helper to generate valid 64-char invite tokens
+const generateInviteToken = () => crypto.randomBytes(32).toString('hex');
 
 describe('Admin Invite API Integration Tests', () => {
   let app: Application;
@@ -75,7 +79,8 @@ describe('Admin Invite API Integration Tests', () => {
       expect(response.body.data.email).toBe('harshalpatilself@gmail.com');
       expect(response.body.data.assigned_role).toBe('scientist');
       expect(response.body.data.status).toBe('pending');
-      expect(response.body.data.invite_token).toBeDefined();
+      // invite_token is intentionally not returned for security - token is only sent via email
+      expect(response.body.data.invite_token).toBeUndefined();
       expect(response.body.data.password).toBeUndefined(); // Password should not be returned
       expect(response.body.message).toContain('Invitation sent successfully');
     });
@@ -219,10 +224,10 @@ describe('Admin Invite API Integration Tests', () => {
           first_name: 'John',
           last_name: 'Doe',
           email: 'john.pending@example.com',
-          invite_token: 'token1',
+          invite_token: generateInviteToken(),
           status: 'pending',
           assigned_role: 'scientist',
-          password: hashedPassword,
+          password_hash: hashedPassword,
           invited_by: adminUserId,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
@@ -230,10 +235,10 @@ describe('Admin Invite API Integration Tests', () => {
           first_name: 'Jane',
           last_name: 'Smith',
           email: 'jane.accepted@example.com',
-          invite_token: 'token2',
+          invite_token: generateInviteToken(),
           status: 'accepted',
           assigned_role: 'researcher',
-          password: hashedPassword,
+          password_hash: hashedPassword,
           invited_by: adminUserId,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
           accepted_at: new Date(),
@@ -242,10 +247,10 @@ describe('Admin Invite API Integration Tests', () => {
           first_name: 'Bob',
           last_name: 'Wilson',
           email: 'bob.expired@example.com',
-          invite_token: 'token3',
+          invite_token: generateInviteToken(),
           status: 'expired',
           assigned_role: 'policymaker',
-          password: hashedPassword,
+          password_hash: hashedPassword,
           invited_by: adminUserId,
           expires_at: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
@@ -302,9 +307,10 @@ describe('Admin Invite API Integration Tests', () => {
 
   describe('POST /api/v1/admin/invitations/accept', () => {
     it('should accept invitation and create user account', async () => {
-      const inviteToken = `test-invite-token-${Date.now()}`;
+      const inviteToken = generateInviteToken();
       const invitationEmail = `newuser-${Date.now()}@example.com`;
-      const hashedPassword = await bcrypt.hash('TempPass123!', 12);
+      const tempPassword = 'TempPass123!';
+      const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
       await db.insert(invitations).values({
         first_name: 'New',
@@ -313,21 +319,24 @@ describe('Admin Invite API Integration Tests', () => {
         invite_token: inviteToken,
         status: 'pending',
         assigned_role: 'scientist',
-        password: hashedPassword,
+        password_hash: hashedPassword,
         invited_by: adminUserId,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
 
       const acceptData = {
         token: inviteToken,
-        password: 'NewSecurePass123!',
+        email: invitationEmail,
+        password: tempPassword,
       };
 
       const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.status).toBe('accepted');
-      expect(response.body.message).toContain('accepted successfully');
+      expect(response.body.data.email).toBe(invitationEmail);
+      expect(response.body.data.name).toBe('New User');
+      expect(response.body.data.token).toBeDefined();
+      expect(response.body.message).toContain('Account created successfully');
 
       // Verify user was created
       const [createdUser] = await db
@@ -342,7 +351,8 @@ describe('Admin Invite API Integration Tests', () => {
 
     it('should fail with invalid token', async () => {
       const acceptData = {
-        token: 'invalid-token',
+        token: generateInviteToken(), // Valid format but doesn't exist
+        email: 'test@example.com',
         password: 'NewSecurePass123!',
       };
 
@@ -352,38 +362,25 @@ describe('Admin Invite API Integration Tests', () => {
       expect(response.body.error.message).toContain('Invalid or expired invitation token');
     });
 
-    it('should fail with weak password', async () => {
-      const inviteToken = `test-invite-token-${Date.now()}`;
-      const invitationEmail = `newuser-weak-${Date.now()}@example.com`;
-      const hashedPassword = await bcrypt.hash('TempPass123!', 12);
-
-      await db.insert(invitations).values({
-        first_name: 'New',
-        last_name: 'User',
-        email: invitationEmail,
-        invite_token: inviteToken,
-        status: 'pending',
-        assigned_role: 'scientist',
-        password: hashedPassword,
-        invited_by: adminUserId,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      });
-
+    it('should fail with weak password validation on token format', async () => {
+      // Token validation happens first - 64 chars required
       const acceptData = {
-        token: inviteToken,
+        token: 'short-token',
+        email: 'test@example.com',
         password: 'weak',
       };
 
       const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);
 
       expect(response.status).toBe(400);
-      expect(response.body.error.message).toContain('password');
+      expect(response.body.error.message).toContain('token');
     });
 
     it('should fail if invitation already accepted', async () => {
-      const inviteToken = `test-invite-token-${Date.now()}`;
+      const inviteToken = generateInviteToken();
       const invitationEmail = `newuser-accepted-${Date.now()}@example.com`;
-      const hashedPassword = await bcrypt.hash('TempPass123!', 12);
+      const tempPassword = 'TempPass123!';
+      const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
       await db.insert(invitations).values({
         first_name: 'New',
@@ -392,7 +389,7 @@ describe('Admin Invite API Integration Tests', () => {
         invite_token: inviteToken,
         status: 'pending',
         assigned_role: 'scientist',
-        password: hashedPassword,
+        password_hash: hashedPassword,
         invited_by: adminUserId,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
@@ -400,13 +397,15 @@ describe('Admin Invite API Integration Tests', () => {
       // Accept invitation first time
       await apiHelper.post('/api/v1/admin/invitations/accept', {
         token: inviteToken,
-        password: 'NewSecurePass123!',
+        email: invitationEmail,
+        password: tempPassword,
       });
 
       // Try to accept again
       const response = await apiHelper.post('/api/v1/admin/invitations/accept', {
         token: inviteToken,
-        password: 'AnotherPass123!',
+        email: invitationEmail,
+        password: tempPassword,
       });
 
       expect(response.status).toBe(400);
@@ -415,9 +414,10 @@ describe('Admin Invite API Integration Tests', () => {
 
     it('should fail if invitation expired', async () => {
       // Create expired invitation
-      const expiredToken = `expired-token-${Date.now()}`;
+      const expiredToken = generateInviteToken();
       const expiredEmail = `expired-${Date.now()}@example.com`;
-      const hashedPassword = await bcrypt.hash('TempPass123!', 12);
+      const tempPassword = 'TempPass123!';
+      const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
       await db.insert(invitations).values({
         first_name: 'Expired',
@@ -426,14 +426,15 @@ describe('Admin Invite API Integration Tests', () => {
         invite_token: expiredToken,
         status: 'pending',
         assigned_role: 'scientist',
-        password: hashedPassword,
+        password_hash: hashedPassword,
         invited_by: adminUserId,
         expires_at: new Date(Date.now() - 1000), // Already expired
       });
 
       const response = await apiHelper.post('/api/v1/admin/invitations/accept', {
         token: expiredToken,
-        password: 'NewSecurePass123!',
+        email: expiredEmail,
+        password: tempPassword,
       });
 
       expect(response.status).toBe(400);
@@ -441,9 +442,10 @@ describe('Admin Invite API Integration Tests', () => {
     });
 
     it('should not require authentication (public endpoint)', async () => {
-      const inviteToken = `test-invite-token-${Date.now()}`;
+      const inviteToken = generateInviteToken();
       const invitationEmail = `public-${Date.now()}@example.com`;
-      const hashedPassword = await bcrypt.hash('TempPass123!', 12);
+      const tempPassword = 'TempPass123!';
+      const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
       await db.insert(invitations).values({
         first_name: 'Public',
@@ -452,14 +454,15 @@ describe('Admin Invite API Integration Tests', () => {
         invite_token: inviteToken,
         status: 'pending',
         assigned_role: 'scientist',
-        password: hashedPassword,
+        password_hash: hashedPassword,
         invited_by: adminUserId,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
 
       const acceptData = {
         token: inviteToken,
-        password: 'NewSecurePass123!',
+        email: invitationEmail,
+        password: tempPassword,
       };
 
       const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);

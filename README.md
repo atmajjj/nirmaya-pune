@@ -114,12 +114,37 @@ npm run lint:fix      # Auto-fix linting issues
 
 ## 🧪 Testing
 
+### Local Testing (Development Database)
 ```bash
 npm test              # Run all tests
 npm run test:unit     # Unit tests only
 npm run test:integration # Integration tests only
 npm run test:coverage # Generate coverage report
 ```
+
+### Docker Testing (Isolated Database)
+```bash
+# Run tests with Docker containers (recommended for CI/CD)
+npm run test:docker           # All tests with Docker
+npm run test:docker:unit      # Unit tests with Docker
+npm run test:docker:integration # Integration tests with Docker
+
+# Manual Docker control
+npm run docker:test:up        # Start test containers
+npm run docker:test:down      # Stop test containers
+```
+
+**Docker Testing Benefits:**
+- ✅ Isolated PostgreSQL + Redis containers
+- ✅ No interference with development database
+- ✅ Consistent test environment
+- ✅ Perfect for CI/CD pipelines
+
+**Test Environment:**
+- PostgreSQL on port `5433` (avoids dev DB conflicts)
+- Redis on port `6380` (avoids dev Redis conflicts)
+- Separate `.env.test` configuration
+- Automatic container cleanup after tests
 
 Tests include:
 - Unit tests for utilities (JWT, validation, etc.)
@@ -178,14 +203,22 @@ curl -X POST http://localhost:8000/api/v1/uploads \
 ## 🚀 Deployment
 
 ### Docker Deployment
-```bash
-# Development
-docker-compose up --build
 
-# Production
-docker build -t nirmaya-backend .
-docker run --env-file .env.prod -p 8000:8000 nirmaya-backend
+```bash
+# Development (with PostgreSQL + Redis)
+npm run docker:dev
+
+# Test environment
+npm run docker:test
+
+# Production (backend only, uses external DB/Redis)
+npm run docker:prod
+
+# Build production image
+npm run docker:build
 ```
+
+See `docker/README.md` for detailed Docker documentation.
 
 ### Manual Production Deployment
 ```bash

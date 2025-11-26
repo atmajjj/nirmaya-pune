@@ -7,6 +7,8 @@ if (nodeEnv === 'development') {
   dotenv.config({ path: '.env.dev' });
 } else if (nodeEnv === 'production') {
   dotenv.config({ path: '.env.prod' });
+} else if (nodeEnv === 'test') {
+  dotenv.config({ path: '.env.test' });
 }
 // Fallback to default .env only for missing values
 dotenv.config();
@@ -21,7 +23,7 @@ import { logger } from './logger';
 export const validateEnv = () => {
   const env = cleanEnv(process.env, {
     // Environment
-    NODE_ENV: str({ choices: ['development', 'production'], default: 'development' }),
+    NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
     
     // Server configuration
     JWT_SECRET: str(),
@@ -81,3 +83,4 @@ export const config = validateEnv();
  */
 export const isDevelopment = config.NODE_ENV === 'development';
 export const isProduction = config.NODE_ENV === 'production';
+export const isTest = config.NODE_ENV === 'test';

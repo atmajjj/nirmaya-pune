@@ -4,13 +4,16 @@ import { Request, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
 import { redisClient } from '../utils/redis';
 import { RequestWithId } from '../interfaces/request.interface';
-import { isProduction, isDevelopment, config } from '../utils/validateEnv';
+import { isProduction, isDevelopment, isTest, config } from '../utils/validateEnv';
 
 // Create Redis store for production, in-memory for development
 const createStore = () =>
   isProduction && config.REDIS_URL
     ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) })
     : undefined;
+
+// Skip rate limiting in test environment for integration tests
+const skipTest = () => isTest;
 
 // Consistent error response matching error middleware structure
 const createRateLimitResponse = (message: string, retryAfter: string, requestId: string) => ({
@@ -59,7 +62,7 @@ export const authRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: () => false, // Never skip auth rate limiting
+  skip: skipTest, // Skip rate limiting in test environment
   handler: createRateLimitHandler(
     'Too many authentication attempts, please try again later.',
     '15 minutes'
@@ -114,7 +117,7 @@ export const invitationRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: () => false, // Never skip - these are security-critical
+  skip: skipTest, // Skip rate limiting in test environment
   handler: createRateLimitHandler(
     'Too many invitation attempts, please try again later.',
     '15 minutes'

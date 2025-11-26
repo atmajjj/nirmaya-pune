@@ -9,13 +9,16 @@ describe('ResponseFormatter', () => {
   let mockRes: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let endMock: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn();
-    statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+    endMock = jest.fn();
+    statusMock = jest.fn().mockReturnValue({ json: jsonMock, end: endMock });
     mockRes = {
       status: statusMock,
       json: jsonMock,
+      end: endMock,
     };
   });
 
@@ -99,32 +102,12 @@ describe('ResponseFormatter', () => {
   });
 
   describe('noContent', () => {
-    it('should send 204 status with success response structure', () => {
-      const message = 'Resource deleted';
-
-      ResponseFormatter.noContent(mockRes as Response, message);
+    it('should send 204 status with no response body', () => {
+      ResponseFormatter.noContent(mockRes as Response);
 
       expect(statusMock).toHaveBeenCalledWith(204);
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: true,
-        message,
-        meta: expect.objectContaining({
-          timestamp: expect.any(String),
-        }),
-      });
-    });
-
-    it('should handle empty message', () => {
-      ResponseFormatter.noContent(mockRes as Response, '');
-
-      expect(statusMock).toHaveBeenCalledWith(204);
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: true,
-        message: '',
-        meta: expect.objectContaining({
-          timestamp: expect.any(String),
-        }),
-      });
+      expect(endMock).toHaveBeenCalled();
+      expect(jsonMock).not.toHaveBeenCalled();
     });
   });
 

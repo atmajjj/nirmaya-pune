@@ -43,7 +43,7 @@ export const uploads = pgTable(
     status: text('status').$type<UploadStatus>().default('pending').notNull(),
     error_message: text('error_message'),
     // Audit fields
-    created_by: integer('created_by').notNull(),
+    created_by: integer('created_by'), // Nullable for consistency with users table
     created_at: timestamp('created_at').defaultNow().notNull(),
     updated_by: integer('updated_by'),
     updated_at: timestamp('updated_at').defaultNow().notNull(),

@@ -108,7 +108,8 @@ export class DatabaseTestHelper {
   // Reset sequences
   public async resetSequences(): Promise<void> {
     try {
-      await this.db.execute(sql`ALTER SEQUENCE invitation_id_seq RESTART WITH 1`);
+      // Note: invitation sequence is named invitation_invitation_id_seq due to column name
+      await this.db.execute(sql`ALTER SEQUENCE invitation_invitation_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE uploads_id_seq RESTART WITH 1`);
     } catch (error) {
