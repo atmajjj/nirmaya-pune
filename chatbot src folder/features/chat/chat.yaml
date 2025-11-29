@@ -1,0 +1,607 @@
+paths:
+  /chat/agents/{agentId}:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Chat
+      summary: Agent-based chat with session management
+      description: Send messages to a specific agent and automatically manage chat sessions (requires authentication)
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema:
+            type: integer
+          description: The agent ID to chat with
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentChatRequest"
+            examples:
+              new_conversation:
+                summary: Start new conversation with agent
+                value:
+                  messages:
+                    - role: user
+                      content: "Hello! Can you help me with some questions?"
+              continue_session:
+                summary: Continue existing session
+                value:
+                  messages:
+                    - role: user
+                      content: "What else can you tell me about this topic?"
+                  sessionId: "123"
+      responses:
+        "200":
+          description: Agent chat processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentChatResponse"
+              examples:
+                success:
+                  summary: Successful agent chat response
+                  value:
+                    data:
+                      message: "Hello! I'd be happy to help you with your questions. What would you like to know?"
+                      model: "meta-llama/llama-4-scout-17b-16e-instruct"
+                      provider: "groq"
+                      sessionId: 123
+                      agentId: 1
+                      agentName: "My AI Assistant"
+                    message: "Agent chat processed successfully"
+        "400":
+          description: Invalid request (invalid agent ID, messages, or session)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                invalid_agent:
+                  summary: Invalid agent ID
+                  value:
+                    status: 400
+                    message: "Invalid agent ID"
+                inactive_agent:
+                  summary: Agent not active
+                  value:
+                    status: 400
+                    message: "Agent is not active"
+                session_mismatch:
+                  summary: Session doesn't belong to agent
+                  value:
+                    status: 400
+                    message: "Session does not belong to this agent"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                agent_not_found:
+                  summary: Agent not found
+                  value:
+                    status: 404
+                    message: "Agent not found"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /chat:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Chat
+      summary: Legacy chat endpoint
+      description: Processes chat messages and returns AI-generated responses (no session management, requires authentication)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+            examples:
+              chat_request:
+                summary: Basic chat request
+                value:
+                  messages:
+                    - role: user
+                      content: "Hello, how are you?"
+                  model: "meta-llama/llama-4-scout-17b-16e-instruct"
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+              examples:
+                success:
+                  summary: Successful chat response
+                  value:
+                    message: "I don't have access to that information."
+                    model: "meta-llama/llama-4-scout-17b-16e-instruct"
+        "400":
+          description: Invalid message format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                bad_request:
+                  summary: Invalid request format
+                  value:
+                    status: 400
+                    message: "Invalid message format"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                rate_limit:
+                  summary: Rate limit exceeded
+                  value:
+                    status: 429
+                    message: "Rate limit exceeded. Please try again later."
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                server_error:
+                  summary: Internal server error
+                  value:
+                    status: 500
+                    message: "Internal server error"
+
+  /chat/sessions:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Chat
+      summary: Create new chat session
+      description: Creates a new chat session for the specified agent (requires authentication)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionRequest"
+            examples:
+              create_session:
+                summary: Create session for agent
+                value:
+                  agentId: 1
+      responses:
+        "201":
+          description: Chat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSessionResponse"
+              examples:
+                success:
+                  summary: Successful session creation
+                  value:
+                    data:
+                      id: 123
+                      agent_id: 1
+                      agent_name: "My AI Assistant"
+                      created_at: "2025-08-17T10:00:00.000Z"
+                    message: "Chat session created successfully"
+        "400":
+          description: Invalid request (invalid agent ID, agent not active)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                invalid_agent:
+                  summary: Invalid agent ID
+                  value:
+                    status: 400
+                    message: "Valid agent ID is required"
+                inactive_agent:
+                  summary: Agent not active
+                  value:
+                    status: 400
+                    message: "Agent is not active"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                agent_not_found:
+                  summary: Agent not found
+                  value:
+                    status: 404
+                    message: "Agent not found"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Chat
+      summary: Get chat sessions
+      description: Retrieve all chat sessions for the authenticated user
+      parameters:
+        - in: query
+          name: agent_id
+          required: false
+          schema:
+            type: integer
+          description: Filter sessions by agent ID (optional)
+      responses:
+        "200":
+          description: Chat sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChatSession"
+                  message:
+                    type: string
+                    example: "Chat sessions retrieved successfully"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /chat/sessions/{sessionId}/history:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Chat
+      summary: Get chat history
+      description: Retrieve chat message history for a specific session
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: integer
+          description: The session ID
+      responses:
+        "200":
+          description: Chat history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChatHistory"
+                  message:
+                    type: string
+                    example: "Chat history retrieved successfully"
+        "400":
+          description: Invalid session ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /chat/sessions/{sessionId}:
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - Chat
+      summary: Delete chat session
+      description: Delete a chat session and all its messages
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: integer
+          description: The session ID to delete
+      responses:
+        "200":
+          description: Chat session deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Chat session deleted successfully"
+        "400":
+          description: Invalid session ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Message:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Who sent the message
+          example: "user"
+        content:
+          type: string
+          description: The actual message content
+          example: "What's your model?"
+
+    ChatRequest:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+          minItems: 1
+          description: Array of message objects
+        model:
+          type: string
+          description: The AI model to use (optional)
+          enum:
+            - "meta-llama/llama-4-scout-17b-16e-instruct"
+            - "deepseek-r1-distill-llama-70b"
+          default: "meta-llama/llama-4-scout-17b-16e-instruct"
+          example: "meta-llama/llama-4-scout-17b-16e-instruct"
+
+    AgentChatRequest:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+          minItems: 1
+          description: Array of message objects
+        sessionId:
+          type: string
+          description: Optional session ID to continue existing conversation
+          example: "123"
+
+    CreateSessionRequest:
+      type: object
+      required:
+        - agentId
+      properties:
+        agentId:
+          type: integer
+          description: The agent ID to create session for
+          example: 1
+
+    ChatResponse:
+      type: object
+      required:
+        - message
+        - model
+      properties:
+        message:
+          type: string
+          description: AI-generated response message
+          example: "I don't have access to that information."
+        model:
+          type: string
+          description: The AI model that was used
+          example: "meta-llama/llama-4-scout-17b-16e-instruct"
+
+    AgentChatResponse:
+      type: object
+      required:
+        - data
+        - message
+      properties:
+        data:
+          type: object
+          required:
+            - message
+            - model
+            - provider
+            - sessionId
+            - agentId
+            - agentName
+          properties:
+            message:
+              type: string
+              description: AI-generated response message
+              example: "Hello! I'd be happy to help you with your questions."
+            model:
+              type: string
+              description: The AI model that was used
+              example: "meta-llama/llama-4-scout-17b-16e-instruct"
+            provider:
+              type: string
+              description: The AI provider that was used
+              example: "groq"
+            sessionId:
+              type: integer
+              description: The session ID for this conversation
+              example: 123
+            agentId:
+              type: integer
+              description: The agent ID that processed this chat
+              example: 1
+            agentName:
+              type: string
+              description: The name of the agent
+              example: "My AI Assistant"
+        message:
+          type: string
+          description: Success message
+          example: "Agent chat processed successfully"
+
+    CreateSessionResponse:
+      type: object
+      required:
+        - data
+        - message
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - agent_id
+            - agent_name
+            - created_at
+          properties:
+            id:
+              type: integer
+              description: The created session ID
+              example: 123
+            agent_id:
+              type: integer
+              description: The agent ID for this session
+              example: 1
+            agent_name:
+              type: string
+              description: The name of the agent
+              example: "My AI Assistant"
+            created_at:
+              type: string
+              format: date-time
+              description: Session creation timestamp
+              example: "2025-08-17T10:00:00.000Z"
+        message:
+          type: string
+          description: Success message
+          example: "Chat session created successfully"
+
+    ChatSession:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Session ID
+          example: 1
+        agent_id:
+          type: integer
+          description: Agent ID associated with this session
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+          example: "2025-08-17T10:00:00.000Z"
+        message_count:
+          type: integer
+          description: Number of messages in this session
+          example: 5
+        last_message:
+          type: string
+          description: Content of the last message in the session
+          example: "Hello, how can I help you?"
+        last_message_time:
+          type: string
+          format: date-time
+          description: Timestamp of the last message
+          example: "2025-08-17T10:30:00.000Z"
+
+    ChatHistory:
+      type: object
+      properties:
+        session_id:
+          type: integer
+          description: Session ID
+          example: 1
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/HistoryMessage"
+          description: Array of chat messages
+
+    HistoryMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Who sent the message
+          example: "user"
+        content:
+          type: string
+          description: The message content
+          example: "Hello, how are you?"
+        created_at:
+          type: string
+          format: date-time
+          description: Message timestamp
+          example: "2025-08-17T10:00:00.000Z"

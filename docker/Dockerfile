@@ -1,12 +1,18 @@
 # Multi-stage Dockerfile for Nirmaya Backend
 # Supports: development, production
 
-ARG NODE_VERSION=22
+# Use specific Node version with latest Alpine for security patches
+# Check https://hub.docker.com/_/node for latest tags
+ARG NODE_VERSION=22.16.0-alpine3.22
 
 # ============================================
 # Base Stage - Common setup
 # ============================================
-FROM node:${NODE_VERSION}-alpine AS base
+FROM node:${NODE_VERSION} AS base
+
+# Update Alpine packages to get latest security fixes
+RUN apk upgrade --no-cache
+
 WORKDIR /app
 
 # ============================================
@@ -56,8 +62,9 @@ FROM base AS production
 
 ENV NODE_ENV=production
 
-# Install curl for healthcheck and create non-root user
-RUN apk add --no-cache curl && \
+# Update packages, install curl for healthcheck and create non-root user
+RUN apk upgrade --no-cache && \
+    apk add --no-cache curl && \
     addgroup -g 1001 nodejs && \
     adduser -S -u 1001 -G nodejs nodejs
 

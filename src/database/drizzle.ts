@@ -10,6 +10,11 @@ import { config, isProduction, isDevelopment } from '../utils/validateEnv';
 import { users } from '../features/user/shared/schema';
 import { uploads } from '../features/upload/shared/schema';
 import { invitations } from '../features/admin-invite/shared/schema';
+import {
+  chatbotDocuments,
+  chatbotSessions,
+  chatbotMessages,
+} from '../features/chatbot/shared/schema';
 
 /**
  * Database connection configuration
@@ -80,6 +85,9 @@ export const schema = {
   users,
   uploads,
   invitations,
+  chatbotDocuments,
+  chatbotSessions,
+  chatbotMessages,
 };
 
 /**

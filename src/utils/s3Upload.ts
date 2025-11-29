@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import HttpException from './httpException';
 import { logger } from './logger';
@@ -156,5 +156,129 @@ export async function downloadFromS3(
     });
     if (error instanceof HttpException) throw error;
     throw new HttpException(500, 'Failed to download file. Please try again later.');
+  }
+}
+
+/**
+ * Download a file from S3 as a Buffer
+ * Useful for processing file contents directly
+ */
+export async function downloadAsBuffer(key: string): Promise<Buffer> {
+  try {
+    const bucket = config.AWS_BUCKET_NAME;
+    if (!bucket) {
+      throw new HttpException(500, 'S3 bucket not configured');
+    }
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    const response = await s3Client.send(command);
+
+    if (!response.Body) {
+      throw new HttpException(404, 'File not found in S3');
+    }
+
+    // Convert stream to buffer
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+
+    logger.info(`File downloaded from S3 as buffer: ${key}`);
+
+    return Buffer.concat(chunks);
+  } catch (error) {
+    logger.error('S3 buffer download error', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      key
+    });
+    if (error instanceof HttpException) throw error;
+    throw new HttpException(500, 'Failed to download file. Please try again later.');
+  }
+}
+
+/**
+ * Delete a file from S3
+ * @param key - S3 object key to delete
+ */
+export async function deleteFromS3(key: string): Promise<void> {
+  try {
+    const bucket = config.AWS_BUCKET_NAME;
+    if (!bucket) {
+      throw new HttpException(500, 'S3 bucket not configured');
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    await s3Client.send(command);
+    logger.info(`File deleted from S3: ${key}`);
+  } catch (error) {
+    logger.error('S3 delete error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      key
+    });
+    if (error instanceof HttpException) throw error;
+    throw new HttpException(500, 'Failed to delete file. Please try again later.');
+  }
+}
+
+/**
+ * Delete all files with a specific prefix from S3
+ * Useful for cleaning up test uploads or user data
+ * @param prefix - S3 key prefix (e.g., 'uploads/test-user/')
+ */
+export async function deleteByPrefixFromS3(prefix: string): Promise<number> {
+  try {
+    const bucket = config.AWS_BUCKET_NAME;
+    if (!bucket) {
+      throw new HttpException(500, 'S3 bucket not configured');
+    }
+
+    let deletedCount = 0;
+    let continuationToken: string | undefined;
+
+    do {
+      const listCommand = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      });
+
+      const listResponse = await s3Client.send(listCommand);
+      
+      if (listResponse.Contents) {
+        for (const object of listResponse.Contents) {
+          if (object.Key) {
+            const deleteCommand = new DeleteObjectCommand({
+              Bucket: bucket,
+              Key: object.Key,
+            });
+            await s3Client.send(deleteCommand);
+            deletedCount++;
+          }
+        }
+      }
+
+      continuationToken = listResponse.NextContinuationToken;
+    } while (continuationToken);
+
+    logger.info(`Deleted ${deletedCount} files from S3 with prefix: ${prefix}`);
+    return deletedCount;
+  } catch (error) {
+    logger.error('S3 batch delete error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      prefix
+    });
+    if (error instanceof HttpException) throw error;
+    throw new HttpException(500, 'Failed to delete files. Please try again later.');
   }
 }

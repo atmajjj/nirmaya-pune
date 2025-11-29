@@ -1,0 +1,415 @@
+openapi: 3.0.0
+info:
+  title: Vector Operations API
+  description: API endpoints for vector operations using Pinecone's integrated embeddings
+
+paths:
+  /vectors/upsert:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Vectors
+      summary: Upsert records with text content
+      description: Upserts predefined records to Pinecone index using integrated embeddings. The embeddings will be automatically generated from the text content.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - records
+              properties:
+                records:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/VectorRecord"
+            examples:
+              upsert_vectors:
+                summary: Upsert sample vectors
+                value:
+                  records:
+                    - _id: "rec1"
+                      text: "The Eiffel Tower was completed in 1889 and stands in Paris, France."
+                      category: "history"
+                    - _id: "rec2"
+                      text: "Photosynthesis allows plants to convert sunlight into energy."
+                      category: "science"
+      responses:
+        "201":
+          description: Records upserted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              examples:
+                upsert_success:
+                  summary: Upsert success
+                  value:
+                    success: true
+                    message: "Vectors upserted successfully"
+        "400":
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vectors/search:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Vectors
+      summary: Search similar content
+      description: Performs semantic search using a query to find similar vectors.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: The text to search for similar vectors
+                  example: "The Eiffel Tower was completed in 1889 and stands in Paris, France."
+            examples:
+              search_vectors:
+                summary: Search for similar vectors
+                value:
+                  query: "The Eiffel Tower was completed in 1889 and stands in Paris, France."
+      responses:
+        "200":
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+              examples:
+                search_success:
+                  summary: Search success
+                  value:
+                    success: true
+                    message: "Search completed successfully"
+                    data:
+                      matches:
+                        - id: "rec17"
+                          score: 0.95
+                          values: []
+                          metadata:
+                            text: "The Pyramids of Giza are among the Seven Wonders of the Ancient World."
+                            category: "history"
+        "500":
+          description: Search failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vectors/fetch:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Vectors
+      summary: Fetch vectors by IDs
+      description: Retrieves specific vectors by their IDs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchVectorsRequest"
+            examples:
+              fetch_vectors:
+                summary: Fetch specific vectors
+                value:
+                  ids: ["rec1", "rec2", "rec3"]
+      responses:
+        "200":
+          description: Vectors fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              examples:
+                fetch_success:
+                  summary: Fetch success
+                  value:
+                    success: true
+                    message: "Vectors fetched successfully"
+                    data:
+                      vectors:
+                        rec1:
+                          id: "rec1"
+                          values: []
+                          metadata:
+                            text: "The Eiffel Tower was completed in 1889 and stands in Paris, France."
+                            category: "history"
+        "400":
+          description: Invalid input - Vector IDs are required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vectors/delete:
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - Vectors
+      summary: Delete vectors by IDs
+      description: Deletes specific vectors by their IDs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteVectorsRequest"
+            examples:
+              delete_vectors:
+                summary: Delete specific vectors
+                value:
+                  ids: ["rec1", "rec2"]
+      responses:
+        "200":
+          description: Vectors deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              examples:
+                delete_success:
+                  summary: Delete success
+                  value:
+                    success: true
+                    message: "Vectors deleted successfully"
+        "400":
+          description: Invalid input - Vector IDs are required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vectors/delete-all:
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - Vectors
+      summary: Delete all vectors
+      description: Deletes all vectors in the namespace.
+      responses:
+        "200":
+          description: All vectors deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              examples:
+                delete_all_success:
+                  summary: Delete all success
+                  value:
+                    success: true
+                    message: "All vectors deleted successfully"
+        "500":
+          description: Failed to delete all vectors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vectors/stats:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Vectors
+      summary: Get index statistics
+      description: Get statistics about the vector index.
+      responses:
+        "200":
+          description: Index statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexStatsResponse"
+              examples:
+                stats_success:
+                  summary: Stats success
+                  value:
+                    success: true
+                    message: "Index stats retrieved successfully"
+                    data:
+                      namespaces:
+                        "example-namespace":
+                          vectorCount: 50
+                      dimension: 1536
+                      indexFullness: 0.12
+                      totalVectorCount: 50
+        "500":
+          description: Failed to get index stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message describing what went wrong"
+        error:
+          type: string
+          example: "Detailed error information if available"
+
+    VectorRecord:
+      type: object
+      required:
+        - _id
+        - text
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the record
+          example: "rec1"
+        text:
+          type: string
+          description: The text content to be embedded
+          example: "The Eiffel Tower was completed in 1889 and stands in Paris, France."
+        category:
+          type: string
+          description: Category or tag for the content
+          example: "history"
+
+    FetchVectorsRequest:
+      type: object
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+          description: Array of vector IDs to fetch
+          example: ["rec1", "rec2", "rec3"]
+        namespace:
+          type: string
+          description: Optional namespace
+          example: "example-namespace"
+
+    DeleteVectorsRequest:
+      type: object
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+          description: Array of vector IDs to delete
+          example: ["rec1", "rec2"]
+        namespace:
+          type: string
+          description: Optional namespace
+          example: "example-namespace"
+        filter:
+          type: object
+          description: Optional filter for deletion
+          additionalProperties: true
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        data:
+          type: object
+          description: Response data varies by endpoint
+
+    SearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Search completed successfully"
+        data:
+          type: object
+          properties:
+            matches:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "rec17"
+                  score:
+                    type: number
+                    example: 0.95
+                  values:
+                    type: array
+                    items:
+                      type: number
+                  metadata:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+                        example: "The Pyramids of Giza are among the Seven Wonders of the Ancient World."
+                      category:
+                        type: string
+                        example: "history"
+
+    IndexStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Index stats retrieved successfully"
+        data:
+          type: object
+          properties:
+            namespaces:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  vectorCount:
+                    type: integer
+                    example: 50
+            dimension:
+              type: integer
+              example: 1536
+            indexFullness:
+              type: number
+              example: 0.12
+            totalVectorCount:
+              type: integer
+              example: 50

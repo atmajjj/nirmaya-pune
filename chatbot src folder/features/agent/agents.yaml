@@ -1,0 +1,428 @@
+components:
+  schemas:
+    CreateAgentRequest:
+      type: object
+      required:
+        - name
+        - provider
+        - api_key
+        - model
+        - temperature
+        - is_active
+      properties:
+        name:
+          type: string
+          example: "My Llama 4 Scout Agent"
+        provider:
+          type: string
+          example: "groq"
+        api_key:
+          type: string
+          example: "sk-your-openai-key-here"
+        model:
+          type: string
+          example: "meta-llama/llama-4-scout-17b-16e-instruct"
+        temperature:
+          type: number
+          example: 0.7
+        system_prompt:
+          type: string
+          example: "You are a helpful AI assistant specialized in coding and technical questions."
+        is_active:
+          type: integer
+          example: 1
+    AgentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "My Llama 4 Scout Agent"
+        provider:
+          type: string
+          example: "groq"
+        model:
+          type: string
+          example: "meta-llama/llama-4-scout-17b-16e-instruct"
+        temperature:
+          type: number
+          example: 0.7
+        system_prompt:
+          type: string
+          example: "You are a helpful AI assistant. Provide accurate, informative responses while being concise and clear."
+        is_active:
+          type: integer
+          example: 1
+        created_by:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-07-29T10:00:00.000Z"
+        updated_by:
+          type: integer
+          example: 1
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-07-29T10:00:00.000Z"
+        is_deleted:
+          type: boolean
+          example: false
+        deleted_by:
+          type: integer
+        deleted_at:
+          type: string
+          format: date-time
+
+    UpdateAgentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Updated name of the agent
+          example: "Updated Agent Name"
+        provider:
+          type: string
+          description: Updated AI provider
+          example: "groq"
+        api_key:
+          type: string
+          description: Updated API key (will be encrypted automatically)
+          example: "sk-new-api-key-here"
+        model:
+          type: string
+          description: Updated AI model
+          example: "meta-llama/llama-4-scout-17b-16e-instruct"
+        temperature:
+          type: number
+          description: Updated temperature setting
+          example: 0.8
+        system_prompt:
+          type: string
+          description: Updated system prompt
+          example: "You are an updated AI assistant"
+        is_active:
+          type: integer
+          description: Updated active status (0 or 1)
+          example: 1
+
+    Agent:
+      type: object
+      required:
+        - id
+        - name
+        - user_id
+        - provider
+        - model
+        - encrypted_api_key
+        - encryption_salt
+        - is_active
+        - trained_on
+        - created_by
+        - created_at
+        - is_deleted
+      properties:
+        id:
+          type: integer
+          description: Agent's unique identifier
+          example: 1
+        name:
+          type: string
+          description: The name of the agent
+          example: "My Llama 4 Scout Agent"
+        user_id:
+          type: integer
+          description: ID of the user who owns this agent
+          example: 1
+        provider:
+          type: string
+          description: The LLM provider
+          example: "groq"
+        model:
+          type: string
+          description: The AI model being used
+          example: "meta-llama/llama-4-scout-17b-16e-instruct"
+        temperature:
+          type: number
+          description: Temperature setting
+          example: 0.7
+        system_prompt:
+          type: string
+          description: Custom system prompt for the agent
+          example: "You are a helpful AI assistant. Provide accurate, informative responses while being concise and clear."
+        encrypted_api_key:
+          type: string
+          description: Encrypted API key
+        encryption_salt:
+          type: string
+          description: Salt used for API key encryption
+        is_active:
+          type: integer
+          description: Whether the agent is active (0 or 1)
+          example: 1
+        trained_on:
+          type: string
+          format: date-time
+          description: When the agent was trained
+          example: "2025-07-29T10:00:00.000Z"
+        created_by:
+          type: integer
+          description: ID of the user who created this agent
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Agent creation timestamp
+          example: "2025-07-29T10:00:00.000Z"
+        updated_by:
+          type: integer
+          description: ID of the user who last updated this agent
+          example: 1
+        updated_at:
+          type: string
+          format: date-time
+          description: Agent last update timestamp
+          example: "2025-07-29T10:00:00.000Z"
+        is_deleted:
+          type: boolean
+          description: Whether the agent is deleted
+          example: false
+        deleted_by:
+          type: integer
+          description: ID of the user who deleted this agent
+        deleted_at:
+          type: string
+          format: date-time
+          description: Agent deletion timestamp
+
+paths:
+  /agents:
+    post:
+      tags:
+        - Agents
+      summary: Create a new agent
+      description: Creates a new AI agent with the specified configuration (requires authentication). API keys are automatically encrypted before storage.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgentRequest"
+            examples:
+              create_agent:
+                summary: Create agent
+                value:
+                  name: "My Llama 4 Scout Agent"
+                  provider: "groq"
+                  api_key: "sk-your-openai-key-here"
+                  model: "meta-llama/llama-4-scout-17b-16e-instruct"
+                  temperature: 0.7
+                  is_active: 1
+      responses:
+        "201":
+          description: Agent created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentResponse"
+        "400":
+          description: Invalid input data or model not compatible with provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Agent with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    get:
+      tags:
+        - Agents
+      summary: Get all agents
+      description: Retrieves all agents belonging to the authenticated user (requires authentication)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Agents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AgentResponse"
+                  message:
+                    type: string
+                    example: "Agents retrieved successfully"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /agents/{id}:
+    get:
+      tags:
+        - Agents
+      summary: Get agent by ID
+      description: Retrieves a specific agent by its ID (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Agent ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Agent retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AgentResponse"
+                  message:
+                    type: string
+                    example: "Agent retrieved successfully"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      tags:
+        - Agents
+      summary: Update agent
+      description: Updates an existing agent. All fields are optional - only provide the fields you want to update. API keys are automatically encrypted before storage (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Agent ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAgentRequest"
+            examples:
+              update_agent:
+                summary: Update agent name, API key, and temperature
+                value:
+                  name: "My Updated Llama 4 Scout Agent"
+                  api_key: "sk-new-api-key-here"
+                  temperature: 0.5
+                  is_active: 1
+      responses:
+        "200":
+          description: Agent updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AgentResponse"
+                  message:
+                    type: string
+                    example: "Agent updated successfully"
+        "400":
+          description: Invalid input data or model not compatible with provider
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Agent with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags:
+        - Agents
+      summary: Delete agent
+      description: Soft deletes an agent (marks as deleted, doesn't actually remove from database) (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Agent ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Agent deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Agent deleted successfully"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

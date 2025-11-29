@@ -1,0 +1,545 @@
+# Website Source API Documentation
+# This file contains website source API paths and schemas to be integrated into the main Swagger documentation
+
+paths:
+  /sources/website/agent/{agentId}:
+    get:
+      tags:
+        - Website Sources
+      summary: Get all website sources for an agent
+      description: Retrieves all website sources for a given agent (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          description: Agent ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Website sources retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllWebsiteSourcesResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sources/website/{id}:
+    get:
+      tags:
+        - Website Sources
+      summary: Get website source by ID
+      description: Retrieves a specific website source by its ID (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Website Source ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Website source retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SingleWebsiteSourceResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Website source not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      tags:
+        - Website Sources
+      summary: Update website source
+      description: Updates an existing website source (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Website Source ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWebsiteSourceDto"
+            examples:
+              update_website_source:
+                summary: Update website source URL and crawl depth
+                value:
+                  name: "Smart India Hackathon - Updated"
+                  description: "Official website for Smart India Hackathon with updated information"
+                  url: "https://sih.gov.in/"
+                  crawl_depth: 3
+      responses:
+        "200":
+          description: Website source updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SingleWebsiteSourceResponse"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Website source not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sources/website:
+    post:
+      tags:
+        - Website Sources
+      summary: Create website source
+      description: Creates a new website source and starts scraping immediately (requires authentication)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWebsiteSourceDto"
+            examples:
+              create_website_source:
+                summary: Create website source for Smart India Hackathon
+                value:
+                  agent_id: 1
+                  name: "Smart India Hackathon"
+                  description: "Official website for Smart India Hackathon - A nationwide initiative to provide students with a platform to solve pressing problems"
+                  url: "https://sih.gov.in/"
+                  crawl_depth: 2
+      responses:
+        "201":
+          description: Website source created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SingleWebsiteSourceResponse"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden - User doesn't own the agent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sources/website/{id}/scrape:
+    post:
+      tags:
+        - Website Sources
+      summary: Trigger website scraping
+      description: Manually triggers scraping for an existing website source (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Website Source ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Scraping triggered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Scraping triggered successfully"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Website source not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sources/website/{id}/status:
+    get:
+      tags:
+        - Website Sources
+      summary: Get scraping status
+      description: Retrieves the current scraping status and statistics for a website source (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Website Source ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Scraping status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScrapingStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Website source not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    WebsiteSource:
+      type: object
+      description: Complete website source with joined source and website_sources table data
+      required:
+        - id
+        - agent_id
+        - source_type
+        - name
+        - status
+        - is_embedded
+        - created_by
+        - created_at
+        - updated_at
+        - is_deleted
+        - source_id
+        - url
+        - crawl_depth
+        - scraping_status
+        - pages_scraped
+        - extracted_links
+        - scraped_content
+      properties:
+        # Fields from sources table
+        id:
+          type: integer
+          description: Source ID (primary key from sources table)
+          example: 1
+        agent_id:
+          type: integer
+          description: ID of the agent this source belongs to
+          example: 1
+        source_type:
+          type: string
+          description: Type of source (always 'website' for website sources)
+          example: "website"
+        name:
+          type: string
+          description: Name of the source
+          example: "Smart India Hackathon"
+        description:
+          type: string
+          nullable: true
+          description: Description of the source
+          example: "Official website for Smart India Hackathon - A nationwide initiative"
+        status:
+          type: string
+          description: Processing status of the source
+          enum: [pending, processing, completed, failed]
+          example: "completed"
+        is_embedded:
+          type: boolean
+          description: Whether the source content has been vectorized
+          example: true
+        created_by:
+          type: integer
+          description: ID of user who created the source
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-08-05T14:33:39Z"
+        updated_by:
+          type: integer
+          nullable: true
+          description: ID of user who last updated the source
+          example: 1
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-08-05T14:33:39Z"
+        is_deleted:
+          type: boolean
+          description: Whether the source is soft deleted
+          example: false
+        deleted_by:
+          type: integer
+          nullable: true
+          description: ID of user who deleted the source
+          example: null
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deletion timestamp
+          example: null
+        # Fields from website_sources table
+        source_id:
+          type: integer
+          description: Reference to the source record (same as id for joined responses)
+          example: 1
+        url:
+          type: string
+          format: uri
+          description: The website URL to scrape
+          example: "https://sih.gov.in/"
+        crawl_depth:
+          type: integer
+          description: Maximum depth for crawling (1-10)
+          minimum: 1
+          maximum: 10
+          example: 3
+        scraped_content:
+          type: string
+          nullable: true
+          description: The scraped and cleaned content from the website
+          example: "Smart India Hackathon is a nationwide initiative to provide students with a platform to solve some of the pressing problems we face in our daily lives..."
+        scraping_status:
+          type: string
+          description: Current scraping status
+          enum: [pending, processing, completed, failed]
+          example: "completed"
+        scraping_error:
+          type: string
+          nullable: true
+          description: Error message if scraping failed
+          example: null
+        scraped_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when scraping was last completed
+          example: "2025-08-05T14:35:22Z"
+        content_length:
+          type: integer
+          nullable: true
+          description: Length of scraped content in characters
+          example: 25432
+        word_count:
+          type: integer
+          nullable: true
+          description: Number of words in scraped content
+          example: 4156
+        pages_scraped:
+          type: integer
+          description: Number of pages scraped
+          example: 4
+        extracted_links:
+          type: array
+          nullable: true
+          description: Array of links extracted during scraping
+          items:
+            type: string
+            format: uri
+          example:
+            [
+              "https://sih.gov.in/about/",
+              "https://sih.gov.in/challenges/",
+              "https://sih.gov.in/timeline/",
+              "https://www.youtube.com/watch?v=example123",
+            ]
+
+    CreateWebsiteSourceDto:
+      type: object
+      required:
+        - agent_id
+        - name
+        - url
+      properties:
+        agent_id:
+          type: integer
+          description: ID of the agent this website source belongs to
+          example: 1
+        name:
+          type: string
+          description: Name of the website source
+          example: "Smart India Hackathon"
+        description:
+          type: string
+          description: Optional description of the website source
+          example: "Official website for Smart India Hackathon - A nationwide initiative to provide students with a platform to solve pressing problems"
+        url:
+          type: string
+          format: uri
+          description: The website URL to scrape
+          example: "https://sih.gov.in/"
+        crawl_depth:
+          type: integer
+          description: Maximum depth for crawling (1-10, defaults to 1)
+          minimum: 1
+          maximum: 10
+          example: 2
+
+    UpdateWebsiteSourceDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Updated name for the website source
+          example: "Smart India Hackathon - Updated"
+        description:
+          type: string
+          description: Updated description for the website source
+          example: "Official website for Smart India Hackathon with updated information and resources"
+        url:
+          type: string
+          format: uri
+          description: Updated website URL
+          example: "https://sih.gov.in/"
+        crawl_depth:
+          type: integer
+          description: Updated crawl depth (1-10)
+          minimum: 1
+          maximum: 10
+          example: 3
+
+    ScrapingStatus:
+      type: object
+      description: Scraping status and statistics for a website source
+      properties:
+        scraping_status:
+          type: string
+          description: Current scraping status
+          enum: [pending, processing, completed, failed]
+          example: "completed"
+        pages_scraped:
+          type: integer
+          description: Number of pages scraped
+          example: 4
+        content_length:
+          type: integer
+          nullable: true
+          description: Length of scraped content in characters
+          example: 25432
+        word_count:
+          type: integer
+          nullable: true
+          description: Number of words in scraped content
+          example: 4156
+        scraped_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when scraping was last completed
+          example: "2025-08-05T14:35:22Z"
+        scraping_error:
+          type: string
+          nullable: true
+          description: Error message if scraping failed
+          example: null
+
+    SingleWebsiteSourceResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/WebsiteSource"
+        message:
+          type: string
+          example: "Website source retrieved successfully"
+
+    AllWebsiteSourcesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebsiteSource"
+        message:
+          type: string
+          example: "Website sources retrieved successfully"
+
+    ScrapingStatusResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/ScrapingStatus"
+        message:
+          type: string
+          example: "Scraping status retrieved successfully"
+
+    ScrapingTriggerResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Scraping triggered successfully"
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Error message"
+        status:
+          type: integer
+          example: 400

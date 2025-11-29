@@ -4,6 +4,7 @@ import UserRoute from './features/user';
 import AuthRoute from './features/auth';
 import UploadRoute from './features/upload';
 import AdminInviteRoute from './features/admin-invite';
+import ChatbotRoute from './features/chatbot';
 import { connectWithRetry, pool } from './database/drizzle';
 import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
@@ -25,7 +26,13 @@ async function bootstrap() {
     await testRedisConnection();
 
     // Start Express app
-    const app = new App([new AuthRoute(), new UserRoute(), new UploadRoute(), new AdminInviteRoute()]);
+    const app = new App([
+      new AuthRoute(),
+      new UserRoute(),
+      new UploadRoute(),
+      new AdminInviteRoute(),
+      new ChatbotRoute(),
+    ]);
 
     server = app.listen();
 

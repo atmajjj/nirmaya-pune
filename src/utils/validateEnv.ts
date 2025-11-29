@@ -55,7 +55,17 @@ export const validateEnv = () => {
     FRONTEND_URL: str({ desc: 'Frontend URL for invitation links' }),
     
     // File upload configuration
-    ALLOWED_FILE_TYPES: str({ default: 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),
+    ALLOWED_FILE_TYPES: str({ default: 'application/pdf,text/plain,text/markdown,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),
+
+    // Chatbot - Groq LLM
+    GROQ_API_KEY: str({ desc: 'Groq API key for LLM' }),
+
+    // Chatbot - Pinecone Vector DB
+    PINECONE_API_KEY: str({ desc: 'Pinecone API key for vector storage' }),
+    PINECONE_INDEX_NAME: str({ default: 'nira', desc: 'Pinecone index name' }),
+
+    // Chatbot - HuggingFace Embeddings
+    HUGGINGFACE_TOKEN: str({ desc: 'HuggingFace token for BGE-M3 embeddings' }),
   });
 
   // Additional JWT secret validation

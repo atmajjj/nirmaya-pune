@@ -12,9 +12,6 @@ const createStore = () =>
     ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) })
     : undefined;
 
-// Skip rate limiting in test environment for integration tests
-const skipTest = () => isTest;
-
 // Consistent error response matching error middleware structure
 const createRateLimitResponse = (message: string, retryAfter: string, requestId: string) => ({
   success: false,
@@ -45,12 +42,13 @@ const createRateLimitHandler =
       .status(429)
       .json(createRateLimitResponse(message, retryAfter, requestWithId.requestId || 'unknown'));
   };
-// Skip logic for development localhost
-const skipDev = (req: Request) =>
-  isDevelopment &&
-  (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1');
+// Skip logic for development localhost and test environment
+const skipDevOrTest = (req: Request) =>
+  isTest ||
+  (isDevelopment &&
+    (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1'));
 
-// Auth endpoints - strict rate limiting (5 requests per 15 minutes)
+// Auth endpoints - strict rate limiting (5 requests per 15 minutes) - PRODUCTION ONLY
 export const authRateLimit: RequestHandler = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5,
@@ -62,7 +60,7 @@ export const authRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipTest, // Skip rate limiting in test environment
+  skip: skipDevOrTest, // Skip rate limiting in test and development environments
   handler: createRateLimitHandler(
     'Too many authentication attempts, please try again later.',
     '15 minutes'
@@ -81,7 +79,7 @@ export const apiRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipDev,
+  skip: skipDevOrTest,
   handler: createRateLimitHandler(
     'Too many requests from this IP, please try again later.',
     '1 minute'
@@ -100,7 +98,7 @@ export const uploadRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipDev,
+  skip: skipDevOrTest,
   handler: createRateLimitHandler('Too many upload requests, please try again later.', '1 minute'),
 });
 
@@ -117,7 +115,7 @@ export const invitationRateLimit: RequestHandler = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore(),
-  skip: skipTest, // Skip rate limiting in test environment
+  skip: skipDevOrTest, // Skip rate limiting in test and development environments
   handler: createRateLimitHandler(
     'Too many invitation attempts, please try again later.',
     '15 minutes'

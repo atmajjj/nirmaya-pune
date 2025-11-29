@@ -64,8 +64,12 @@ export class DatabaseTestHelper {
     }
     try {
       // Use transaction for atomic cleanup
+      // Order matters due to foreign key constraints
       await this.db.execute(sql`
         BEGIN;
+        TRUNCATE TABLE chatbot_messages CASCADE;
+        TRUNCATE TABLE chatbot_sessions CASCADE;
+        TRUNCATE TABLE chatbot_documents CASCADE;
         TRUNCATE TABLE invitation CASCADE;
         TRUNCATE TABLE uploads CASCADE;
         TRUNCATE TABLE users CASCADE;
@@ -75,6 +79,9 @@ export class DatabaseTestHelper {
       logger.warn(`Database cleanup warning: ${error}`);
       // Fallback to individual truncates if transaction fails
       try {
+        await this.db.execute(sql`TRUNCATE TABLE chatbot_messages CASCADE`);
+        await this.db.execute(sql`TRUNCATE TABLE chatbot_sessions CASCADE`);
+        await this.db.execute(sql`TRUNCATE TABLE chatbot_documents CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE invitation CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE uploads CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE users CASCADE`);
@@ -108,10 +115,14 @@ export class DatabaseTestHelper {
   // Reset sequences
   public async resetSequences(): Promise<void> {
     try {
-      // Note: invitation sequence is named invitation_invitation_id_seq due to column name
+      // Core tables
       await this.db.execute(sql`ALTER SEQUENCE invitation_invitation_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
       await this.db.execute(sql`ALTER SEQUENCE uploads_id_seq RESTART WITH 1`);
+      // Chatbot tables
+      await this.db.execute(sql`ALTER SEQUENCE chatbot_documents_id_seq RESTART WITH 1`);
+      await this.db.execute(sql`ALTER SEQUENCE chatbot_sessions_id_seq RESTART WITH 1`);
+      await this.db.execute(sql`ALTER SEQUENCE chatbot_messages_id_seq RESTART WITH 1`);
     } catch (error) {
       logger.warn(`Database reset sequences warning: ${error}`);
     }

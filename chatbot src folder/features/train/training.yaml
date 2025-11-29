@@ -1,0 +1,924 @@
+openapi: 3.0.0
+info:
+  title: Agent Training API Documentation
+  description: Comprehensive documentation for AI Agent Training System with background processing, analytics, and vector management
+  version: 1.0.0
+  contact:
+    name: AI Chatbot Training System
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+
+tags:
+  - name: Training
+    description: Agent training operations with background job processing
+  - name: Analytics
+    description: Training analytics and performance metrics
+  - name: Vectors
+    description: Vector operations and content search
+
+paths:
+  /agents/{agentId}/train:
+    post:
+      tags:
+        - Training
+      summary: Start Agent Training
+      description: |
+        Initiates agent training with all configured sources using background job processing.
+        Returns immediately with job ID for status tracking.
+
+        **Features:**
+        - Background processing with BullMQ
+        - Automatic source detection and processing
+        - Real-time status updates
+        - Vector namespace isolation per agent
+
+        **Process Flow:**
+        1. Validates agent ownership
+        2. Extracts data from all sources (text, file, website, QA, database)
+        3. Processes content through vector embeddings
+        4. Stores vectors in isolated namespace (user_{userId}_agent_{agentId})
+        5. Updates training status and analytics
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          description: Unique identifier for the agent to train
+          schema:
+            type: integer
+            example: 9
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forceRetrain:
+                  type: boolean
+                  description: Force training even if agent was recently trained
+                  default: false
+                  example: false
+                cleanupExisting:
+                  type: boolean
+                  description: Clean up existing vectors before training
+                  default: true
+                  example: true
+      responses:
+        "200":
+          description: Training job started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Agent training started successfully"
+                  data:
+                    type: object
+                    properties:
+                      agentId:
+                        type: integer
+                        example: 8
+                      jobId:
+                        type: string
+                        description: Background job identifier for tracking
+                        example: "training_3_8_1734512345678"
+                      totalSources:
+                        type: integer
+                        description: Number of sources to be processed
+                        example: 8
+                      status:
+                        type: string
+                        enum: [pending, processing, completed, failed]
+                        example: "pending"
+                      namespace:
+                        type: string
+                        description: Vector namespace for this agent
+                        example: "user_3_agent_8"
+                      estimatedDuration:
+                        type: string
+                        description: Estimated completion time
+                        example: "5-10 minutes"
+        "400":
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                no_sources:
+                  summary: No sources configured
+                  value:
+                    success: false
+                    message: "No sources found for agent. Please add sources before training."
+                    error: "NO_SOURCES_CONFIGURED"
+                recently_trained:
+                  summary: Recently trained
+                  value:
+                    success: false
+                    message: "Agent was recently trained. Use forceRetrain=true to override."
+                    error: "RECENTLY_TRAINED"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/AgentNotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /agents/{agentId}/retrain:
+    post:
+      tags:
+        - Training
+      summary: Retrain Agent
+      description: |
+        Forces a complete retraining of the agent, cleaning up existing vectors and reprocessing all sources.
+        This is equivalent to train with forceRetrain=true and cleanupExisting=true.
+
+        **Use Cases:**
+        - Sources have been updated
+        - Training failed and needs retry
+        - Model or embedding settings changed
+        - Performance optimization
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 9
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Retraining job started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Agent retraining started successfully"
+                  data:
+                    type: object
+                    properties:
+                      agentId:
+                        type: integer
+                        example: 8
+                      jobId:
+                        type: string
+                        example: "retraining_3_8_1734512345678"
+                      totalSources:
+                        type: integer
+                        description: Number of sources to be reprocessed
+                        example: 8
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/AgentNotFoundError"
+
+  /agents/{agentId}/training-status:
+    get:
+      tags:
+        - Training
+      summary: Get Training Status
+      description: |
+        Retrieves detailed status of agent training including job progress, metrics, and error information.
+        Supports real-time polling for status updates.
+
+        **Status Types:**
+        - `not_started`: No training initiated
+        - `pending`: Training queued but not started
+        - `processing`: Currently training
+        - `completed`: Training finished successfully
+        - `failed`: Training encountered errors
+        - `cancelled`: Training was cancelled
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 8
+        - name: includeHistory
+          in: query
+          description: Include training history in response
+          schema:
+            type: boolean
+            default: false
+            example: false
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Training status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      agentId:
+                        type: integer
+                        example: 8
+                      isTraining:
+                        type: boolean
+                        example: true
+                      currentJob:
+                        type: object
+                        nullable: true
+                        properties:
+                          id:
+                            type: string
+                            example: "training_3_8_1734512345678"
+                          type:
+                            type: string
+                            enum: [training, retraining]
+                            example: "training"
+                          status:
+                            type: string
+                            enum:
+                              [
+                                pending,
+                                processing,
+                                completed,
+                                failed,
+                                cancelled,
+                              ]
+                            example: "processing"
+                          progress:
+                            type: object
+                            properties:
+                              current:
+                                type: integer
+                                example: 3
+                              total:
+                                type: integer
+                                example: 8
+                              percentage:
+                                type: number
+                                format: float
+                                example: 37.5
+                          startedAt:
+                            type: string
+                            format: date-time
+                            example: "2024-12-18T10:30:45.678Z"
+                          estimatedCompletion:
+                            type: string
+                            format: date-time
+                            nullable: true
+                            example: "2024-12-18T10:40:45.678Z"
+                          currentStep:
+                            type: string
+                            example: "Processing website sources"
+                      lastTraining:
+                        type: object
+                        nullable: true
+                        properties:
+                          completedAt:
+                            type: string
+                            format: date-time
+                            example: "2024-12-17T15:20:30.123Z"
+                          status:
+                            type: string
+                            example: "completed"
+                          duration:
+                            type: string
+                            example: "8 minutes 23 seconds"
+                          sourcesProcessed:
+                            type: integer
+                            example: 8
+                          vectorsCreated:
+                            type: integer
+                            example: 245
+                      trainingHistory:
+                        type: array
+                        description: Included when includeHistory=true
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "training_3_8_1734425430123"
+                            type:
+                              type: string
+                              example: "training"
+                            status:
+                              type: string
+                              example: "completed"
+                            startedAt:
+                              type: string
+                              format: date-time
+                              example: "2024-12-17T15:12:07.123Z"
+                            completedAt:
+                              type: string
+                              format: date-time
+                              example: "2024-12-17T15:20:30.123Z"
+                            duration:
+                              type: string
+                              example: "8 minutes 23 seconds"
+                            sourcesProcessed:
+                              type: integer
+                              example: 8
+                            vectorsCreated:
+                              type: integer
+                              example: 245
+                  message:
+                    type: string
+                    example: "Training status retrieved successfully"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/AgentNotFoundError"
+
+  /agents/{agentId}/training-analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Get Training Analytics
+      description: |
+        Retrieves comprehensive analytics and performance metrics for agent training.
+        Includes historical data, performance trends, and optimization recommendations.
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 8
+        - name: timeRange
+          in: query
+          description: Time range for analytics data
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, 90d, all]
+            default: 30d
+            example: 30d
+        - name: includeRecommendations
+          in: query
+          description: Include optimization recommendations
+          schema:
+            type: boolean
+            default: true
+            example: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Training analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      agentId:
+                        type: integer
+                        example: 8
+                      overview:
+                        type: object
+                        properties:
+                          totalTrainingSessions:
+                            type: integer
+                            description: Total number of training sessions
+                            example: 5
+                          successfulTrainings:
+                            type: integer
+                            example: 4
+                          failedTrainings:
+                            type: integer
+                            example: 1
+                          successRate:
+                            type: number
+                            format: float
+                            example: 80.0
+                          averageTrainingTime:
+                            type: string
+                            example: "4m 32s"
+                          lastTrainingDate:
+                            type: string
+                            format: date-time
+                            example: "2024-12-18T10:35:22.456Z"
+                      sourceMetrics:
+                        type: object
+                        properties:
+                          totalSources:
+                            type: integer
+                            example: 8
+                          embeddedSources:
+                            type: integer
+                            example: 8
+                          pendingSources:
+                            type: integer
+                            example: 0
+                          sourceBreakdown:
+                            type: object
+                            properties:
+                              text:
+                                type: integer
+                                example: 4
+                              file:
+                                type: integer
+                                example: 2
+                              qa:
+                                type: integer
+                                example: 2
+                              website:
+                                type: integer
+                                example: 0
+                              database:
+                                type: integer
+                                example: 0
+                      vectorMetrics:
+                        type: object
+                        properties:
+                          totalVectors:
+                            type: integer
+                            example: 245
+                          averageVectorsPerSource:
+                            type: number
+                            format: float
+                            example: 30.6
+                          vectorDimensions:
+                            type: integer
+                            example: 1536
+                          indexSize:
+                            type: string
+                            example: "2.8 MB"
+                      performanceMetrics:
+                        type: object
+                        properties:
+                          searchAccuracy:
+                            type: number
+                            format: float
+                            example: 94.5
+                          averageResponseTime:
+                            type: string
+                            example: "250ms"
+                          embeddingQuality:
+                            type: string
+                            example: "high"
+                          lastPerformanceCheck:
+                            type: string
+                            format: date-time
+                            example: "2024-12-18T09:15:30.789Z"
+                      recentActivity:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            timestamp:
+                              type: string
+                              format: date-time
+                              example: "2024-12-18T10:35:22.456Z"
+                            action:
+                              type: string
+                              example: "training_completed"
+                            details:
+                              type: string
+                              example: "Successfully processed 8 sources, created 245 vectors"
+                      recommendations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              enum: [performance, quality, cost, reliability]
+                              example: "performance"
+                            priority:
+                              type: string
+                              enum: [low, medium, high, critical]
+                              example: "medium"
+                            title:
+                              type: string
+                              example: "Optimize chunk size"
+                            description:
+                              type: string
+                              example: "Consider reducing chunk size for better granularity"
+                            impact:
+                              type: string
+                              example: "Could improve search accuracy by 5%"
+                  message:
+                    type: string
+                    example: "Training analytics retrieved successfully"
+
+  /vectors/search:
+    post:
+      tags:
+        - Vectors
+      summary: Search Vector Content
+      description: |
+        Performs semantic search across agent's vector database using natural language queries.
+        Returns raw Pinecone response format for LLM processing.
+        Results are filtered by user and optionally by agent for namespace isolation.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: Natural language search query
+                  example: "How to implement authentication in React"
+                agentId:
+                  type: integer
+                  description: Optional agent ID to search within specific agent's namespace
+                  example: 8
+      responses:
+        "200":
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Search completed successfully"
+                  data:
+                    type: object
+                    description: Raw Pinecone response format
+                    properties:
+                      result:
+                        type: object
+                        properties:
+                          hits:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                _id:
+                                  type: string
+                                  example: "agent_8_text_source_65"
+                                _score:
+                                  type: number
+                                  format: float
+                                  description: Similarity score (0.0 to 1.0)
+                                  example: 0.85
+                                fields:
+                                  type: object
+                                  properties:
+                                    category:
+                                      type: string
+                                      example: "text"
+                                    sourceId:
+                                      type: integer
+                                      example: 65
+                                    sourceType:
+                                      type: string
+                                      example: "text"
+                                    text:
+                                      type: string
+                                      example: "React authentication can be implemented using JWT tokens..."
+                      usage:
+                        type: object
+                        properties:
+                          readUnits:
+                            type: integer
+                            example: 1
+                          embedTotalTokens:
+                            type: integer
+                            example: 9
+                      _metadata:
+                        type: object
+                        properties:
+                          query:
+                            type: string
+                            example: "How to implement authentication in React"
+                          namespace:
+                            type: string
+                            example: "user_3_agent_8"
+                          userId:
+                            type: integer
+                            example: 3
+                          agentId:
+                            type: integer
+                            example: 8
+        "400":
+          description: Bad request - missing or invalid query
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /vectors/upsert:
+    post:
+      tags:
+        - Vectors
+      summary: Upsert Vector Records
+      description: |
+        Inserts or updates vector records in the database. 
+        Automatically handles embedding generation and namespace assignment.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - records
+              properties:
+                records:
+                  type: array
+                  description: Array of text records to vectorize and store
+                  items:
+                    type: object
+                    required:
+                      - text
+                    properties:
+                      text:
+                        type: string
+                        description: Text content to be vectorized
+                        example: "This is sample content for vectorization"
+                      metadata:
+                        type: object
+                        description: Optional metadata to store with the vector
+                        properties:
+                          sourceType:
+                            type: string
+                            example: "manual"
+                          title:
+                            type: string
+                            example: "Manual Entry"
+                          tags:
+                            type: array
+                            items:
+                              type: string
+                            example: ["important", "reference"]
+                agentId:
+                  type: integer
+                  description: Optional agent ID for namespace assignment
+                  example: 8
+      responses:
+        "201":
+          description: Vectors upserted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vectors upserted successfully"
+        "400":
+          description: Bad request - invalid records format
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message description"
+        error:
+          type: string
+          example: "ERROR_CODE"
+        details:
+          type: string
+          description: Additional error details
+          example: "Detailed error information"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Authentication required"
+            error: "UNAUTHORIZED"
+
+    ForbiddenError:
+      description: Access denied - user doesn't own this agent
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Access denied. You don't have permission to access this agent."
+            error: "FORBIDDEN"
+
+    AgentNotFoundError:
+      description: Agent not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Agent not found"
+            error: "AGENT_NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: "Internal server error"
+            error: "INTERNAL_SERVER_ERROR"
+
+# Example Usage Guide
+x-examples:
+  complete-training-workflow:
+    summary: Complete Training Workflow
+    description: |
+      This example demonstrates a complete agent training workflow from start to finish:
+
+      ## Step 1: Start Training
+      ```bash
+      curl -X POST http://localhost:3000/api/v1/agents/8/train \
+        -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"forceRetrain": false, "cleanupExisting": true}'
+      ```
+
+      ## Step 2: Monitor Progress
+      ```bash
+      # Poll every 30 seconds for status updates
+      curl -X GET http://localhost:3000/api/v1/agents/8/training-status \
+        -H "Authorization: Bearer YOUR_JWT_TOKEN"
+      ```
+
+      ## Step 3: Test Search
+      ```bash
+      curl -X POST http://localhost:3000/api/v1/vectors/search \
+        -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "query": "How to implement user authentication?",
+          "agentId": 8
+        }'
+      ```
+
+      ## Step 4: View Analytics
+      ```bash
+      curl -X GET http://localhost:3000/api/v1/agents/8/training-analytics \
+        -H "Authorization: Bearer YOUR_JWT_TOKEN"
+      ```
+
+  authentication-setup:
+    summary: Authentication Setup
+    description: |
+      ## Getting Your JWT Token
+
+      1. **Login to get JWT token:**
+      ```bash
+      curl -X POST http://localhost:3000/api/v1/users/login \
+        -H "Content-Type: application/json" \
+        -d '{
+          "email": "myselfharshal2004@gmail.com",
+          "password": "harshal2004"
+        }'
+      ```
+
+      2. **Extract token from response:**
+      ```json
+      {
+        "success": true,
+        "message": "Login successful",
+        "data": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "user": {
+            "id": 1,
+            "email": "myselfharshal2004@gmail.com"
+          }
+        }
+      }
+      ```
+
+      3. **Use token in subsequent requests:**
+      ```bash
+      curl -X GET http://localhost:3000/api/v1/agents \
+        -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      ```
+
+  error-handling:
+    summary: Error Handling Examples
+    description: |
+      ## Common Error Scenarios
+
+      ### 1. No Sources Configured
+      **Request:**
+      ```bash
+      curl -X POST http://localhost:3000/api/v1/agents/8/train \
+        -H "Authorization: Bearer YOUR_TOKEN"
+      ```
+
+      **Response (400):**
+      ```json
+      {
+        "success": false,
+        "message": "No sources found for agent. Please add sources before training.",
+        "error": "NO_SOURCES_CONFIGURED"
+      }
+      ```
+
+      ### 2. Agent Recently Trained
+      **Response (400):**
+      ```json
+      {
+        "success": false,
+        "message": "Agent was recently trained. Use forceRetrain=true to override.",
+        "error": "RECENTLY_TRAINED"
+      }
+      ```
+
+      ### 3. Training Failed
+      **Status Response:**
+      ```json
+      {
+        "success": true,
+        "data": {
+          "status": "failed",
+          "error": {
+            "message": "Failed to process website source",
+            "code": "WEBSITE_FETCH_ERROR",
+            "details": "Connection timeout after 30 seconds"
+          }
+        }
+      }
+      ```
+
+  performance-optimization:
+    summary: Performance Optimization Tips
+    description: |
+      ## Optimization Strategies
+
+      ### 1. Training Performance
+      - Use `cleanupExisting: false` for incremental training when sources haven't changed significantly
+      - Monitor training analytics to identify slow source types
+      - Consider splitting large website sources into smaller chunks
+
+      ### 2. Search Performance
+      - Use appropriate similarity thresholds (0.7-0.8 for most use cases)
+      - Limit results to what you actually need (default 10 is usually sufficient)
+      - Use agent-specific search when possible for better namespace isolation
+
+      ### 3. Monitoring and Maintenance
+      - Check training analytics regularly for performance trends
+      - Monitor vector count growth and namespace sizes
+      - Use retrain sparingly - only when sources have significantly changed
+
+      ### 4. Error Prevention
+      - Ensure website sources are accessible and stable
+      - Validate file sources before training
+      - Monitor database source connections
+      - Use appropriate timeouts for external sources
