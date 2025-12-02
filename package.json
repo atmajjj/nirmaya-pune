@@ -43,6 +43,7 @@
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
     "create-admin": "tsx scripts/create-admin.ts",
+    "create-test-users": "tsx scripts/create-test-users.ts",
     "pre-commit": "lint-staged"
   },
   "keywords": [

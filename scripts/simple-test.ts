@@ -4,9 +4,12 @@
  * Tests basic connectivity and login
  *
  * Usage: npx ts-node scripts/simple-test.ts
+ * Usage with custom credentials: TEST_EMAIL=user@example.com TEST_PASSWORD=password123 npx ts-node scripts/simple-test.ts
  */
 
 const BASE_URL = 'http://localhost:8000/api/v1';
+const TEST_EMAIL = process.env.TEST_EMAIL || 'harshal@gmail.com';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || '12345678';
 
 async function simpleTest() {
   try {
@@ -25,8 +28,8 @@ async function simpleTest() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'harshal@gmail.com',
-        password: '12345678',
+        email: TEST_EMAIL,
+        password: TEST_PASSWORD,
       }),
     });
 
