@@ -19,7 +19,7 @@ import { logger } from '../../../utils/logger';
 import { decrypt } from '../../../utils/encryption';
 import { findInvitationByToken, updateInvitation } from '../shared/queries';
 import { IInvitationVerifyResponse } from '../shared/interface';
-import { invitationRateLimit } from '../../../middlewares/rate-limit.middleware';
+// import { invitationRateLimit } from '../../../middlewares/rate-limit.middleware'; // DISABLED
 import { db } from '../../../database/drizzle';
 import { invitations } from '../shared/schema';
 
@@ -108,6 +108,6 @@ const handler = asyncHandler(async (req: Request, res: Response): Promise<void> 
 
 const router = Router();
 // POST method + rate limiting for security
-router.post('/verify', invitationRateLimit, handler);
+router.post('/verify', handler); // invitationRateLimit DISABLED
 
 export default router;

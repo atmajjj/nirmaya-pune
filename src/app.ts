@@ -1,7 +1,7 @@
 import express from 'express';
 import hpp from 'hpp';
 import compression from 'compression';
-import { authRateLimit, apiRateLimit } from './middlewares/rate-limit.middleware';
+// import { authRateLimit, apiRateLimit } from './middlewares/rate-limit.middleware'; // DISABLED
 import { requestIdMiddleware } from './middlewares/request-id.middleware';
 import { securityMiddleware } from './middlewares/security.middleware';
 import { corsMiddleware } from './middlewares/cors.middleware';
@@ -106,12 +106,11 @@ class App {
     // Compression
     this.app.use(compression());
 
-    // Rate limiting - auth endpoints (stricter)
-    this.app.use('/api/auth/login', authRateLimit);
-    this.app.use('/api/auth/register', authRateLimit);
-    this.app.use('/api/auth/refresh-token', authRateLimit);
-    // General API rate limiting
-    this.app.use('/api/', apiRateLimit);
+    // Rate limiting - DISABLED
+    // this.app.use('/api/auth/login', authRateLimit);
+    // this.app.use('/api/auth/register', authRateLimit);
+    // this.app.use('/api/auth/refresh-token', authRateLimit);
+    // this.app.use('/api/', apiRateLimit);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));

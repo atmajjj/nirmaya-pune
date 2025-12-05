@@ -7,7 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import validationMiddleware from '../../../middlewares/validation.middleware';
-import { invitationRateLimit } from '../../../middlewares/rate-limit.middleware';
+// import { invitationRateLimit } from '../../../middlewares/rate-limit.middleware'; // DISABLED
 import { verifyPassword } from '../../../utils/password';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
 import { asyncHandler } from '../../../utils/controllerHelpers';
@@ -123,6 +123,6 @@ const handler = asyncHandler(async (req: Request, res: Response): Promise<void> 
 });
 
 const router = Router();
-router.post('/accept', invitationRateLimit, validationMiddleware(schema), handler);
+router.post('/accept', validationMiddleware(schema), handler); // invitationRateLimit DISABLED
 
 export default router;
