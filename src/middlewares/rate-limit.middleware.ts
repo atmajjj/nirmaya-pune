@@ -46,7 +46,8 @@ const createRateLimitHandler =
 const skipDevOrTest = (req: Request) =>
   isTest ||
   (isDevelopment &&
-    (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1'));
+    (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1')) ||
+  true; // TEMPORARILY DISABLE ALL RATE LIMITING
 
 // Auth endpoints - strict rate limiting (5 requests per 15 minutes) - PRODUCTION ONLY
 export const authRateLimit: RequestHandler = rateLimit({
