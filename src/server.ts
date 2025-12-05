@@ -6,6 +6,7 @@ import UploadRoute from './features/upload';
 import AdminInviteRoute from './features/admin-invite';
 import ChatbotRoute from './features/chatbot';
 import HMPIEngineRoute from './features/hmpi-engine';
+import FormulaEditorRoute from './features/formula-editor';
 import { connectWithRetry, pool } from './database/drizzle';
 import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
@@ -34,6 +35,7 @@ async function bootstrap() {
       new AdminInviteRoute(),
       new ChatbotRoute(),
       new HMPIEngineRoute(),
+      new FormulaEditorRoute(),
     ]);
 
     server = app.listen();

@@ -57,6 +57,13 @@
       "when": 1764789778548,
       "tag": "0007_unique_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1764927155935,
+      "tag": "0008_past_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ dotenv.config();
 import { db, closeDatabase } from './drizzle';
 import { users } from '../features/user/shared/schema';
 import { uploads } from '../features/upload/shared/schema';
+import { seedDefaultFormulas } from '../features/formula-editor/seed-formulas';
 import { logger } from '../utils/logger';
 import bcrypt from 'bcrypt';
 
@@ -77,6 +78,10 @@ async function seed() {
     ]);
 
     logger.info(`✅ Created ${2} test uploads`);
+
+    // Seed default formulas (HPI, MI, WQI)
+    await seedDefaultFormulas(testUser.id);
+
     logger.info('🎉 Database seeding completed successfully!');
   } catch (error) {
     logger.error('❌ Error seeding database:', error);
