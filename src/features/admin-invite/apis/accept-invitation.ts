@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/admin/invitations/accept
+ * POST /api/admin/invitations/accept
  * Accept invitation - creates user account and returns auth token (Public - no auth)
  * Called when invited user clicks "Login" with pre-filled credentials
  */

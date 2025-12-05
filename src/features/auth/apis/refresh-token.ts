@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/refresh-token
+ * POST /api/auth/refresh-token
  * Refresh access token (Requires auth)
  */
 

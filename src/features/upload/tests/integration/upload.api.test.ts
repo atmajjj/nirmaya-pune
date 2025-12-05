@@ -50,7 +50,7 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     const registerResponse = await apiHelper.post(
-      '/api/v1/auth/register',
+      '/api/auth/register',
       userData as unknown as Record<string, unknown>
     );
 
@@ -63,14 +63,14 @@ describeS3('Upload API Integration Tests', () => {
     await dbHelper.close();
   });
 
-  describe('POST /api/v1/uploads', () => {
+  describe('POST /api/uploads', () => {
     it('should upload file to S3 successfully', async () => {
       // Create a test PDF buffer with valid magic bytes
       const fileBuffer = createTestPdfBuffer('Test upload content');
       const filename = 'test-document.pdf';
 
       const response = await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         fileBuffer,
         filename,
@@ -90,7 +90,7 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should fail when no file is provided', async () => {
-      const response = await apiHelper.post('/api/v1/uploads', {}, authToken);
+      const response = await apiHelper.post('/api/uploads', {}, authToken);
 
       expect(response.status).toBe(400);
       expect(response.body.error.message).toContain('No file uploaded');
@@ -99,7 +99,7 @@ describeS3('Upload API Integration Tests', () => {
     it('should require authentication', async () => {
       const fileBuffer = createTestPdfBuffer();
       const response = await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         fileBuffer,
         'test.pdf'
@@ -110,11 +110,11 @@ describeS3('Upload API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/v1/uploads', () => {
+  describe('GET /api/uploads', () => {
     beforeEach(async () => {
       // Create some test uploads
       await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         createTestPdfBuffer('File 1'),
         'test1.pdf',
@@ -122,7 +122,7 @@ describeS3('Upload API Integration Tests', () => {
       );
 
       await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         createTestPdfBuffer('File 2'),
         'test2.pdf',
@@ -131,7 +131,7 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should return user uploads with pagination', async () => {
-      const response = await apiHelper.get('/api/v1/uploads', authToken);
+      const response = await apiHelper.get('/api/uploads', authToken);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body.data)).toBe(true);
@@ -146,7 +146,7 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should filter by mime type', async () => {
-      const response = await apiHelper.get('/api/v1/uploads?mime_type=application/pdf', authToken);
+      const response = await apiHelper.get('/api/uploads?mime_type=application/pdf', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(2);
@@ -154,7 +154,7 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should support pagination', async () => {
-      const response = await apiHelper.get('/api/v1/uploads?page=1&limit=1', authToken);
+      const response = await apiHelper.get('/api/uploads?page=1&limit=1', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.length).toBe(1);
@@ -163,20 +163,20 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/uploads');
+      const response = await apiHelper.get('/api/uploads');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication');
     });
   });
 
-  describe('GET /api/v1/uploads/:id', () => {
+  describe('GET /api/uploads/:id', () => {
     let uploadId: number;
 
     beforeEach(async () => {
       // Create a test upload
       const response = await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         createTestPdfBuffer('Test content'),
         'test.pdf',
@@ -187,7 +187,7 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should get upload by ID', async () => {
-      const response = await apiHelper.get(`/api/v1/uploads/${uploadId}`, authToken);
+      const response = await apiHelper.get(`/api/uploads/${uploadId}`, authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.id).toBe(uploadId);
@@ -196,27 +196,27 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent upload', async () => {
-      const response = await apiHelper.get('/api/v1/uploads/99999', authToken);
+      const response = await apiHelper.get('/api/uploads/99999', authToken);
 
       expect(response.status).toBe(404);
       expect(response.body.error.message).toContain('not found');
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/uploads/1');
+      const response = await apiHelper.get('/api/uploads/1');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication');
     });
   });
 
-  describe('PUT /api/v1/uploads/:id', () => {
+  describe('PUT /api/uploads/:id', () => {
     let uploadId: number;
 
     beforeEach(async () => {
       // Create a test upload
       const response = await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         createTestPdfBuffer('Test content'),
         'test.pdf',
@@ -231,7 +231,7 @@ describeS3('Upload API Integration Tests', () => {
         status: 'completed',
       };
 
-      const response = await apiHelper.put(`/api/v1/uploads/${uploadId}`, updateData, authToken);
+      const response = await apiHelper.put(`/api/uploads/${uploadId}`, updateData, authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.status).toBe('completed');
@@ -244,7 +244,7 @@ describeS3('Upload API Integration Tests', () => {
       };
 
       const response = await apiHelper.put(
-        `/api/v1/uploads/${uploadId}`,
+        `/api/uploads/${uploadId}`,
         invalidUpdateData,
         authToken
       );
@@ -258,7 +258,7 @@ describeS3('Upload API Integration Tests', () => {
       const nonExistentId = 99999;
 
       const response = await apiHelper.put(
-        `/api/v1/uploads/${nonExistentId}`,
+        `/api/uploads/${nonExistentId}`,
         updateData,
         authToken
       );
@@ -268,13 +268,13 @@ describeS3('Upload API Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/v1/uploads/:id', () => {
+  describe('DELETE /api/uploads/:id', () => {
     let uploadId: number;
 
     beforeEach(async () => {
       // Create a test upload
       const response = await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         createTestPdfBuffer('Test content'),
         'test.pdf',
@@ -285,30 +285,30 @@ describeS3('Upload API Integration Tests', () => {
     });
 
     it('should delete upload successfully', async () => {
-      const response = await apiHelper.delete(`/api/v1/uploads/${uploadId}`, authToken);
+      const response = await apiHelper.delete(`/api/uploads/${uploadId}`, authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toContain('Upload deleted successfully');
 
       // Verify upload is deleted (soft delete)
-      const getResponse = await apiHelper.get(`/api/v1/uploads/${uploadId}`, authToken);
+      const getResponse = await apiHelper.get(`/api/uploads/${uploadId}`, authToken);
 
       expect(getResponse.status).toBe(404);
     });
 
     it('should return 404 for non-existent upload', async () => {
-      const response = await apiHelper.delete('/api/v1/uploads/99999', authToken);
+      const response = await apiHelper.delete('/api/uploads/99999', authToken);
 
       expect(response.status).toBe(404);
       expect(response.body.error.message).toContain('not found');
     });
   });
 
-  describe('GET /api/v1/uploads/stats', () => {
+  describe('GET /api/uploads/stats', () => {
     beforeEach(async () => {
       // Create test uploads with different statuses
       const response = await apiHelper.uploadFileBuffer(
-        '/api/v1/uploads',
+        '/api/uploads',
         'file',
         createTestPdfBuffer('Stats test content'),
         'completed.pdf',
@@ -317,11 +317,11 @@ describeS3('Upload API Integration Tests', () => {
 
       // Update one to completed status
       const uploadId = response.body.data.id;
-      await apiHelper.put(`/api/v1/uploads/${uploadId}`, { status: 'completed' }, authToken);
+      await apiHelper.put(`/api/uploads/${uploadId}`, { status: 'completed' }, authToken);
     });
 
     it('should return upload statistics', async () => {
-      const response = await apiHelper.get('/api/v1/uploads/stats', authToken);
+      const response = await apiHelper.get('/api/uploads/stats', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveProperty('total_uploads');

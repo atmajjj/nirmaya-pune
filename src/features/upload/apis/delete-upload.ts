@@ -1,5 +1,5 @@
 /**
- * DELETE /api/v1/uploads/:id
+ * DELETE /api/uploads/:id
  * Soft delete an upload (Requires auth and ownership)
  */
 

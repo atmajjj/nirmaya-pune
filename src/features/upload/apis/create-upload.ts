@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/uploads
+ * POST /api/uploads
  * Upload file to S3 and create record (Requires auth)
  */
 

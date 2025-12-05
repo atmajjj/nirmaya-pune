@@ -2,10 +2,10 @@
  * Sessions & Chat API Integration Tests
  *
  * Tests for session and message endpoints:
- * - POST /api/v1/chatbot/chat - Send message
- * - GET /api/v1/chatbot/sessions - List sessions
- * - GET /api/v1/chatbot/sessions/:id - Get session with messages
- * - DELETE /api/v1/chatbot/sessions/:id - Delete session
+ * - POST /api/chatbot/chat - Send message
+ * - GET /api/chatbot/sessions - List sessions
+ * - GET /api/chatbot/sessions/:id - Get session with messages
+ * - DELETE /api/chatbot/sessions/:id - Delete session
  */
 
 import { Application } from 'express';
@@ -72,7 +72,7 @@ describe('Sessions & Chat API Integration Tests', () => {
     await dbHelper.close();
   });
 
-  describe('GET /api/v1/chatbot/sessions', () => {
+  describe('GET /api/chatbot/sessions', () => {
     it('should list user sessions', async () => {
       // Create sessions for the user
       await db.insert(chatbotSessions).values([
@@ -90,7 +90,7 @@ describe('Sessions & Chat API Integration Tests', () => {
         },
       ]);
 
-      const response = await apiHelper.get('/api/v1/chatbot/sessions', userToken);
+      const response = await apiHelper.get('/api/chatbot/sessions', userToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(2);
@@ -108,7 +108,7 @@ describe('Sessions & Chat API Integration Tests', () => {
         });
       }
 
-      const response = await apiHelper.get('/api/v1/chatbot/sessions?page=1&limit=2', userToken);
+      const response = await apiHelper.get('/api/chatbot/sessions?page=1&limit=2', userToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(2);
@@ -133,7 +133,7 @@ describe('Sessions & Chat API Integration Tests', () => {
         updated_by: otherUserId,
       });
 
-      const response = await apiHelper.get('/api/v1/chatbot/sessions', userToken);
+      const response = await apiHelper.get('/api/chatbot/sessions', userToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(1);
@@ -141,13 +141,13 @@ describe('Sessions & Chat API Integration Tests', () => {
     });
 
     it('should reject unauthenticated requests', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/sessions');
+      const response = await apiHelper.get('/api/chatbot/sessions');
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('GET /api/v1/chatbot/sessions/:id', () => {
+  describe('GET /api/chatbot/sessions/:id', () => {
     it('should get session with messages', async () => {
       // Create session
       const [session] = await db
@@ -178,7 +178,7 @@ describe('Sessions & Chat API Integration Tests', () => {
         },
       ]);
 
-      const response = await apiHelper.get(`/api/v1/chatbot/sessions/${session.id}`, userToken);
+      const response = await apiHelper.get(`/api/chatbot/sessions/${session.id}`, userToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.session.id).toBe(session.id);
@@ -189,7 +189,7 @@ describe('Sessions & Chat API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent session', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/sessions/999', userToken);
+      const response = await apiHelper.get('/api/chatbot/sessions/999', userToken);
 
       expect(response.status).toBe(404);
     });
@@ -206,19 +206,19 @@ describe('Sessions & Chat API Integration Tests', () => {
         })
         .returning();
 
-      const response = await apiHelper.get(`/api/v1/chatbot/sessions/${session.id}`, userToken);
+      const response = await apiHelper.get(`/api/chatbot/sessions/${session.id}`, userToken);
 
       expect(response.status).toBe(404);
     });
 
     it('should reject invalid session ID', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/sessions/invalid', userToken);
+      const response = await apiHelper.get('/api/chatbot/sessions/invalid', userToken);
 
       expect(response.status).toBe(400);
     });
   });
 
-  describe('DELETE /api/v1/chatbot/sessions/:id', () => {
+  describe('DELETE /api/chatbot/sessions/:id', () => {
     it('should soft delete session and messages', async () => {
       // Create session with messages
       const [session] = await db
@@ -239,17 +239,17 @@ describe('Sessions & Chat API Integration Tests', () => {
         updated_by: userId,
       });
 
-      const response = await apiHelper.delete(`/api/v1/chatbot/sessions/${session.id}`, userToken);
+      const response = await apiHelper.delete(`/api/chatbot/sessions/${session.id}`, userToken);
 
       expect(response.status).toBe(204);
 
       // Verify session is deleted (not visible in list)
-      const listResponse = await apiHelper.get('/api/v1/chatbot/sessions', userToken);
+      const listResponse = await apiHelper.get('/api/chatbot/sessions', userToken);
       expect(listResponse.body.data).toHaveLength(0);
     });
 
     it('should return 404 for non-existent session', async () => {
-      const response = await apiHelper.delete('/api/v1/chatbot/sessions/999', userToken);
+      const response = await apiHelper.delete('/api/chatbot/sessions/999', userToken);
 
       expect(response.status).toBe(404);
     });
@@ -266,36 +266,36 @@ describe('Sessions & Chat API Integration Tests', () => {
         })
         .returning();
 
-      const response = await apiHelper.delete(`/api/v1/chatbot/sessions/${session.id}`, userToken);
+      const response = await apiHelper.delete(`/api/chatbot/sessions/${session.id}`, userToken);
 
       expect(response.status).toBe(404);
     });
   });
 
-  // Note: POST /api/v1/chatbot/chat tests require mocking external services
+  // Note: POST /api/chatbot/chat tests require mocking external services
   // (Pinecone, HuggingFace, Groq) which should be done in separate test file
-  describe('POST /api/v1/chatbot/chat', () => {
+  describe('POST /api/chatbot/chat', () => {
     it('should reject empty message', async () => {
-      const response = await apiHelper.post('/api/v1/chatbot/chat', { message: '' }, userToken);
+      const response = await apiHelper.post('/api/chatbot/chat', { message: '' }, userToken);
 
       expect(response.status).toBe(400);
     });
 
     it('should reject request without message', async () => {
-      const response = await apiHelper.post('/api/v1/chatbot/chat', {}, userToken);
+      const response = await apiHelper.post('/api/chatbot/chat', {}, userToken);
 
       expect(response.status).toBe(400);
     });
 
     it('should reject unauthenticated requests', async () => {
-      const response = await apiHelper.post('/api/v1/chatbot/chat', { message: 'Hello' });
+      const response = await apiHelper.post('/api/chatbot/chat', { message: 'Hello' });
 
       expect(response.status).toBe(401);
     });
 
     it('should reject invalid session ID', async () => {
       const response = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'Hello', sessionId: 'invalid' },
         userToken
       );
@@ -305,7 +305,7 @@ describe('Sessions & Chat API Integration Tests', () => {
 
     it('should reject non-existent session ID', async () => {
       const response = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'Hello', sessionId: 999 },
         userToken
       );
@@ -326,7 +326,7 @@ describe('Sessions & Chat API Integration Tests', () => {
         .returning();
 
       const response = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'Hello', sessionId: session.id },
         userToken
       );

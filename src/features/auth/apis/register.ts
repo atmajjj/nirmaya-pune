@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/register
+ * POST /api/auth/register
  * Register new user account (Public - no auth)
  */
 

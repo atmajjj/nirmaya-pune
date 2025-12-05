@@ -28,7 +28,7 @@ describe('User Authentication Integration Tests', () => {
     await dbHelper.close();
   });
 
-  describe('POST /api/v1/auth/register', () => {
+  describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
       const userData = TestDataFactory.createUser({
         email: 'newuser@example.com',
@@ -37,7 +37,7 @@ describe('User Authentication Integration Tests', () => {
       });
 
       const response = await apiHelper.post(
-        '/api/v1/auth/register',
+        '/api/auth/register',
         userData as unknown as Record<string, unknown>
       );
 
@@ -54,7 +54,7 @@ describe('User Authentication Integration Tests', () => {
       });
 
       const response = await apiHelper.post(
-        '/api/v1/auth/register',
+        '/api/auth/register',
         userData as unknown as Record<string, unknown>
       );
 
@@ -69,7 +69,7 @@ describe('User Authentication Integration Tests', () => {
       });
 
       const response = await apiHelper.post(
-        '/api/v1/auth/register',
+        '/api/auth/register',
         userData as unknown as Record<string, unknown>
       );
 
@@ -83,10 +83,10 @@ describe('User Authentication Integration Tests', () => {
         password: 'TestPassword123!',
       });
 
-      await apiHelper.post('/api/v1/auth/register', userData as unknown as Record<string, unknown>);
+      await apiHelper.post('/api/auth/register', userData as unknown as Record<string, unknown>);
 
       const response = await apiHelper.post(
-        '/api/v1/auth/register',
+        '/api/auth/register',
         userData as unknown as Record<string, unknown>
       );
 
@@ -95,16 +95,16 @@ describe('User Authentication Integration Tests', () => {
     });
   });
 
-  describe('POST /api/v1/auth/login', () => {
+  describe('POST /api/auth/login', () => {
     it('should login successfully with correct credentials', async () => {
       const userData = TestDataFactory.createUser({
         email: 'logintest@example.com',
         password: 'TestPassword123!',
       });
 
-      await apiHelper.post('/api/v1/auth/register', userData as unknown as Record<string, unknown>);
+      await apiHelper.post('/api/auth/register', userData as unknown as Record<string, unknown>);
 
-      const response = await apiHelper.post('/api/v1/auth/login', {
+      const response = await apiHelper.post('/api/auth/login', {
         email: userData.email,
         password: userData.password,
       });
@@ -118,7 +118,7 @@ describe('User Authentication Integration Tests', () => {
     it('should fail login with incorrect password', async () => {
       const { user } = await AuthTestHelper.createTestUserWithToken();
 
-      const response = await apiHelper.post('/api/v1/auth/login', {
+      const response = await apiHelper.post('/api/auth/login', {
         email: user.email,
         password: 'wrongpassword',
       });
@@ -129,7 +129,7 @@ describe('User Authentication Integration Tests', () => {
     });
 
     it('should fail login with non-existent email', async () => {
-      const response = await apiHelper.post('/api/v1/auth/login', {
+      const response = await apiHelper.post('/api/auth/login', {
         email: 'nonexistent@example.com',
         password: 'TestPassword123!',
       });
@@ -140,16 +140,16 @@ describe('User Authentication Integration Tests', () => {
     });
 
     it('should fail login with missing fields', async () => {
-      const response = await apiHelper.post('/api/v1/auth/login', { email: 'test@example.com' });
+      const response = await apiHelper.post('/api/auth/login', { email: 'test@example.com' });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBeDefined();
     });
   });
 
-  describe('GET /api/v1/users', () => {
+  describe('GET /api/users', () => {
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/users');
+      const response = await apiHelper.get('/api/users');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication required');
@@ -158,18 +158,18 @@ describe('User Authentication Integration Tests', () => {
     it('should require admin role to access users list', async () => {
       const { token } = await AuthTestHelper.createTestUserWithToken();
 
-      const response = await apiHelper.get('/api/v1/users', token);
+      const response = await apiHelper.get('/api/users', token);
 
       expect(response.status).toBe(403);
       expect(response.body.error.message).toContain('Access denied');
     });
   });
 
-  describe('GET /api/v1/users/:id', () => {
+  describe('GET /api/users/:id', () => {
     it('should get user by ID for authenticated user', async () => {
       const { user, token } = await AuthTestHelper.createTestUserWithToken();
 
-      const response = await apiHelper.get(`/api/v1/users/${user.id}`, token);
+      const response = await apiHelper.get(`/api/users/${user.id}`, token);
 
       expect(response.status).toBe(200);
       expect(response.body.data.id).toBe(user.id);
@@ -180,14 +180,14 @@ describe('User Authentication Integration Tests', () => {
     it('should return 404 for non-existent user', async () => {
       const { token } = await AuthTestHelper.createTestUserWithToken();
 
-      const response = await apiHelper.get('/api/v1/users/99999', token);
+      const response = await apiHelper.get('/api/users/99999', token);
 
       expect(response.status).toBe(404);
       expect(response.body.error.message).toContain('User not found');
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/users/1');
+      const response = await apiHelper.get('/api/users/1');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication required');

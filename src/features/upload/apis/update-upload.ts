@@ -1,5 +1,5 @@
 /**
- * PUT /api/v1/uploads/:id
+ * PUT /api/uploads/:id
  * Update upload metadata (Requires auth and ownership)
  */
 

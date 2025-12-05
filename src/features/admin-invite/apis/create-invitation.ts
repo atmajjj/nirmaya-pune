@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/admin/invitations
+ * POST /api/admin/invitations
  * Create invitation with auto-generated secure password (Admin only)
  * User will receive email with invite link, credentials shown on verification
  */

@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/login
+ * POST /api/auth/login
  * Login with email and password (Public - no auth)
  */
 

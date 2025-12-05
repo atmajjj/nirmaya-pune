@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/admin/invitations
+ * GET /api/admin/invitations
  * Get all invitations with filtering and pagination (Admin only)
  */
 

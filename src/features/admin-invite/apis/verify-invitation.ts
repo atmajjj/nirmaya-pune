@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/admin/invitations/verify
+ * POST /api/admin/invitations/verify
  * Verify invitation token and return credentials for auto-login (Public - no auth)
  * Frontend calls this to get email + password for pre-filling login form
  * 

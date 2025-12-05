@@ -149,7 +149,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Upload document via API using the uploadFileBuffer helper
       const uploadResponse = await apiHelper.uploadFileBuffer(
-        '/api/v1/chatbot/documents',
+        '/api/chatbot/documents',
         'file',
         fileBuffer,
         'test-document.txt',
@@ -168,7 +168,7 @@ describe('Chatbot E2E Integration Tests', () => {
       expect(processed).toBe(true);
 
       // Verify document status
-      const getResponse = await apiHelper.get('/api/v1/chatbot/documents', adminToken);
+      const getResponse = await apiHelper.get('/api/chatbot/documents', adminToken);
       expect(getResponse.status).toBe(200);
 
       const doc = getResponse.body.data.find((d: any) => d.id === documentId);
@@ -197,7 +197,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Upload document via API using the uploadFileBuffer helper
       const uploadResponse = await apiHelper.uploadFileBuffer(
-        '/api/v1/chatbot/documents',
+        '/api/chatbot/documents',
         'file',
         Buffer.from(testContent),
         'test-document.txt',
@@ -242,7 +242,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Send chat message
       const chatResponse = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'What is Nirmaya about?' },
         userToken
       );
@@ -257,7 +257,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Verify session was created
       const sessionId = chatResponse.body.data.sessionId;
-      const sessionResponse = await apiHelper.get(`/api/v1/chatbot/sessions/${sessionId}`, userToken);
+      const sessionResponse = await apiHelper.get(`/api/chatbot/sessions/${sessionId}`, userToken);
       expect(sessionResponse.status).toBe(200);
       expect(sessionResponse.body.data.messages).toHaveLength(2); // user + assistant
     });
@@ -265,7 +265,7 @@ describe('Chatbot E2E Integration Tests', () => {
     it('should continue conversation in existing session', async () => {
       // First message creates session
       const firstResponse = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'Hello NIRA!' },
         userToken
       );
@@ -275,7 +275,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Second message in same session
       const secondResponse = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         {
           message: 'What can you help me with?',
           sessionId: sessionId,
@@ -287,7 +287,7 @@ describe('Chatbot E2E Integration Tests', () => {
       expect(secondResponse.body.data.sessionId).toBe(sessionId);
 
       // Verify session has 4 messages (2 user + 2 assistant)
-      const sessionResponse = await apiHelper.get(`/api/v1/chatbot/sessions/${sessionId}`, userToken);
+      const sessionResponse = await apiHelper.get(`/api/chatbot/sessions/${sessionId}`, userToken);
       expect(sessionResponse.status).toBe(200);
       expect(sessionResponse.body.data.messages).toHaveLength(4);
     });
@@ -298,7 +298,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Send message - should still work with general knowledge
       const chatResponse = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'Can you help me?' },
         userToken
       );
@@ -323,7 +323,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Upload the document using uploadFileBuffer
       const uploadResponse = await apiHelper.uploadFileBuffer(
-        '/api/v1/chatbot/documents',
+        '/api/chatbot/documents',
         'file',
         Buffer.from(uniqueContent),
         'nirmaya-info.txt',
@@ -347,7 +347,7 @@ describe('Chatbot E2E Integration Tests', () => {
 
       // Ask a question that requires the uploaded document
       const chatResponse = await apiHelper.post(
-        '/api/v1/chatbot/chat',
+        '/api/chatbot/chat',
         { message: 'Who leads the research division at Nirmaya?' },
         userToken
       );

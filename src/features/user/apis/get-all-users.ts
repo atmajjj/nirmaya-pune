@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/users
+ * GET /api/users
  * Get all users with pagination (Admin only)
  */
 

@@ -32,7 +32,7 @@ describe('User API Integration Tests', () => {
     });
 
     const registerResponse = await apiHelper.post(
-      '/api/v1/auth/register',
+      '/api/auth/register',
       userData as unknown as Record<string, unknown>
     );
 
@@ -43,29 +43,29 @@ describe('User API Integration Tests', () => {
     await dbHelper.close();
   });
 
-  describe('GET /api/v1/users', () => {
+  describe('GET /api/users', () => {
     it('should require admin role to access users list', async () => {
-      const response = await apiHelper.get('/api/v1/users', authToken);
+      const response = await apiHelper.get('/api/users', authToken);
 
       expect(response.status).toBe(403);
       expect(response.body.error.message).toContain('Access denied');
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/users');
+      const response = await apiHelper.get('/api/users');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication required');
     });
   });
 
-  describe('GET /api/v1/users/:id', () => {
+  describe('GET /api/users/:id', () => {
     it('should get user by ID for authenticated user', async () => {
       // First get the user ID from the token
       const userInfo = AuthTestHelper.verifyToken(authToken);
       const userId = userInfo.id;
 
-      const response = await apiHelper.get(`/api/v1/users/${userId}`, authToken);
+      const response = await apiHelper.get(`/api/users/${userId}`, authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.id).toBe(userId);
@@ -75,14 +75,14 @@ describe('User API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent user', async () => {
-      const response = await apiHelper.get('/api/v1/users/99999', authToken);
+      const response = await apiHelper.get('/api/users/99999', authToken);
 
       expect(response.status).toBe(404);
       expect(response.body.error.message).toContain('User not found');
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/users/1');
+      const response = await apiHelper.get('/api/users/1');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication required');

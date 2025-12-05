@@ -2,10 +2,10 @@
  * Documents API Integration Tests
  *
  * Tests for document management endpoints:
- * - POST /api/v1/chatbot/documents - Upload document
- * - GET /api/v1/chatbot/documents - List documents
- * - GET /api/v1/chatbot/documents/stats - Get document stats
- * - DELETE /api/v1/chatbot/documents/:id - Delete document
+ * - POST /api/chatbot/documents - Upload document
+ * - GET /api/chatbot/documents - List documents
+ * - GET /api/chatbot/documents/stats - Get document stats
+ * - DELETE /api/chatbot/documents/:id - Delete document
  */
 
 import { Application } from 'express';
@@ -67,7 +67,7 @@ describe('Documents API Integration Tests', () => {
     await dbHelper.close();
   });
 
-  describe('GET /api/v1/chatbot/documents', () => {
+  describe('GET /api/chatbot/documents', () => {
     it('should list documents for admin', async () => {
       // Create test documents directly in DB
       await db.insert(chatbotDocuments).values({
@@ -93,7 +93,7 @@ describe('Documents API Integration Tests', () => {
         updated_by: 1,
       });
 
-      const response = await apiHelper.get('/api/v1/chatbot/documents', adminToken);
+      const response = await apiHelper.get('/api/chatbot/documents', adminToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(2);
@@ -115,7 +115,7 @@ describe('Documents API Integration Tests', () => {
         });
       }
 
-      const response = await apiHelper.get('/api/v1/chatbot/documents?page=1&limit=2', adminToken);
+      const response = await apiHelper.get('/api/chatbot/documents?page=1&limit=2', adminToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(2);
@@ -125,19 +125,19 @@ describe('Documents API Integration Tests', () => {
     });
 
     it('should reject non-admin users', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/documents', userToken);
+      const response = await apiHelper.get('/api/chatbot/documents', userToken);
 
       expect(response.status).toBe(403);
     });
 
     it('should reject unauthenticated requests', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/documents');
+      const response = await apiHelper.get('/api/chatbot/documents');
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('GET /api/v1/chatbot/documents/stats', () => {
+  describe('GET /api/chatbot/documents/stats', () => {
     it('should return document statistics for admin', async () => {
       // Create documents with various statuses
       await db.insert(chatbotDocuments).values([
@@ -175,7 +175,7 @@ describe('Documents API Integration Tests', () => {
         },
       ]);
 
-      const response = await apiHelper.get('/api/v1/chatbot/documents/stats', adminToken);
+      const response = await apiHelper.get('/api/chatbot/documents/stats', adminToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.total).toBe(3);
@@ -186,7 +186,7 @@ describe('Documents API Integration Tests', () => {
     });
 
     it('should return zeros when no documents', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/documents/stats', adminToken);
+      const response = await apiHelper.get('/api/chatbot/documents/stats', adminToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.total).toBe(0);
@@ -197,13 +197,13 @@ describe('Documents API Integration Tests', () => {
     });
 
     it('should reject non-admin users', async () => {
-      const response = await apiHelper.get('/api/v1/chatbot/documents/stats', userToken);
+      const response = await apiHelper.get('/api/chatbot/documents/stats', userToken);
 
       expect(response.status).toBe(403);
     });
   });
 
-  describe('DELETE /api/v1/chatbot/documents/:id', () => {
+  describe('DELETE /api/chatbot/documents/:id', () => {
     it('should soft delete document for admin', async () => {
       const [doc] = await db
         .insert(chatbotDocuments)
@@ -220,17 +220,17 @@ describe('Documents API Integration Tests', () => {
         })
         .returning();
 
-      const response = await apiHelper.delete(`/api/v1/chatbot/documents/${doc.id}`, adminToken);
+      const response = await apiHelper.delete(`/api/chatbot/documents/${doc.id}`, adminToken);
 
       expect(response.status).toBe(204);
 
       // Verify document is soft deleted
-      const listResponse = await apiHelper.get('/api/v1/chatbot/documents', adminToken);
+      const listResponse = await apiHelper.get('/api/chatbot/documents', adminToken);
       expect(listResponse.body.data).toHaveLength(0);
     });
 
     it('should return 404 for non-existent document', async () => {
-      const response = await apiHelper.delete('/api/v1/chatbot/documents/999', adminToken);
+      const response = await apiHelper.delete('/api/chatbot/documents/999', adminToken);
 
       expect(response.status).toBe(404);
     });
@@ -250,33 +250,33 @@ describe('Documents API Integration Tests', () => {
         })
         .returning();
 
-      const response = await apiHelper.delete(`/api/v1/chatbot/documents/${doc.id}`, userToken);
+      const response = await apiHelper.delete(`/api/chatbot/documents/${doc.id}`, userToken);
 
       expect(response.status).toBe(403);
     });
 
     it('should reject invalid document ID', async () => {
-      const response = await apiHelper.delete('/api/v1/chatbot/documents/invalid', adminToken);
+      const response = await apiHelper.delete('/api/chatbot/documents/invalid', adminToken);
 
       // Invalid ID causes Zod parse error - returns 500 (should be 400, but current behavior)
       expect([400, 500]).toContain(response.status);
     });
   });
 
-  // Note: POST /api/v1/chatbot/documents (upload) tests require file upload
+  // Note: POST /api/chatbot/documents (upload) tests require file upload
   // The route uses multipart/form-data, not JSON. Testing without file returns different status.
-  describe('POST /api/v1/chatbot/documents', () => {
+  describe('POST /api/chatbot/documents', () => {
     it('should reject requests without file (multipart expected)', async () => {
       // This endpoint expects multipart/form-data with a file
       // Sending JSON without file may result in different behavior
-      const response = await apiHelper.post('/api/v1/chatbot/documents', {}, adminToken);
+      const response = await apiHelper.post('/api/chatbot/documents', {}, adminToken);
 
       // Could be 400 (no file) or 404 (route not matching for non-multipart)
       expect([400, 404]).toContain(response.status);
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.post('/api/v1/chatbot/documents', {});
+      const response = await apiHelper.post('/api/chatbot/documents', {});
 
       expect(response.status).toBe(401);
     });

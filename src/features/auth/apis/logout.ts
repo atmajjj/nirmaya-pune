@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/logout
+ * POST /api/auth/logout
  * Logout user and blacklist token (Requires auth)
  */
 

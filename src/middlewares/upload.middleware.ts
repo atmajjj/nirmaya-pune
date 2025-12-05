@@ -140,3 +140,108 @@ export const uploadSingleFileMiddleware = (req: Request, res: Response, next: Ne
     }
   });
 };
+
+// ============================================================================
+// CSV Upload Middleware
+// ============================================================================
+
+// Allowed CSV MIME types
+const ALLOWED_CSV_TYPES = [
+  'text/csv',
+  'application/csv',
+  'text/comma-separated-values',
+  'application/vnd.ms-excel', // Some systems send CSV with this MIME type
+];
+
+// File filter function to validate CSV files
+const csvFileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  // Check MIME type
+  if (ALLOWED_CSV_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+    return;
+  }
+
+  // Also allow by extension for cases where MIME type detection fails
+  if (file.originalname.toLowerCase().endsWith('.csv')) {
+    cb(null, true);
+    return;
+  }
+
+  cb(
+    new Error(
+      `File type ${file.mimetype} is not allowed. Only CSV files are accepted.`
+    )
+  );
+};
+
+// Configure multer for CSV uploads
+const csvUpload = multer({
+  storage,
+  fileFilter: csvFileFilter,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+  },
+});
+
+/**
+ * Validate that buffer content looks like CSV data
+ * Basic validation: check for common CSV patterns
+ */
+function validateCsvContent(buffer: Buffer): boolean {
+  try {
+    // Convert first 1KB to string for validation
+    const sample = buffer.slice(0, 1024).toString('utf-8');
+
+    // CSV files typically:
+    // 1. Are valid UTF-8 text
+    // 2. Contain commas or other delimiters
+    // 3. Have newlines separating rows
+
+    // Check for newlines (CR, LF, or CRLF)
+    const hasNewlines = /[\r\n]/.test(sample);
+
+    // Check for common delimiters (comma, semicolon, tab)
+    const hasDelimiters = /[,;\t]/.test(sample);
+
+    // Basic check: should have both delimiters and newlines for a valid CSV
+    return hasNewlines && hasDelimiters;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Middleware for CSV file upload
+ * Validates file presence, MIME type, and basic CSV content structure
+ */
+export const uploadCsvMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const multerSingle = csvUpload.single('file');
+
+  multerSingle(req, res, (err: unknown) => {
+    if (err) {
+      handleMulterError(err as Error, next);
+      return;
+    }
+
+    // Check if file exists
+    if (!req.file) {
+      return next(new HttpException(400, 'No file uploaded'));
+    }
+
+    // Validate CSV content structure
+    if (!validateCsvContent(req.file.buffer)) {
+      return next(
+        new HttpException(
+          400,
+          'Invalid CSV file. File does not appear to contain valid CSV data.'
+        )
+      );
+    }
+
+    next();
+  });
+};

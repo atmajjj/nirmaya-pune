@@ -1,5 +1,5 @@
 /**
- * DELETE /api/v1/users/:id
+ * DELETE /api/users/:id
  * Soft delete user (Admin only)
  * - Prevents self-deletion
  * - Prevents deleting the last admin

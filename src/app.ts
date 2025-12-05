@@ -107,11 +107,11 @@ class App {
     this.app.use(compression());
 
     // Rate limiting - auth endpoints (stricter)
-    this.app.use('/api/v1/auth/login', authRateLimit);
-    this.app.use('/api/v1/auth/register', authRateLimit);
-    this.app.use('/api/v1/auth/refresh-token', authRateLimit);
+    this.app.use('/api/auth/login', authRateLimit);
+    this.app.use('/api/auth/register', authRateLimit);
+    this.app.use('/api/auth/refresh-token', authRateLimit);
     // General API rate limiting
-    this.app.use('/api/v1/', apiRateLimit);
+    this.app.use('/api/', apiRateLimit);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
@@ -121,7 +121,7 @@ class App {
   private initializeRoutes(routes: Routes[]) {
     // Routes now handle auth individually with requireAuth
     routes.forEach(route => {
-      this.app.use('/api/v1/', route.router);
+      this.app.use('/api/', route.router);
     });
   }
 

@@ -1,5 +1,5 @@
 /**
- * PUT /api/v1/users/:id
+ * PUT /api/users/:id
  * Update user (Requires auth)
  * - Users can only update their own profile (name, email, phone, password)
  * - Admins can update any user including role changes

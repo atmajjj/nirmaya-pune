@@ -1,7 +1,7 @@
 /**
- * GET /api/v1/uploads (list all with pagination/filtering)
- * GET /api/v1/uploads/:id (get by ID)
- * GET /api/v1/uploads/status/:status (get by status)
+ * GET /api/uploads (list all with pagination/filtering)
+ * GET /api/uploads/:id (get by ID)
+ * GET /api/uploads/status/:status (get by status)
  */
 
 import { Router, Response } from 'express';

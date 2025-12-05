@@ -58,7 +58,7 @@ describe('Admin Invite API Integration Tests', () => {
     await dbHelper.close();
   });
 
-  describe('POST /api/v1/admin/invitations', () => {
+  describe('POST /api/admin/invitations', () => {
     it('should create invitation successfully with admin role', async () => {
       const invitationData = {
         first_name: 'Harshal',
@@ -68,7 +68,7 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData,
         adminToken
       );
@@ -94,7 +94,7 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData,
         adminToken
       );
@@ -112,7 +112,7 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData,
         adminToken
       );
@@ -129,7 +129,7 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData as any,
         adminToken
       );
@@ -147,11 +147,11 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       // Create first invitation
-      await apiHelper.post('/api/v1/admin/invitations', invitationData, adminToken);
+      await apiHelper.post('/api/admin/invitations', invitationData, adminToken);
 
       // Try to create duplicate
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData,
         adminToken
       );
@@ -169,7 +169,7 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData,
         scientistToken
       );
@@ -186,7 +186,7 @@ describe('Admin Invite API Integration Tests', () => {
         assigned_role: 'scientist',
       };
 
-      const response = await apiHelper.post('/api/v1/admin/invitations', invitationData);
+      const response = await apiHelper.post('/api/admin/invitations', invitationData);
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication required');
@@ -204,7 +204,7 @@ describe('Admin Invite API Integration Tests', () => {
         };
 
         const response = await apiHelper.post(
-          '/api/v1/admin/invitations',
+          '/api/admin/invitations',
           invitationData,
           adminToken
         );
@@ -215,7 +215,7 @@ describe('Admin Invite API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/v1/admin/invitations', () => {
+  describe('GET /api/admin/invitations', () => {
     beforeEach(async () => {
       // Create test invitations
       const hashedPassword = await bcrypt.hash('TempPass123!', 12);
@@ -258,7 +258,7 @@ describe('Admin Invite API Integration Tests', () => {
     });
 
     it('should get all invitations for admin', async () => {
-      const response = await apiHelper.get('/api/v1/admin/invitations', adminToken);
+      const response = await apiHelper.get('/api/admin/invitations', adminToken);
 
       expect(response.status).toBe(200);
       expect(response.body.data.invitations).toHaveLength(3);
@@ -269,7 +269,7 @@ describe('Admin Invite API Integration Tests', () => {
 
     it('should filter invitations by status', async () => {
       const response = await apiHelper.get(
-        '/api/v1/admin/invitations?status=pending',
+        '/api/admin/invitations?status=pending',
         adminToken
       );
 
@@ -280,7 +280,7 @@ describe('Admin Invite API Integration Tests', () => {
 
     it('should support pagination', async () => {
       const response = await apiHelper.get(
-        '/api/v1/admin/invitations?page=1&limit=2',
+        '/api/admin/invitations?page=1&limit=2',
         adminToken
       );
 
@@ -291,21 +291,21 @@ describe('Admin Invite API Integration Tests', () => {
     });
 
     it('should require admin role', async () => {
-      const response = await apiHelper.get('/api/v1/admin/invitations', scientistToken);
+      const response = await apiHelper.get('/api/admin/invitations', scientistToken);
 
       expect(response.status).toBe(403);
       expect(response.body.error.message).toContain('Access denied');
     });
 
     it('should require authentication', async () => {
-      const response = await apiHelper.get('/api/v1/admin/invitations');
+      const response = await apiHelper.get('/api/admin/invitations');
 
       expect(response.status).toBe(401);
       expect(response.body.error.message).toContain('Authentication required');
     });
   });
 
-  describe('POST /api/v1/admin/invitations/accept', () => {
+  describe('POST /api/admin/invitations/accept', () => {
     it('should accept invitation and create user account', async () => {
       const inviteToken = generateInviteToken();
       const invitationEmail = `newuser-${Date.now()}@example.com`;
@@ -330,7 +330,7 @@ describe('Admin Invite API Integration Tests', () => {
         password: tempPassword,
       };
 
-      const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);
+      const response = await apiHelper.post('/api/admin/invitations/accept', acceptData);
 
       expect(response.status).toBe(200);
       expect(response.body.data.email).toBe(invitationEmail);
@@ -356,7 +356,7 @@ describe('Admin Invite API Integration Tests', () => {
         password: 'NewSecurePass123!',
       };
 
-      const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);
+      const response = await apiHelper.post('/api/admin/invitations/accept', acceptData);
 
       expect(response.status).toBe(404);
       expect(response.body.error.message).toContain('Invalid or expired invitation token');
@@ -370,7 +370,7 @@ describe('Admin Invite API Integration Tests', () => {
         password: 'weak',
       };
 
-      const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);
+      const response = await apiHelper.post('/api/admin/invitations/accept', acceptData);
 
       expect(response.status).toBe(400);
       expect(response.body.error.message).toContain('token');
@@ -395,14 +395,14 @@ describe('Admin Invite API Integration Tests', () => {
       });
 
       // Accept invitation first time
-      await apiHelper.post('/api/v1/admin/invitations/accept', {
+      await apiHelper.post('/api/admin/invitations/accept', {
         token: inviteToken,
         email: invitationEmail,
         password: tempPassword,
       });
 
       // Try to accept again
-      const response = await apiHelper.post('/api/v1/admin/invitations/accept', {
+      const response = await apiHelper.post('/api/admin/invitations/accept', {
         token: inviteToken,
         email: invitationEmail,
         password: tempPassword,
@@ -431,7 +431,7 @@ describe('Admin Invite API Integration Tests', () => {
         expires_at: new Date(Date.now() - 1000), // Already expired
       });
 
-      const response = await apiHelper.post('/api/v1/admin/invitations/accept', {
+      const response = await apiHelper.post('/api/admin/invitations/accept', {
         token: expiredToken,
         email: expiredEmail,
         password: tempPassword,
@@ -465,7 +465,7 @@ describe('Admin Invite API Integration Tests', () => {
         password: tempPassword,
       };
 
-      const response = await apiHelper.post('/api/v1/admin/invitations/accept', acceptData);
+      const response = await apiHelper.post('/api/admin/invitations/accept', acceptData);
 
       expect(response.status).toBe(200);
     });
@@ -481,7 +481,7 @@ describe('Admin Invite API Integration Tests', () => {
       };
 
       const response = await apiHelper.post(
-        '/api/v1/admin/invitations',
+        '/api/admin/invitations',
         invitationData,
         adminToken
       );

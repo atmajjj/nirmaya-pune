@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/uploads/:id/download
+ * GET /api/uploads/:id/download
  * Download file from S3 (Requires auth and ownership)
  */
 

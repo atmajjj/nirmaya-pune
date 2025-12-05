@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/uploads/stats
+ * GET /api/uploads/stats
  * Get upload statistics (Requires auth)
  */
 

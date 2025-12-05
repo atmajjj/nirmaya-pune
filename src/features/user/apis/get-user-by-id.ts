@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/users/:id
+ * GET /api/users/:id
  * Get user by ID (Requires auth)
  */
 
