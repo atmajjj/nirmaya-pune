@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMPI Water Quality Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+        }
+
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+        }
+
+        /* Header Styles */
+        .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2563eb;
+        }
+
+        .report-title {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .report-subtitle {
+            font-size: 14pt;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .report-meta {
+            font-size: 10pt;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .section-subtitle {
+            font-size: 12pt;
+            font-weight: 600;
+            color: #475569;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .summary-card-title {
+            font-size: 10pt;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .summary-card-value {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .summary-card-label {
+            font-size: 9pt;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        /* Statistics Table */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stats-table th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+            font-size: 10pt;
+        }
+
+        .stats-table td {
+            font-size: 10pt;
+        }
+
+        .stats-table tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            margin: 20px 0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .chart-title {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        /* Top Polluters List */
+        .polluter-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .polluter-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #f8fafc;
+            border-left: 4px solid #ef4444;
+            border-radius: 4px;
+        }
+
+        .polluter-rank {
+            font-weight: bold;
+            color: #64748b;
+            margin-right: 10px;
+        }
+
+        .polluter-station {
+            flex: 1;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .polluter-value {
+            font-weight: bold;
+            color: #ef4444;
+            margin-right: 10px;
+        }
+
+        .polluter-location {
+            font-size: 9pt;
+            color: #64748b;
+        }
+
+        /* Geographic Distribution */
+        .geo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .geo-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 4px;
+            font-size: 10pt;
+        }
+
+        .geo-name {
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .geo-count {
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        /* Recommendations */
+        .recommendation-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .recommendation-box h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 11pt;
+        }
+
+        .recommendation-box ul {
+            margin-left: 20px;
+            color: #78350f;
+        }
+
+        .recommendation-box li {
+            margin-bottom: 5px;
+            font-size: 10pt;
+        }
+
+        /* Footer */
+        .report-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            font-size: 9pt;
+            color: #94a3b8;
+        }
+
+        /* Page Break */
+        .page-break {
+            page-break-after: always;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Report Header -->
+        <div class="report-header">
+            <h1 class="report-title">HMPI Water Quality Analysis Report</h1>
+            <div class="report-subtitle">Comprehensive Assessment of Water Quality Indices</div>
+            <div class="report-meta">
+                <div>Report Generated: {{generatedDate}}</div>
+                <div>Data File: {{uploadFilename}}</div>
+                <div>Total Stations Analyzed: {{totalStations}}</div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="section">
+            <h2 class="section-title">Executive Summary</h2>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-card-title">Average HPI</div>
+                    <div class="summary-card-value">{{avgHPI}}</div>
+                    <div class="summary-card-label">Heavy Metal Pollution Index</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card-title">Average MI</div>
+                    <div class="summary-card-value">{{avgMI}}</div>
+                    <div class="summary-card-label">Metal Index</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-card-title">Average WQI</div>
+                    <div class="summary-card-value">{{avgWQI}}</div>
+                    <div class="summary-card-label">Water Quality Index</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 20px; text-align: justify;">
+                This report presents a comprehensive analysis of water quality across {{totalStations}} monitoring stations. 
+                The assessment includes Heavy Metal Pollution Index (HPI), Metal Index (MI), and Water Quality Index (WQI) 
+                measurements to evaluate the overall water quality and identify areas of concern.
+            </p>
+        </div>
+
+        <!-- HPI Analysis -->
+        <div class="section page-break">
+            <h2 class="section-title">Heavy Metal Pollution Index (HPI) Analysis</h2>
+            
+            <h3 class="section-subtitle">Classification Distribution</h3>
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Classification</th>
+                        <th style="text-align: right;">Number of Stations</th>
+                        <th style="text-align: right;">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each hpiClassifications}}
+                    <tr>
+                        <td>{{classification}}</td>
+                        <td style="text-align: right;">{{count}}</td>
+                        <td style="text-align: right;">{{percentage}}%</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            <div class="chart-container">
+                <div class="chart-title">HPI Classification Distribution</div>
+                <img src="data:image/png;base64,{{hpiDistributionChart}}" class="chart-image" alt="HPI Distribution">
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">HPI Classification Breakdown</div>
+                <img src="data:image/png;base64,{{hpiClassificationChart}}" class="chart-image" alt="HPI Classification">
+            </div>
+
+            <h3 class="section-subtitle">Top 10 Most Polluted Stations</h3>
+            <ul class="polluter-list">
+                {{#each topPollutedStations}}
+                <li class="polluter-item">
+                    <span class="polluter-rank">{{rank}}.</span>
+                    <span class="polluter-station">{{stationId}}</span>
+                    <span class="polluter-value">HPI: {{hpi}}</span>
+                    {{#if location}}
+                    <span class="polluter-location">{{location}}</span>
+                    {{/if}}
+                </li>
+                {{/each}}
+            </ul>
+
+            <div class="chart-container">
+                <div class="chart-title">Top Polluted Stations by HPI</div>
+                <img src="data:image/png;base64,{{topPollutedChart}}" class="chart-image" alt="Top Polluted Stations">
+            </div>
+        </div>
+
+        <!-- MI Analysis -->
+        <div class="section page-break">
+            <h2 class="section-title">Metal Index (MI) Analysis</h2>
+            
+            <h3 class="section-subtitle">Classification Distribution</h3>
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Classification</th>
+                        <th style="text-align: right;">Number of Stations</th>
+                        <th style="text-align: right;">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each miClassifications}}
+                    <tr>
+                        <td>{{classification}}</td>
+                        <td style="text-align: right;">{{count}}</td>
+                        <td style="text-align: right;">{{percentage}}%</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            <div class="chart-container">
+                <div class="chart-title">MI Classification Distribution</div>
+                <img src="data:image/png;base64,{{miDistributionChart}}" class="chart-image" alt="MI Distribution">
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">MI Classification Breakdown</div>
+                <img src="data:image/png;base64,{{miClassificationChart}}" class="chart-image" alt="MI Classification">
+            </div>
+        </div>
+
+        <!-- WQI Analysis -->
+        <div class="section page-break">
+            <h2 class="section-title">Water Quality Index (WQI) Analysis</h2>
+            
+            <h3 class="section-subtitle">Classification Distribution</h3>
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Classification</th>
+                        <th style="text-align: right;">Number of Stations</th>
+                        <th style="text-align: right;">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each wqiClassifications}}
+                    <tr>
+                        <td>{{classification}}</td>
+                        <td style="text-align: right;">{{count}}</td>
+                        <td style="text-align: right;">{{percentage}}%</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            <div class="chart-container">
+                <div class="chart-title">WQI Classification Distribution</div>
+                <img src="data:image/png;base64,{{wqiDistributionChart}}" class="chart-image" alt="WQI Distribution">
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">WQI Classification Breakdown</div>
+                <img src="data:image/png;base64,{{wqiClassificationChart}}" class="chart-image" alt="WQI Classification">
+            </div>
+        </div>
+
+        <!-- Geographic Distribution -->
+        <div class="section">
+            <h2 class="section-title">Geographic Distribution</h2>
+            
+            <h3 class="section-subtitle">Stations by State</h3>
+            <div class="geo-grid">
+                {{#each geoStates}}
+                <div class="geo-item">
+                    <span class="geo-name">{{state}}</span>
+                    <span class="geo-count">{{count}} stations</span>
+                </div>
+                {{/each}}
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Geographic Distribution (Top States)</div>
+                <img src="data:image/png;base64,{{geographicChart}}" class="chart-image" alt="Geographic Distribution">
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="section">
+            <h2 class="section-title">Recommendations</h2>
+            
+            {{#if hasHighPollution}}
+            <div class="recommendation-box">
+                <h4>⚠️ High Pollution Areas Detected</h4>
+                <ul>
+                    <li>Immediate water quality intervention required for critically polluted stations</li>
+                    <li>Conduct detailed source identification studies for high HPI locations</li>
+                    <li>Implement regular monitoring programs with increased sampling frequency</li>
+                    <li>Consider water treatment solutions for affected areas</li>
+                </ul>
+            </div>
+            {{/if}}
+
+            <div class="recommendation-box">
+                <h4>📋 General Recommendations</h4>
+                <ul>
+                    <li>Continue routine monitoring of all stations to track trends</li>
+                    <li>Establish baseline values for each monitoring location</li>
+                    <li>Implement source control measures in areas showing degradation</li>
+                    <li>Develop watershed management plans for affected regions</li>
+                    <li>Engage stakeholders in water quality improvement initiatives</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <p>This report was automatically generated by the Nirmaya HMPI System</p>
+            <p>For technical queries, please contact the system administrator</p>
+            <p>&copy; {{year}} Nirmaya Water Quality Monitoring System</p>
+        </div>
+    </div>
+</body>
+</html>
