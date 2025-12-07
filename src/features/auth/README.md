@@ -155,7 +155,7 @@ Content-Type: application/json
 
 ### 3. Logout
 
-Logs out the user by blacklisting their current JWT token. The token will no longer be valid for authentication.
+Logs out the user. The JWT token will remain valid until it naturally expires.
 
 **Endpoint:** `POST /api/auth/logout`
 
@@ -297,8 +297,8 @@ Content-Type: application/json
 5. LOGOUT
    ┌─────────────┐         ┌─────────────┐        ┌─────────────┐
    │  Frontend   │ ──POST──▶│   Backend   │        │   Token     │
-   │  Logout     │ /logout  │  Blacklists │ ─────▶ │   Removed   │
-   │  + Token    │         │   Token     │        │   Locally   │
+   │  Logout     │ /logout  │  Confirms   │ ─────▶ │   Removed   │
+   │  + Token    │         │   Logout    │        │   Locally   │
    └─────────────┘          └─────────────┘        └─────────────┘
 ```
 

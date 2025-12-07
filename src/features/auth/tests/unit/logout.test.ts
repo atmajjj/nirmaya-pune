@@ -57,13 +57,13 @@ describe('Logout Business Logic', () => {
 
   describe('logout security considerations', () => {
     it('should note that JWT logout is stateless', () => {
-      // Document: For JWT, real logout happens client-side by removing the token
-      // Server-side token blacklisting would require additional implementation
-      // (e.g., storing invalidated tokens in Redis with TTL matching token expiry)
-      
+      // Document: For JWT, logout happens client-side by removing the token
+      // Server-side token blacklisting is not implemented for simplicity
+      // Tokens remain valid until they naturally expire
+
       const logoutNotes = {
         implementation: 'client-side token removal',
-        serverSide: 'optional token blacklisting not implemented',
+        serverSide: 'token blacklisting not implemented',
         securityNote: 'tokens remain valid until expiry',
       };
 

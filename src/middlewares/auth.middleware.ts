@@ -3,12 +3,9 @@ import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
 import { DataStoredInToken } from '../interfaces/request.interface';
 import { verifyToken } from '../utils/jwt';
-import { isTokenBlacklisted } from '../utils/tokenBlacklist';
-import { isRedisReady } from '../utils/redis';
 
 /**
  * Authentication middleware - requires valid JWT token
- * Checks token blacklist if Redis is available
  */
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -36,20 +33,6 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         method: req.method,
       });
       return next(new HttpException(401, 'Authentication required. No token provided.'));
-    }
-
-    // Check if token is blacklisted (only if Redis is available)
-    if (isRedisReady()) {
-      const blacklisted = await isTokenBlacklisted(token);
-      if (blacklisted) {
-        logger.warn('Authentication failed: Token is blacklisted (logged out)', {
-          ip: clientIP,
-          userAgent,
-          url: req.originalUrl,
-          method: req.method,
-        });
-        return next(new HttpException(401, 'Token has been revoked. Please login again.'));
-      }
     }
 
     const verificationResponse = verifyToken(token);
