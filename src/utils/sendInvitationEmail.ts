@@ -13,9 +13,12 @@ interface InvitationEmailParams {
 }
 
 /**
- * Format role for display (capitalize first letter)
+ * Format role for display (capitalize first letter, handle underscores)
  */
 function formatRole(role: UserRole): string {
+  if (role === 'field_technician') {
+    return 'Field Technician';
+  }
   return role.charAt(0).toUpperCase() + role.slice(1);
 }
 

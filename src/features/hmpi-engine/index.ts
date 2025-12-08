@@ -12,6 +12,7 @@ import Route from '../../interfaces/route.interface';
 // Import API routes
 import previewRouter from './apis/preview';
 import calculateRouter from './apis/calculate';
+import calculateFromSourceRouter from './apis/calculate-from-source';
 import listCalculationsRouter from './apis/list-calculations';
 import getCalculationRouter from './apis/get-calculation';
 import downloadResultsRouter from './apis/download-results';
@@ -32,6 +33,9 @@ class HMPIEngineRoute implements Route {
     
     // POST /api/hmpi-engine/calculate - Upload CSV and calculate indices
     this.router.use(this.path, calculateRouter);
+    
+    // POST /api/hmpi-engine/calculate-from-source - Calculate from pre-uploaded data source
+    this.router.use(this.path, calculateFromSourceRouter);
     
     // GET /api/hmpi-engine/calculations - List calculations with filters
     this.router.use(this.path, listCalculationsRouter);

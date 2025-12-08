@@ -74,6 +74,12 @@ const TEST_USERS = [
     password: 'policymaker123',
     role: 'policymaker' as const,
   },
+  {
+    name: 'Test Field Technician',
+    email: 'fieldtech@nirmaya.test',
+    password: 'fieldtech123',
+    role: 'field_technician' as const,
+  },
 ];
 
 async function createTestUsers() {

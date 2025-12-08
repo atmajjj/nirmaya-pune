@@ -193,7 +193,7 @@ describe('Admin Invite API Integration Tests', () => {
     });
 
     it('should create invitation for all valid roles', async () => {
-      const roles = ['admin', 'scientist', 'researcher', 'policymaker'];
+      const roles = ['admin', 'scientist', 'researcher', 'policymaker', 'field_technician'];
 
       for (const role of roles) {
         const invitationData = {

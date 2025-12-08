@@ -1,6 +1,6 @@
 import { pgTable, serial, text, timestamp, boolean, integer, varchar, index } from 'drizzle-orm/pg-core';
 
-export const userRoles = ['admin', 'scientist', 'researcher', 'policymaker'] as const;
+export const userRoles = ['admin', 'scientist', 'researcher', 'policymaker', 'field_technician'] as const;
 export type UserRole = (typeof userRoles)[number];
 
 /**
