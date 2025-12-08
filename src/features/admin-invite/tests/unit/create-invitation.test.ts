@@ -8,6 +8,7 @@ import * as inviteQueries from '../../shared/queries';
 import * as sendEmail from '../../../../utils/sendInvitationEmail';
 import { ICreateInvitation, IInvitation } from '../../shared/interface';
 import { Invitation } from '../../shared/schema';
+import { config } from '../../../../utils/validateEnv';
 
 // Mock dependencies - order matters! Mock database before importing queries
 jest.mock('../../../../database/drizzle', () => ({
@@ -23,6 +24,7 @@ jest.mock('../../../../utils/sendInvitationEmail');
 jest.mock('../../../../utils/validateEnv', () => ({
   config: {
     ALLOWED_ORIGINS: 'http://localhost:3000',
+    FRONTEND_URL: 'http://localhost:8080',
   },
 }));
 jest.mock('../../../../utils/logger', () => ({
@@ -65,7 +67,8 @@ async function handleCreateInvitation(
   });
 
   try {
-    const inviteLink = `http://localhost:3000/accept-invitation?token=${inviteToken}`;
+    const frontendUrl = config.FRONTEND_URL.replace(/\/+$/, '');
+    const inviteLink = `${frontendUrl}?invite_token=${inviteToken}`;
     await sendEmail.sendInvitationEmail({
       to: invitationData.email,
       firstName: invitationData.first_name,

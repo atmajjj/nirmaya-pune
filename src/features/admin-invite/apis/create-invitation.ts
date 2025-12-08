@@ -83,7 +83,7 @@ async function handleCreateInvitation(
   // Send invitation email (without password)
   try {
     const frontendUrl = config.FRONTEND_URL.replace(/\/+$/, '');
-    const inviteLink = `${frontendUrl}/accept-invitation/${inviteToken}`;
+    const inviteLink = `${frontendUrl}?invite_token=${inviteToken}`;
     
     await sendInvitationEmail({
       to: invitationData.email,
