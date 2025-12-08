@@ -65,7 +65,5 @@ export {
 export {
   generateChatResponse,
   generateSessionTitle,
-  isGreeting,
-  handleGreeting,
   getAvailableModels,
 } from './chat.service';

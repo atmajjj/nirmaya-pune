@@ -161,38 +161,6 @@ export async function generateSessionTitle(firstMessage: string): Promise<string
 }
 
 /**
- * Check if the message is a greeting/small talk
- */
-export function isGreeting(message: string): boolean {
-  const greetings = [
-    'hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening',
-    'how are you', 'what\'s up', 'greetings', 'howdy',
-  ];
-
-  const lowerMessage = message.toLowerCase().trim();
-  
-  return greetings.some(greeting => 
-    lowerMessage === greeting || 
-    lowerMessage.startsWith(greeting + ' ') ||
-    lowerMessage.startsWith(greeting + ',') ||
-    lowerMessage.startsWith(greeting + '!')
-  );
-}
-
-/**
- * Handle greeting messages
- */
-export function handleGreeting(): string {
-  const responses = [
-    "Hello! I'm NIRA AI, your assistant for the Nirmaya platform. I can help you find information from the uploaded documents. What would you like to know?",
-    "Hi there! I'm NIRA AI. I'm here to help you explore and understand the documents that have been uploaded. What can I help you with?",
-    "Greetings! I'm NIRA AI, ready to assist you with questions about the available documents. How can I help you today?",
-  ];
-
-  return responses[Math.floor(Math.random() * responses.length)];
-}
-
-/**
  * Get available LLM models
  */
 export function getAvailableModels(): string[] {

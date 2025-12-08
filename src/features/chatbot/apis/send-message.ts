@@ -25,8 +25,6 @@ import {
 } from '../shared/queries';
 import {
   generateChatResponse,
-  isGreeting,
-  handleGreeting,
   generateSessionTitle,
 } from '../services/chat.service';
 import { MessageSource } from '../shared/schema';
@@ -76,27 +74,20 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
   let responseText: string;
   let sources: MessageSource[] = [];
 
-  // Check if it's a greeting
-  if (isGreeting(message)) {
-    responseText = handleGreeting();
-    sources = [];
-    logger.info(`👋 Greeting handled for session ${session.id}`);
-  } else {
-    // Get conversation history for context
-    const recentMessages = await getRecentMessages(session.id, 10);
-    const conversationHistory = recentMessages
-      .filter(m => m.id !== userMessage.id) // Exclude the message we just created
-      .map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      }));
+  // Get conversation history for context
+  const recentMessages = await getRecentMessages(session.id, 10);
+  const conversationHistory = recentMessages
+    .filter(m => m.id !== userMessage.id) // Exclude the message we just created
+    .map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }));
 
-    // Generate response using LLM (includes search internally)
-    logger.info(`🤖 Generating response for session ${session.id}`);
-    const response = await generateChatResponse(message, conversationHistory);
-    responseText = response.message;
-    sources = response.sources;
-  }
+  // Generate response using LLM (includes search internally)
+  logger.info(`🤖 Generating response for session ${session.id}`);
+  const response = await generateChatResponse(message, conversationHistory);
+  responseText = response.message;
+  sources = response.sources;
 
   // Store assistant message
   const assistantMessage = await createMessage({

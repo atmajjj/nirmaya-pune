@@ -71,6 +71,13 @@
       "when": 1765128702899,
       "tag": "0009_quiet_tiger_shark",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1765178249557,
+      "tag": "0010_tranquil_mandrill",
+      "breakpoints": true
     }
   ]
 }

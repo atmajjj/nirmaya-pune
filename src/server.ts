@@ -8,6 +8,7 @@ import ChatbotRoute from './features/chatbot';
 import HMPIEngineRoute from './features/hmpi-engine';
 import FormulaEditorRoute from './features/formula-editor';
 import { HMPIReportRoutes } from './features/hmpi-report';
+import ResearcherRoute from './features/researcher';
 import { connectWithRetry, pool } from './database/drizzle';
 import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
@@ -38,6 +39,7 @@ async function bootstrap() {
       new HMPIEngineRoute(),
       new FormulaEditorRoute(),
       new HMPIReportRoutes(),
+      new ResearcherRoute(),
     ]);
 
     server = app.listen();

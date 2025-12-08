@@ -70,6 +70,7 @@ export class DatabaseTestHelper {
         TRUNCATE TABLE chatbot_messages CASCADE;
         TRUNCATE TABLE chatbot_sessions CASCADE;
         TRUNCATE TABLE chatbot_documents CASCADE;
+        TRUNCATE TABLE researcher_applications CASCADE;
         TRUNCATE TABLE invitation CASCADE;
         TRUNCATE TABLE uploads CASCADE;
         TRUNCATE TABLE users CASCADE;
@@ -82,6 +83,7 @@ export class DatabaseTestHelper {
         await this.db.execute(sql`TRUNCATE TABLE chatbot_messages CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE chatbot_sessions CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE chatbot_documents CASCADE`);
+        await this.db.execute(sql`TRUNCATE TABLE researcher_applications CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE invitation CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE uploads CASCADE`);
         await this.db.execute(sql`TRUNCATE TABLE users CASCADE`);
