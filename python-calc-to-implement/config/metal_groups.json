@@ -1,0 +1,7 @@
+{
+  "heavy_metals": ["Hg", "Cd", "As", "Pb", "Se", "Ni", "Cr"],
+  "metals": ["Al", "Cu", "Mo", "Ag", "Mn", "Fe", "Zn", "Ba"],
+  "ions": ["F", "Ca", "Cl", "Mg", "NO3", "SO4"],
+  "physical": ["Hazen", "NTU", "TDS", "CaCO3"],
+  "chemical": ["NH3-N", "MBAS", "B", "NH2Cl", "Cl2", "Oil", "C6H5OH", "H2S", "CN", "Pest", "PCB", "PAH", "CHBr3", "CHBr2Cl", "CHBrCl2", "CHCl3"]
+}
