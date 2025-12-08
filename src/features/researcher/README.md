@@ -247,7 +247,7 @@ Content-Type: application/json
 1. ✅ Generates secure 64-character invitation token
 2. ✅ Generates random 16-character temporary password
 3. ✅ Creates invitation record in `invitations` table
-4. ✅ Sends invitation email with link: `http://localhost:8080?invite_token={token}`
+4. ✅ Sends invitation email with link: `http://localhost:8080/accept-invitation?invite_token={token}`
 5. ✅ Updates application status to `accepted`
 6. ✅ Records review timestamp and admin who accepted
 
@@ -908,7 +908,7 @@ When an application is accepted, the researcher receives the same invitation ema
 - Expiry notice (24 hours)
 - Fallback text link
 
-The invitation link directs to: `{FRONTEND_URL}/accept-invitation/{token}`
+The invitation link directs to: `{FRONTEND_URL}/accept-invitation?invite_token={token}`
 
 ---
 
