@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/invitations/accept
  * Accept invitation - creates user account and returns auth token (Public - no auth)
- * Called when invited user clicks "Login" with pre-filled credentials
+ * User manually enters credentials received via email along with the token from URL
  */
 
 import { Router, Request, Response } from 'express';

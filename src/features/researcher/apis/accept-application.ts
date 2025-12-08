@@ -73,10 +73,10 @@ async function businessLogic(applicationId: string, reviewedBy: number) {
   // Update application status
   const updatedApplication = await acceptApplication(applicationId, reviewedBy, inviteToken);
 
-  // Send invitation email
+  // Send invitation email with credentials
   try {
     const frontendUrl = config.FRONTEND_URL.replace(/\/+$/, '');
-    const inviteLink = `${frontendUrl}?invite_token=${inviteToken}`;
+    const inviteLink = `${frontendUrl}/accept-invitation?invite_token=${inviteToken}`;
 
     await sendInvitationEmail({
       to: application.email,
@@ -85,6 +85,7 @@ async function businessLogic(applicationId: string, reviewedBy: number) {
       assignedRole: 'researcher',
       inviteLink,
       expiresIn: `${INVITATION_EXPIRY_HOURS} hours`,
+      tempPassword, // Include credentials in email
     });
 
     logger.info('Researcher invitation email sent successfully', {

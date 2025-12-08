@@ -80,10 +80,10 @@ async function handleCreateInvitation(
     status: 'pending',
   });
 
-  // Send invitation email (without password)
+  // Send invitation email with credentials
   try {
     const frontendUrl = config.FRONTEND_URL.replace(/\/+$/, '');
-    const inviteLink = `${frontendUrl}?invite_token=${inviteToken}`;
+    const inviteLink = `${frontendUrl}/accept-invitation?invite_token=${inviteToken}`;
     
     await sendInvitationEmail({
       to: invitationData.email,
@@ -92,6 +92,7 @@ async function handleCreateInvitation(
       assignedRole: invitationData.assigned_role,
       inviteLink,
       expiresIn: `${INVITATION_EXPIRY_HOURS} hours`,
+      tempPassword, // Include credentials in email
     });
   } catch (emailError) {
     logger.error('Failed to send invitation email', { 

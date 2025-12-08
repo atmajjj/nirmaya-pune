@@ -9,6 +9,7 @@ interface InvitationEmailParams {
     assignedRole: UserRole;
     inviteLink: string;
     expiresIn: string;
+    tempPassword: string; // Temporary password for first login
 }
 
 /**
@@ -20,7 +21,7 @@ function formatRole(role: UserRole): string {
 
 /**
  * Send invitation email to new user
- * Contains invite link - credentials are shown when user visits the link
+ * Contains invite link AND credentials for direct login
  */
 export const sendInvitationEmail = async ({
     to,
@@ -29,6 +30,7 @@ export const sendInvitationEmail = async ({
     assignedRole,
     inviteLink,
     expiresIn = '24 hours',
+    tempPassword,
 }: InvitationEmailParams): Promise<void> => {
     const transporter = createTransporter();
     const formattedRole = formatRole(assignedRole);
@@ -52,12 +54,13 @@ export const sendInvitationEmail = async ({
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #1a73e8;">
                     <p style="margin: 0; color: #555;">
                         <strong>Email:</strong> ${to}<br>
-                        <strong>Role:</strong> ${formattedRole}
+                        <strong>Role:</strong> ${formattedRole}<br>
+                        <strong>Temporary Password:</strong> <code style="background: #e8eaed; padding: 2px 6px; border-radius: 3px; font-family: monospace;">${tempPassword}</code>
                     </p>
                 </div>
                 
                 <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                    Click the button below to accept your invitation and access your account:
+                    Please save these credentials securely. Click the button below to accept your invitation:
                 </p>
                 
                 <p style="text-align: center; margin: 35px 0;">

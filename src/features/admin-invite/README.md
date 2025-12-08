@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Admin Invite feature allows administrators to create user accounts by sending invitations via email. Invited users can verify their invitation token and accept the invitation to create their account with a pre-assigned role.
+The Admin Invite feature allows administrators to create user accounts by sending invitations via email. Invited users receive their login credentials directly in the email and can accept the invitation to activate their account with a pre-assigned role.
 
 ## Base URL
 
@@ -16,7 +16,6 @@ The Admin Invite feature allows administrators to create user accounts by sendin
 |----------|----------------|---------------|
 | `POST /` | ✅ Required (JWT) | Admin only |
 | `GET /` | ✅ Required (JWT) | Admin only |
-| `POST /verify` | ❌ Public | Rate limited |
 | `POST /accept` | ❌ Public | Rate limited |
 
 ---
@@ -166,64 +165,13 @@ GET /api/admin/invitations?status=pending&page=1&limit=10
 
 ---
 
-### 3. Verify Invitation
+### 3. Accept Invitation
 
-Verifies an invitation token and returns the invitee's credentials for auto-fill on frontend. This endpoint has brute force protection (max 5 attempts).
+Accepts an invitation and creates the user account. User manually enters credentials received via email. Returns an auth token for immediate login.
 
-**Endpoint:** `POST /api/admin/invitations/verify`
+**Endpoint:** `POST /api/admin/invitations/accept`
 
-**Authentication:** Not required (Public endpoint)
-
-**Rate Limiting:** Yes (prevents abuse)
-
-#### Request Body
-
-```json
-{
-  "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2"
-}
-```
-
-#### Request Schema
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `token` | string | ✅ | 64-character hex invitation token |
-
-#### Success Response
-
-**Status Code:** `200 OK`
-
-```json
-{
-  "success": true,
-  "message": "Invitation verified successfully",
-  "data": {
-    "email": "john.doe@example.com",
-    "password": "TempPass123!",
-    "first_name": "John",
-    "last_name": "Doe",
-    "assigned_role": "researcher"
-  }
-}
-```
-
-> **Frontend Note:** Use the returned `email` and `password` to pre-fill the accept invitation form for better UX.
-
-#### Error Responses
-
-| Status | Error | Description |
-|--------|-------|-------------|
-| `400` | Validation Error | Invalid token format |
-| `400` | Bad Request | Invalid or expired invitation |
-| `400` | Bad Request | Maximum verification attempts exceeded |
-| `429` | Too Many Requests | Rate limit exceeded |
-
----
-
-### 4. Accept Invitation
-
-Accepts an invitation and creates the user account. Returns an auth token for immediate login.
+Accepts an invitation and creates the user account. User manually enters credentials received via email. Returns an auth token for immediate login.
 
 **Endpoint:** `POST /api/admin/invitations/accept`
 
@@ -245,9 +193,11 @@ Accepts an invitation and creates the user account. Returns an auth token for im
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `token` | string | ✅ | 64-character hex invitation token |
-| `email` | string | ✅ | Email address (must match invitation) |
+| `token` | string | ✅ | 64-character hex invitation token from URL |
+| `email` | string | ✅ | Email address from invitation email |
 | `password` | string | ✅ | Temporary password from invitation email |
+
+> **Frontend Note:** User reads credentials from the invitation email and manually enters them on the accept-invitation page.
 
 #### Success Response
 
@@ -256,17 +206,14 @@ Accepts an invitation and creates the user account. Returns an auth token for im
 ```json
 {
   "success": true,
-  "message": "Invitation accepted successfully",
+  "message": "Account created successfully. Welcome!",
   "data": {
-    "user": {
-      "id": 5,
-      "email": "john.doe@example.com",
-      "first_name": "John",
-      "last_name": "Doe",
-      "role": "researcher",
-      "email_verified": true,
-      "created_at": "2024-01-15T11:00:00.000Z"
-    },
+    "id": 5,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "role": "researcher",
+    "created_at": "2024-01-15T11:00:00.000Z",
+    "updated_at": "2024-01-15T11:00:00.000Z",
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
 }
@@ -302,32 +249,25 @@ Accepts an invitation and creates the user account. Returns an auth token for im
    └─────────────┘          └─────────────┘        └──────┬──────┘
                                                           │
                                                           ▼
-2. INVITEE RECEIVES EMAIL                         ┌─────────────┐
+2. INVITEE RECEIVES EMAIL WITH CREDENTIALS        ┌─────────────┐
                                                   │   Invitee   │
    Email contains:                                │   Inbox     │
    - Invitation link with token                   └──────┬──────┘
-   - Temporary password                                  │
+   - Email address                                       │
+   - Temporary password (to be entered manually)         │
                                                          │
-3. INVITEE CLICKS LINK                                   ▼
+3. INVITEE CLICKS LINK & ENTERS CREDENTIALS              ▼
    ┌─────────────┐         ┌─────────────┐        ┌─────────────┐
    │  Frontend   │◀──Link──│   Email     │◀───────│   Invitee   │
-   │  Verify     │         │   Link      │        │   Clicks    │
-   │   Page      │         │             │        │             │
+   │  Accept     │         │   Link      │        │   Reads     │
+   │  Page       │         │             │        │   Email &   │
+   │             │         │             │        │   Clicks    │
    └──────┬──────┘         └─────────────┘        └─────────────┘
           │
-          │ POST /verify (with token)
-          ▼
-4. FRONTEND VERIFIES TOKEN
-   ┌─────────────┐         ┌─────────────┐
-   │  Frontend   │ ──POST──▶│   Backend   │
-   │  Gets       │    /     │   Returns   │
-   │  Credentials│  verify  │  email +    │
-   │  & Pre-fills│          │  password   │
-   └──────┬──────┘          └─────────────┘
-          │
+          │ Invitee manually enters email & password from email
           │ POST /accept (token + email + password)
           ▼
-5. INVITEE ACCEPTS INVITATION
+4. BACKEND VERIFIES & CREATES ACCOUNT
    ┌─────────────┐         ┌─────────────┐        ┌─────────────┐
    │  Frontend   │ ──POST──▶│   Backend   │ ─────▶│   User      │
    │  Accept     │    /     │   Creates   │ JWT   │   Logged    │
@@ -345,25 +285,10 @@ Accepts an invitation and creates the user account. Returns an auth token for im
 
 ```typescript
 // 1. Extract token from URL
-const token = new URLSearchParams(window.location.search).get('token');
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('invite_token');
 
-// 2. Verify the invitation and get credentials
-const verifyInvitation = async (token: string) => {
-  const response = await fetch('/api/admin/invitations/verify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message);
-  }
-  
-  return response.json();
-};
-
-// 3. Accept the invitation
+// 2. Accept the invitation (user manually enters email & password from email)
 const acceptInvitation = async (token: string, email: string, password: string) => {
   const response = await fetch('/api/admin/invitations/accept', {
     method: 'POST',
@@ -373,7 +298,7 @@ const acceptInvitation = async (token: string, email: string, password: string) 
   
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message);
+    throw new Error(error.error.message);
   }
   
   const { data } = await response.json();
@@ -386,18 +311,55 @@ const acceptInvitation = async (token: string, email: string, password: string) 
 };
 
 // Usage in component
-useEffect(() => {
-  if (token) {
-    verifyInvitation(token)
-      .then(({ data }) => {
-        setEmail(data.email);
-        setPassword(data.password);
-        setFirstName(data.first_name);
-        setLastName(data.last_name);
-      })
-      .catch(err => setError(err.message));
-  }
-}, [token]);
+const AcceptInvitationPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      await acceptInvitation(token!, email, password);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Accept Invitation</h2>
+      <p>Please enter the credentials from your invitation email</p>
+      
+      <input
+        type="email"
+        placeholder="Email from invitation"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      
+      <input
+        type="password"
+        placeholder="Password from invitation"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+      
+      <button type="submit" disabled={loading}>
+        {loading ? 'Creating Account...' : 'Accept Invitation'}
+      </button>
+      
+      {error && <div className="error">{error}</div>}
+    </form>
+  );
+};
 ```
 
 ---

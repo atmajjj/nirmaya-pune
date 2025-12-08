@@ -68,7 +68,7 @@ async function handleCreateInvitation(
 
   try {
     const frontendUrl = config.FRONTEND_URL.replace(/\/+$/, '');
-    const inviteLink = `${frontendUrl}?invite_token=${inviteToken}`;
+    const inviteLink = `${frontendUrl}/accept-invitation?invite_token=${inviteToken}`;
     await sendEmail.sendInvitationEmail({
       to: invitationData.email,
       firstName: invitationData.first_name,
@@ -76,6 +76,7 @@ async function handleCreateInvitation(
       assignedRole: invitationData.assigned_role,
       inviteLink,
       expiresIn: '24 hours',
+      tempPassword, // Include credentials in email
     });
   } catch {
     // Email errors are logged but don't block operation

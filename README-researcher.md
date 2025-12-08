@@ -42,17 +42,17 @@ The researcher application feature enables users to apply for researcher access 
 - System:
   - Generates secure invitation token and temporary password
   - Creates invitation record in `invitations` table
-  - Sends invitation email with login link: `http://localhost:8080?invite_token={token}`
+  - Sends invitation email with login credentials and link: `http://localhost:8080/accept-invitation?invite_token={token}`
   - Updates application status to `accepted`
-- Researcher receives email with invitation link
+- Researcher receives email with credentials (email + temporary password)
 
-### 4. **Researcher Logs In**
+### 4. **Researcher Accepts Invitation**
+- Researcher reads credentials from email
 - Researcher clicks invitation link from email
-- Redirected to login page: `http://localhost:8080?invite_token={token}`
-- Frontend detects token and calls verify endpoint
-- Email and password fields are auto-filled
-- Researcher clicks "Login"
-- Account is activated and researcher gains access
+- Redirected to accept-invitation page: `http://localhost:8080/accept-invitation?invite_token={token}`
+- Researcher manually enters email and password from the invitation email
+- Researcher clicks "Accept Invitation"
+- Account is created and researcher gains immediate access with JWT token
 
 ### 5. **Reject Application Flow**
 - Admin clicks "Reject" on a pending application
@@ -493,30 +493,39 @@ const urlParams = new URLSearchParams(window.location.search);
 const inviteToken = urlParams.get('invite_token');
 
 if (inviteToken) {
-  // Call verify endpoint to get credentials
-  const response = await fetch('/api/admin/invitations/verify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: inviteToken })
-  });
+  // Show accept invitation form
+  // User manually enters email and password from invitation email
   
-  const { email, password, first_name, last_name } = await response.json();
-  
-  // Pre-fill login form
-  emailInput.value = email;
-  passwordInput.value = password;
-  
-  // Show welcome message
-  showMessage(`Welcome ${first_name} ${last_name}! Please log in with the credentials below.`);
+  // When form is submitted:
+  const acceptInvitation = async (email, password) => {
+    const response = await fetch('/api/admin/invitations/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        token: inviteToken,
+        email,
+        password
+      })
+    });
+    
+    const { data } = await response.json();
+    
+    // Store JWT token
+    localStorage.setItem('authToken', data.token);
+    
+    // Redirect to dashboard
+    window.location.href = '/dashboard';
+  };
 }
 ```
 
 ### Email Template
 When an application is accepted, the researcher receives an email with:
 - Welcome message
-- Invitation link: `http://localhost:8080?invite_token={64_char_token}`
+- **Login credentials**: Email address and temporary password
+- Invitation link: `http://localhost:8080/accept-invitation?invite_token={64_char_token}`
 - Expiration time: 24 hours
-- Instructions to click link and log in
+- Instructions to read credentials and click link to accept invitation
 
 ---
 
