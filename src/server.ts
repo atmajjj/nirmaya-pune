@@ -10,6 +10,7 @@ import FormulaEditorRoute from './features/formula-editor';
 import { HMPIReportRoutes } from './features/hmpi-report';
 import ResearcherRoute from './features/researcher';
 import DataSourcesRoute from './features/data-sources';
+import AdminStatsRoute from './features/admin-stats';
 import { connectWithRetry, pool } from './database/drizzle';
 import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
@@ -36,6 +37,7 @@ async function bootstrap() {
       new UserRoute(),
       new UploadRoute(),
       new AdminInviteRoute(),
+      new AdminStatsRoute(),
       new ChatbotRoute(),
       new HMPIEngineRoute(),
       new FormulaEditorRoute(),

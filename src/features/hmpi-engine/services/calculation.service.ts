@@ -21,6 +21,9 @@ import {
 import { HPICalculatorService } from './hpi-calculator.service';
 import { MICalculatorService } from './mi-calculator.service';
 import { WQICalculatorService } from './wqi-calculator.service';
+import { CDEGCalculatorService } from './cdeg-calculator.service';
+import { HEICalculatorService } from './hei-calculator.service';
+import { PIGCalculatorService } from './pig-calculator.service';
 import { CSVParserService } from './csv-parser.service';
 
 /**
@@ -130,6 +133,44 @@ export class WaterQualityCalculationService {
         } catch (error) {
           result.errors.push(`MI calculation error: ${error}`);
         }
+
+        // Calculate CDEG (uses same metals data)
+        try {
+          const cdegResult = CDEGCalculatorService.calculate(row.metals);
+          if (cdegResult) {
+            result.cdeg = cdegResult;
+          } else {
+            result.errors.push('CDEG: No valid heavy metals for calculation');
+          }
+        } catch (error) {
+          result.errors.push(`CDEG calculation error: ${error}`);
+        }
+
+        // Calculate HEI (uses same metals data)
+        try {
+          const heiResult = HEICalculatorService.calculate(row.metals);
+          if (heiResult) {
+            result.hei = heiResult;
+          } else {
+            result.errors.push('HEI: No valid heavy metals for calculation');
+          }
+        } catch (error) {
+          result.errors.push(`HEI calculation error: ${error}`);
+        }
+
+        // Calculate PIG (requires HPI and HEI)
+        if (result.hpi && result.hei) {
+          try {
+            const pigResult = PIGCalculatorService.calculate(result.hpi.hpi, result.hei.hei);
+            if (pigResult) {
+              result.pig = pigResult;
+            } else {
+              result.errors.push('PIG: Unable to calculate from HPI and HEI');
+            }
+          } catch (error) {
+            result.errors.push(`PIG calculation error: ${error}`);
+          }
+        }
       }
 
       // Calculate WQI (if WQI params available)
@@ -167,7 +208,7 @@ export class WaterQualityCalculationService {
 
     for (const result of results) {
       // Skip stations with no calculations
-      if (!result.hpi && !result.mi && !result.wqi) {
+      if (!result.hpi && !result.mi && !result.wqi && !result.cdeg && !result.hei && !result.pig) {
         continue;
       }
 
@@ -206,6 +247,24 @@ export class WaterQualityCalculationService {
         input.wqi_params_analyzed = result.wqi.paramsAnalyzed;
       }
 
+      // Add CDEG data
+      if (result.cdeg) {
+        input.cdeg = result.cdeg.cdeg;
+        input.cdeg_classification = result.cdeg.classification;
+      }
+
+      // Add HEI data
+      if (result.hei) {
+        input.hei = result.hei.hei;
+        input.hei_classification = result.hei.classification;
+      }
+
+      // Add PIG data
+      if (result.pig) {
+        input.pig = result.pig.pig;
+        input.pig_classification = result.pig.classification;
+      }
+
       // Save to database
       const [saved] = await db
         .insert(waterQualityCalculations)
@@ -223,6 +282,12 @@ export class WaterQualityCalculationService {
           mi_class: input.mi_class,
           wqi: input.wqi?.toString(),
           wqi_classification: input.wqi_classification,
+          cdeg: input.cdeg?.toString(),
+          cdeg_classification: input.cdeg_classification,
+          hei: input.hei?.toString(),
+          hei_classification: input.hei_classification,
+          pig: input.pig?.toString(),
+          pig_classification: input.pig_classification,
           metals_analyzed: input.metals_analyzed?.join(','),
           wqi_params_analyzed: input.wqi_params_analyzed?.join(','),
           created_by: input.created_by,

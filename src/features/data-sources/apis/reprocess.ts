@@ -8,6 +8,7 @@ import { asyncHandler } from '../../../utils/controllerHelpers';
 import HttpException from '../../../utils/httpException';
 import { findDataSourceById } from '../shared/queries';
 import { processDataSourceFile } from '../services/processor.service';
+import { logger } from '../../../utils/logger';
 
 const paramsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -22,7 +23,7 @@ async function reprocessDataSource(id: number): Promise<void> {
 
   // Trigger processing (runs in background)
   processDataSourceFile(id).catch(error => {
-    console.error(`Reprocessing failed for data source ${id}:`, error);
+    logger.error(`Reprocessing failed for data source ${id}:`, error);
   });
 }
 

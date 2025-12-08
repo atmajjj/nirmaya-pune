@@ -29,6 +29,12 @@ export interface WaterQualityCalculation {
   mi_class: MIClass | null;
   wqi: number | null;
   wqi_classification: WQIClassification | null;
+  cdeg: number | null;
+  cdeg_classification: string | null;
+  hei: number | null;
+  hei_classification: string | null;
+  pig: number | null;
+  pig_classification: string | null;
   metals_analyzed: string[] | null;
   wqi_params_analyzed: string[] | null;
   created_by: number | null;
@@ -57,6 +63,12 @@ export interface NewCalculationInput {
   mi_class?: MIClass | null;
   wqi?: number | null;
   wqi_classification?: WQIClassification | null;
+  cdeg?: number | null;
+  cdeg_classification?: string | null;
+  hei?: number | null;
+  hei_classification?: string | null;
+  pig?: number | null;
+  pig_classification?: string | null;
   metals_analyzed?: string[];
   wqi_params_analyzed?: string[];
   created_by: number;
@@ -153,6 +165,34 @@ export interface WQIResult {
 }
 
 /**
+ * CDEG calculation result for a single station
+ */
+export interface CDEGResult {
+  cdeg: number;
+  classification: string;
+  metalsAnalyzed: string[];
+}
+
+/**
+ * HEI calculation result for a single station
+ */
+export interface HEIResult {
+  hei: number;
+  classification: string;
+  metalsAnalyzed: string[];
+}
+
+/**
+ * PIG calculation result for a single station
+ */
+export interface PIGResult {
+  pig: number;
+  classification: string;
+  hpi_used: number;
+  hei_used: number;
+}
+
+/**
  * Complete calculation result for a single station
  */
 export interface StationCalculationResult {
@@ -164,6 +204,9 @@ export interface StationCalculationResult {
   hpi?: HPIResult;
   mi?: MIResult;
   wqi?: WQIResult;
+  cdeg?: CDEGResult;
+  hei?: HEIResult;
+  pig?: PIGResult;
   errors: string[];
 }
 
@@ -226,6 +269,12 @@ export function convertCalculation(
     mi_class: calc.mi_class,
     wqi: calc.wqi ? parseFloat(calc.wqi) : null,
     wqi_classification: calc.wqi_classification,
+    cdeg: calc.cdeg ? parseFloat(calc.cdeg) : null,
+    cdeg_classification: calc.cdeg_classification,
+    hei: calc.hei ? parseFloat(calc.hei) : null,
+    hei_classification: calc.hei_classification,
+    pig: calc.pig ? parseFloat(calc.pig) : null,
+    pig_classification: calc.pig_classification,
     metals_analyzed: calc.metals_analyzed ? calc.metals_analyzed.split(',') : null,
     wqi_params_analyzed: calc.wqi_params_analyzed ? calc.wqi_params_analyzed.split(',') : null,
     created_by: calc.created_by,

@@ -96,6 +96,14 @@ export const waterQualityCalculations = pgTable(
     mi_class: varchar('mi_class', { length: 15 }).$type<MIClass>(),
     wqi: decimal('wqi', { precision: 10, scale: 4 }),
     wqi_classification: varchar('wqi_classification', { length: 50 }).$type<WQIClassification>(),
+    
+    // Additional indices (CDEG, HEI, PIG)
+    cdeg: decimal('cdeg', { precision: 10, scale: 4 }),
+    cdeg_classification: varchar('cdeg_classification', { length: 50 }),
+    hei: decimal('hei', { precision: 10, scale: 4 }),
+    hei_classification: varchar('hei_classification', { length: 50 }),
+    pig: decimal('pig', { precision: 10, scale: 4 }),
+    pig_classification: varchar('pig_classification', { length: 50 }),
 
     // Metadata - stored as comma-separated strings (simpler than arrays for Drizzle)
     metals_analyzed: text('metals_analyzed'), // e.g., "As,Cu,Zn,Hg,Cd,Ni,Pb"

@@ -9,6 +9,7 @@ import { uploadToS3 } from '../../../utils/s3Upload';
 import { createDataSource } from '../shared/queries';
 import { DataSourceResponse } from '../shared/interface';
 import { processDataSourceFile } from '../services/processor.service';
+import { logger } from '../../../utils/logger';
 import path from 'path';
 
 // Configure multer for memory storage
@@ -86,7 +87,7 @@ async function uploadFile(
   // Process file asynchronously (parse and extract metadata)
   // Don't await - let it run in background
   processDataSourceFile(dataSource.id).catch(error => {
-    console.error(`Background processing failed for data source ${dataSource.id}:`, error);
+    logger.error(`Background processing failed for data source ${dataSource.id}:`, error);
   });
 
   // Format response
