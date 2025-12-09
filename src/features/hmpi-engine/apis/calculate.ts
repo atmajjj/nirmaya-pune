@@ -22,6 +22,8 @@ import { db } from '../../../database/drizzle';
 import { uploads } from '../../upload/shared/schema';
 import { WaterQualityCalculationService } from '../services/calculation.service';
 import { BatchCalculationResult } from '../shared/interface';
+import { ReportGeneratorService } from '../../hmpi-report/services/report-generator.service';
+import { logger } from '../../../utils/logger';
 
 /**
  * Create upload record and upload to S3
@@ -103,6 +105,18 @@ async function processCSVCalculation(
       await updateUploadStatus(uploadId, 'failed', 'All stations failed processing');
     } else {
       await updateUploadStatus(uploadId, 'completed');
+      
+      // Automatically trigger report generation in the background (don't wait)
+      // Only generate if at least some stations were processed successfully
+      if (result.processed_stations > 0) {
+        ReportGeneratorService.generateReport(uploadId, userId, 'comprehensive')
+          .then(() => {
+            logger.info(`Auto-generated report for upload ${uploadId}`);
+          })
+          .catch(error => {
+            logger.error(`Failed to auto-generate report for upload ${uploadId}:`, error);
+          });
+      }
     }
 
     return result;
@@ -135,9 +149,9 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
     );
   } else if (result.failed_stations > 0) {
     message = `Processed ${result.processed_stations} of ${result.total_stations} stations. ` +
-      `${result.failed_stations} stations had errors.`;
+      `${result.failed_stations} stations had errors. Report generation started.`;
   } else {
-    message = `Successfully calculated indices for ${result.processed_stations} stations`;
+    message = `Successfully calculated indices for ${result.processed_stations} stations. Report generation started.`;
   }
 
   ResponseFormatter.created(res, result, message);

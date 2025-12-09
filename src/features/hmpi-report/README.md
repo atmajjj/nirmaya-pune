@@ -163,29 +163,40 @@ hmpi_reports {
 ### **1. Generate Report (Manual Trigger)**
 
 ```http
-POST /api/hmpi-engine/uploads/:uploadId/generate-report
+POST /api/hmpi-report/generate
 Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "upload_id": 456,
+  "report_type": "comprehensive"
+}
 ```
 
 **Response (202 Accepted):**
 ```json
 {
   "success": true,
-  "message": "Report generation started",
+  "message": "Report generation initiated successfully",
   "data": {
-    "report_id": 123,
-    "status": "generating",
-    "upload_id": 456
+    "report": {
+      "id": 123,
+      "upload_id": 456,
+      "report_title": "HMPI Report - Upload 456",
+      "status": "generating",
+      "created_at": "2025-12-09T10:30:00.000Z"
+    },
+    "estimatedTime": "30-60 seconds"
   }
 }
 ```
 
 ---
 
-### **2. Get Report Status**
+### **2. Get Report Details**
 
 ```http
-GET /api/hmpi-engine/reports/:reportId
+GET /api/hmpi-report/:reportId
 Authorization: Bearer <token>
 ```
 
@@ -196,16 +207,16 @@ Authorization: Bearer <token>
   "data": {
     "id": 123,
     "upload_id": 456,
-    "report_title": "Water Quality Report - data.csv",
+    "report_title": "HMPI Report - Upload 456",
     "status": "completed",
-    "file_name": "hmpi_report_456_1702123456789.pdf",
+    "file_name": "hmpi-report-123-1733740200000.pdf",
     "file_size": 2457600,
     "total_stations": 150,
     "avg_hpi": "85.5",
     "avg_mi": "3.2",
     "avg_wqi": "45.8",
-    "generated_at": "2025-12-07T10:30:45.123Z",
-    "created_at": "2025-12-07T10:30:00.000Z"
+    "generated_at": "2025-12-09T10:30:45.123Z",
+    "created_at": "2025-12-09T10:30:00.000Z"
   }
 }
 ```
@@ -215,7 +226,7 @@ Authorization: Bearer <token>
 ### **3. Download Report**
 
 ```http
-GET /api/hmpi-engine/reports/:reportId/download
+GET /api/hmpi-report/:reportId/download
 Authorization: Bearer <token>
 ```
 
@@ -223,33 +234,62 @@ Authorization: Bearer <token>
 
 ---
 
-### **4. List Reports**
+### **4. Get Report Status**
 
 ```http
-GET /api/hmpi-engine/reports?page=1&limit=10&status=completed
+GET /api/hmpi-report/:reportId/status
 Authorization: Bearer <token>
 ```
-
-**Query Parameters:**
-- `page` (number, default: 1)
-- `limit` (number, default: 10)
-- `status` ('pending' | 'generating' | 'completed' | 'failed')
-- `sort_by` ('created_at' | 'generated_at')
-- `sort_order` ('asc' | 'desc')
 
 **Response (200 OK):**
 ```json
 {
   "success": true,
-  "message": "Reports retrieved successfully",
+  "data": {
+    "report_id": 123,
+    "status": "completed",
+    "progress": 100,
+    "message": "Report generation completed successfully"
+  }
+}
+```
+
+---
+
+### **5. List All Reports (Admin View)**
+
+```http
+GET /api/hmpi-report?page=1&limit=10&status=completed&sort_by=created_at&sort_order=desc
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `page` (number, default: 1)
+- `limit` (number, default: 10, max: 100)
+- `status` ('pending' | 'generating' | 'completed' | 'failed')
+- `report_type` ('summary' | 'comprehensive')
+- `sort_by` ('created_at' | 'generated_at' | 'file_size' | 'total_stations')
+- `sort_order` ('asc' | 'desc', default: 'desc')
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Retrieved 10 report(s)",
   "data": [
     {
       "id": 123,
       "upload_id": 456,
-      "report_title": "Water Quality Report - data.csv",
+      "report_title": "HMPI Report - Upload 456",
       "status": "completed",
+      "report_type": "comprehensive",
       "total_stations": 150,
-      "generated_at": "2025-12-07T10:30:45.123Z"
+      "avg_hpi": "85.5",
+      "avg_mi": "3.2",
+      "avg_wqi": "45.8",
+      "file_size": 2457600,
+      "generated_at": "2025-12-09T10:30:45.123Z",
+      "created_at": "2025-12-09T10:30:00.000Z"
     }
   ],
   "meta": {
@@ -262,6 +302,17 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+---
+
+### **6. List Reports by Upload**
+
+```http
+GET /api/hmpi-report/upload/:uploadId?page=1&limit=10&status=completed
+Authorization: Bearer <token>
+```
+
+**Response:** Same format as "List All Reports" but filtered by upload ID
 
 ---
 
@@ -499,7 +550,7 @@ const uploadId = data.upload_id;
 ### **Step 2: Poll for Report Status**
 ```javascript
 async function checkReportStatus(uploadId) {
-  const response = await fetch(`/api/hmpi-engine/reports?upload_id=${uploadId}`);
+  const response = await fetch(`/api/hmpi-report/upload/${uploadId}`);
   const { data } = await response.json();
   
   if (data.length > 0 && data[0].status === 'completed') {
@@ -514,7 +565,16 @@ async function checkReportStatus(uploadId) {
 ### **Step 3: Download Report**
 ```javascript
 function downloadReport(reportId) {
-  window.open(`/api/hmpi-engine/reports/${reportId}/download`, '_blank');
+  window.open(`/api/hmpi-report/${reportId}/download`, '_blank');
+}
+```
+
+### **Step 4: List All Reports (Admin)**
+```javascript
+async function listAllReports(page = 1, limit = 10) {
+  const response = await fetch(`/api/hmpi-report?page=${page}&limit=${limit}&sort_by=created_at&sort_order=desc`);
+  const { data, meta } = await response.json();
+  return { reports: data, pagination: meta.pagination };
 }
 ```
 
@@ -523,19 +583,31 @@ function downloadReport(reportId) {
 ## 📝 Usage Example
 
 ```typescript
-// Automatic generation after calculation
-const upload = await uploadCSV(file);
-// Report generation starts automatically in background
+// Automatic generation after calculation (happens automatically)
+// const upload = await uploadCSV(file);
 
 // Manual generation (if needed)
-const report = await generateReport(upload.id);
+const report = await fetch('/api/hmpi-report/generate', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ upload_id: upload.id })
+});
 
 // Check status
-const status = await getReportStatus(report.id);
+const status = await fetch(`/api/hmpi-report/${report.id}/status`);
+
+// List all reports (admin view)
+const allReports = await fetch('/api/hmpi-report?page=1&limit=20&status=completed');
+
+// List reports by upload
+const uploadReports = await fetch(`/api/hmpi-report/upload/${upload.id}`);
 
 // Download when ready
 if (status.status === 'completed') {
-  const url = await downloadReport(report.id);
+  window.open(`/api/hmpi-report/${report.id}/download`, '_blank');
 }
 ```
 
