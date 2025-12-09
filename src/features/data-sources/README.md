@@ -46,7 +46,7 @@ Obtain tokens via the `/api/auth/login` endpoint.
 | Role | Upload Files | View All | View Own | Delete Own | Delete Any | Reprocess | Calculate |
 |------|-------------|----------|----------|------------|------------|-----------|-----------|
 | **Field Technician** | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Scientist** | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Scientist** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **Policymaker** | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | **Researcher** | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -61,9 +61,11 @@ Upload a CSV or Excel file containing water quality data.
 
 **Endpoint:** `POST /api/data-sources/upload`
 
-**Authorization:** Field Technician, Admin
+**Authorization:** Admin, Scientist, Field Technician
 
 **Content-Type:** `multipart/form-data`
+
+**⚠️ Important:** Do NOT manually set the `Content-Type` header when using FormData. The browser/client will automatically set it with the correct boundary parameter.
 
 **Request Body:**
 ```
@@ -81,12 +83,44 @@ description: <string>      (optional)
 - `Date` - Measurement date
 - Water quality parameters (pH, Temperature, DO, etc.)
 
-**Example Request:**
+**Example Request (cURL):**
 ```bash
-curl -X POST https://api.example.com/api/data-sources/upload \
+curl -X POST http://localhost:8000/api/data-sources/upload \
   -H "Authorization: Bearer <token>" \
   -F "file=@water_quality_2024.csv" \
   -F "description=Monthly water quality measurements - December 2024"
+```
+
+**Example Request (JavaScript/Fetch):**
+```javascript
+const formData = new FormData();
+formData.append('file', fileObject); // File from input element
+formData.append('description', 'Monthly water quality measurements - December 2024');
+
+const response = await fetch('http://localhost:8000/api/data-sources/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+    // DO NOT set Content-Type - let the browser handle it
+  },
+  body: formData
+});
+
+const result = await response.json();
+```
+
+**Example Request (Axios):**
+```javascript
+const formData = new FormData();
+formData.append('file', fileObject);
+formData.append('description', 'Monthly water quality measurements - December 2024');
+
+const response = await axios.post('http://localhost:8000/api/data-sources/upload', formData, {
+  headers: {
+    'Authorization': `Bearer ${token}`
+    // Axios automatically sets Content-Type for FormData
+  }
+});
 ```
 
 **Success Response (201 Created):**
@@ -119,9 +153,18 @@ curl -X POST https://api.example.com/api/data-sources/upload \
   "success": false,
   "error": {
     "status": 400,
-    "message": "No file uploaded",
+    "message": "No file uploaded. Please ensure you are sending a multipart/form-data request with a file field named \"file\".",
     "name": "Error"
   }
+}
+```
+
+**400 Bad Request - Invalid multipart request (missing boundary):**
+```json
+{
+  "success": false,
+  "message": "Invalid request format. Please ensure you are sending a multipart/form-data request with Content-Type header and file in \"file\" field.",
+  "error": "INVALID_MULTIPART_REQUEST"
 }
 ```
 
@@ -131,9 +174,18 @@ curl -X POST https://api.example.com/api/data-sources/upload \
   "success": false,
   "error": {
     "status": 400,
-    "message": "Invalid file type. Only CSV and Excel files are allowed",
+    "message": "Invalid file type. Only CSV, XLS, and XLSX files are allowed.",
     "name": "Error"
   }
+}
+```
+
+**400 Bad Request - File too large:**
+```json
+{
+  "success": false,
+  "message": "File size exceeds 50MB limit",
+  "error": "FILE_TOO_LARGE"
 }
 ```
 
@@ -155,7 +207,7 @@ curl -X POST https://api.example.com/api/data-sources/upload \
   "success": false,
   "error": {
     "status": 403,
-    "message": "Access denied. Required role: admin or field_technician",
+    "message": "Access denied. Required role: admin or scientist or field_technician",
     "name": "Error"
   }
 }
@@ -164,16 +216,23 @@ curl -X POST https://api.example.com/api/data-sources/upload \
 **Background Processing:**
 
 After upload, the system automatically:
-1. Changes status from `pending` → `processing`
-2. Downloads file from S3
-3. Parses and validates structure
-4. Extracts metadata:
-   - Total rows and columns
-   - Column names
-   - Unique stations
-   - Date range
-   - Preview of first 5 rows
+1. Uploads file to S3 storage
+2. Creates database record with status `pending`
+3. Returns response immediately to user
+4. **Background processing starts** (asynchronous):
+   - Changes status from `pending` → `processing`
+   - Downloads file from S3
+   - Parses CSV/Excel using native parser (no external dependencies)
+   - Validates structure and extracts metadata:
+     - Total rows and columns
+     - Column names
+     - Unique stations (from Station/station_id/station_name columns)
+     - Date range (from Date/date/timestamp columns)
+     - Preview of first 5 rows
 5. Updates status to `available` (success) or `failed` (error)
+6. Stores extracted metadata in database
+
+**Processing typically completes in 1-5 seconds for most files.**
 
 ---
 
@@ -656,12 +715,13 @@ type DataSourceStatus =
 
 ### CSV/Excel Requirements
 
-**Required Columns:**
-- `Station` - Monitoring station identifier
-- `Date` - Measurement date (YYYY-MM-DD format)
+**Required Columns** (case-insensitive):
+- `Station`, `station_id`, or `station_name` - Monitoring station identifier
+- `Date`, `date`, or `timestamp` - Measurement date/time
 
 **Optional Water Quality Parameters:**
 - pH, Temperature, DO (Dissolved Oxygen), BOD, COD, TDS, Turbidity, etc.
+- Metal concentrations: As, Cd, Cr, Cu, Fe, Pb, Mn, Ni, Zn, etc.
 
 **Example CSV Structure:**
 ```csv
@@ -674,16 +734,21 @@ STN002,2024-01-15,6.9,17.8,6.5,4.1,18.7,280,15.6
 ### Processing Steps
 
 1. **Upload** - File uploaded to S3, database record created with status `pending`
-2. **Queue** - Background job picks up pending files
-3. **Download** - File retrieved from S3
-4. **Parse** - CSV/Excel parsed, structure validated
-5. **Validate** - Check for required columns (`Station`, `Date`)
-6. **Extract Metadata**:
+2. **Response** - API returns immediately with upload confirmation
+3. **Background Processing** - Asynchronous processing begins:
+   - Status changes to `processing`
+   - File downloaded from S3
+   - **Native CSV Parser** used (no papaparse dependency - more reliable)
+   - Excel files parsed using `xlsx` library
+   - Structure validated
+4. **Metadata Extraction**:
    - Count rows and columns
-   - Extract unique stations
-   - Determine date range
+   - Extract unique stations (Station/station_id/station_name)
+   - Determine date range (Date/date/timestamp)
    - Store column names
-7. **Update Status** - Set to `available` or `failed`
+   - Generate preview (first 5 rows)
+5. **Update Status** - Set to `available` or `failed`
+6. **Ready for Use** - Scientists can now select file for calculations
 
 ### Processing Time
 
@@ -800,21 +865,25 @@ X-RateLimit-Reset: 1733745600
 
 ---
 
-## Best Practices
+### Best Practices
 
 ### For Field Technicians
 
 1. **File Naming:** Use descriptive names including date/location (e.g., `river_monitoring_2024_dec.csv`)
 2. **Add Descriptions:** Provide context in the description field
-3. **Check Status:** Wait for processing to complete before re-uploading
+3. **Check Status:** Wait for processing to complete (1-5 seconds) before checking results
 4. **Date Format:** Use consistent date format (YYYY-MM-DD recommended)
+5. **File Upload:** Use FormData correctly - DO NOT manually set Content-Type header
+6. **Column Names:** Ensure Station and Date columns are named correctly (case-insensitive)
 
 ### For Scientists
 
-1. **Filter by Status:** Always filter for `status=available` when selecting files
-2. **Review Metadata:** Check station count, date range, and columns before calculating
-3. **Batch Processing:** Process multiple files sequentially rather than concurrently
-4. **Error Handling:** Check for failed calculations in results
+1. **Upload Files:** Scientists can now upload files directly (not just field technicians)
+2. **Filter by Status:** Always filter for `status=available` when selecting files for calculations
+3. **Review Metadata:** Check station count, date range, and columns before calculating
+4. **Batch Processing:** Process multiple files sequentially rather than concurrently
+5. **Error Handling:** Check for failed calculations in results
+6. **Reprocess Option:** Use reprocess endpoint if a file failed during initial processing
 
 ### For Administrators
 
@@ -833,6 +902,90 @@ For technical issues or questions:
 
 ---
 
-**Document Version:** 1.0.0  
-**Last Updated:** December 9, 2024  
-**API Version:** v1
+## Troubleshooting
+
+### "Multipart: Boundary not found" Error
+
+**Cause:** Incorrectly setting Content-Type header when uploading files.
+
+**Solution:**
+```javascript
+// ❌ WRONG - Causes boundary error
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'multipart/form-data' // ❌ Missing boundary!
+  },
+  body: formData
+});
+
+// ✅ CORRECT - Let browser/client set Content-Type
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+    // ✅ No Content-Type header - browser adds it with boundary
+  },
+  body: formData
+});
+```
+
+### File Processing Stuck at "pending"
+
+**Cause:** Background processing may have encountered an error.
+
+**Solutions:**
+1. Check Docker logs: `docker logs nirmaya-api-dev -f`
+2. Wait 10-30 seconds for processing to complete
+3. Trigger manual reprocessing: `POST /api/data-sources/:id/reprocess`
+
+### File Shows "failed" Status
+
+**Cause:** Invalid file format, missing required columns, or parsing error.
+
+**Solutions:**
+1. Check `error_message` field in the data source object
+2. Verify file has required columns (Station, Date)
+3. Ensure file is valid CSV/Excel format
+4. Try reprocessing: `POST /api/data-sources/:id/reprocess`
+
+### Cannot Upload Large Files
+
+**Cause:** File exceeds 50MB limit.
+
+**Solutions:**
+1. Split large files into smaller chunks
+2. Remove unnecessary columns
+3. Filter data to specific date ranges
+
+---
+
+## Technical Details
+
+### CSV Parsing
+- **Library:** Native Node.js parser (no external dependencies)
+- **Features:** Handles quoted values, escaped quotes, multi-line fields
+- **Performance:** Faster than external libraries, more reliable in Docker
+
+### Excel Parsing
+- **Library:** `xlsx` (industry standard)
+- **Formats:** .xlsx (Excel 2007+), .xls (Excel 97-2003)
+- **Features:** Automatic date conversion, sheet selection
+
+### File Storage
+- **Service:** Amazon S3
+- **Path:** `data-sources/{userId}/{timestamp}-{filename}`
+- **Retention:** Files retained indefinitely (soft delete only)
+
+### Background Processing
+- **Method:** `setImmediate()` for non-blocking execution
+- **Error Handling:** Comprehensive logging to Docker logs
+- **Status Updates:** Real-time status tracking in database
+
+---
+
+**Document Version:** 2.0.0  
+**Last Updated:** December 9, 2025  
+**API Version:** v1  
+**Changes:** Added scientist upload permissions, native CSV parser, improved error handling, troubleshooting guide

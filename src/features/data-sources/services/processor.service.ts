@@ -27,6 +27,7 @@ export async function processDataSourceFile(dataSourceId: number): Promise<void>
       const fileBuffer = await downloadAsBuffer(dataSource.file_path);
       
       // Parse file and extract metadata
+      logger.info(`Parsing file with type: ${dataSource.file_type}`);
       const parseResult = await parseDataSourceFile(
         fileBuffer,
         dataSource.file_type as 'csv' | 'xlsx' | 'xls'
@@ -58,16 +59,23 @@ export async function processDataSourceFile(dataSourceId: number): Promise<void>
       
     } catch (error: any) {
       // Mark as failed
+      const errorMessage = error.message || 'Failed to process file';
       await updateDataSourceStatus(
         dataSourceId,
         'failed',
-        error.message || 'Failed to process file'
+        errorMessage
       );
-      logger.error(`Error processing data source ${dataSourceId}: ${error.message}`);
+      logger.error(`Error processing data source ${dataSourceId}:`, {
+        error: error.message,
+        stack: error.stack
+      });
     }
     
   } catch (error: any) {
-    logger.error(`Fatal error processing data source ${dataSourceId}: ${error.message}`);
+    logger.error(`Fatal error processing data source ${dataSourceId}:`, {
+      error: error.message,
+      stack: error.stack
+    });
   }
 }
 

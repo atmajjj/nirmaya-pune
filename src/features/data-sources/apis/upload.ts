@@ -36,6 +36,45 @@ const upload = multer({
 });
 
 /**
+ * Multer error handler middleware
+ */
+const handleMulterError = (err: any, req: any, res: Response, next: any): void => {
+  if (err) {
+    logger.error('Multer error:', {
+      message: err.message,
+      code: err.code,
+      field: err.field
+    });
+    
+    if (err.message && err.message.includes('Boundary not found')) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid request format. Please ensure you are sending a multipart/form-data request with Content-Type header and file in "file" field.',
+        error: 'INVALID_MULTIPART_REQUEST'
+      });
+      return;
+    }
+    
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({
+        success: false,
+        message: 'File size exceeds 50MB limit',
+        error: 'FILE_TOO_LARGE'
+      });
+      return;
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: err.message || 'File upload error',
+      error: err.code || 'UPLOAD_ERROR'
+    });
+    return;
+  }
+  next();
+};
+
+/**
  * Business logic: Upload CSV/Excel file
  */
 async function uploadFile(
@@ -86,8 +125,11 @@ async function uploadFile(
 
   // Process file asynchronously (parse and extract metadata)
   // Don't await - let it run in background
-  processDataSourceFile(dataSource.id).catch(error => {
-    logger.error(`Background processing failed for data source ${dataSource.id}:`, error);
+  // Wrap in setImmediate to ensure it runs after response is sent
+  setImmediate(() => {
+    processDataSourceFile(dataSource.id).catch(error => {
+      logger.error(`Background processing failed for data source ${dataSource.id}:`, error);
+    });
   });
 
   // Format response
@@ -113,14 +155,33 @@ async function uploadFile(
  * Handler: Upload data source file
  */
 const handler = asyncHandler(async (req: any, res: Response) => {
+  logger.info('Upload handler called', {
+    hasFile: !!req.file,
+    contentType: req.headers['content-type'],
+    userId: req.userId,
+    bodyKeys: Object.keys(req.body || {})
+  });
+
   if (!req.file) {
-    throw new HttpException(400, 'No file uploaded');
+    logger.error('No file in request', {
+      headers: req.headers,
+      body: req.body
+    });
+    throw new HttpException(400, 'No file uploaded. Please ensure you are sending a multipart/form-data request with a file field named "file".');
   }
 
   const { description } = req.body;
   const userId = req.userId!;
 
+  logger.info('Processing upload', {
+    filename: req.file.originalname,
+    size: req.file.size,
+    mimetype: req.file.mimetype
+  });
+
   const result = await uploadFile(req.file, userId, description);
+
+  logger.info('Upload successful', { dataSourceId: result.id });
 
   ResponseFormatter.created(res, result, 'File uploaded successfully. Processing will begin shortly.');
 });
@@ -130,8 +191,9 @@ const router = Router();
 router.post(
   '/upload',
   requireAuth,
-  requireRole('field_technician'),
+  requireRole(['admin', 'scientist', 'field_technician']),
   upload.single('file'),
+  handleMulterError,
   handler
 );
 

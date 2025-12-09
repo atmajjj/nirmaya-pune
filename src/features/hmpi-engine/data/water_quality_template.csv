@@ -1,0 +1,3 @@
+S.No,State,District,Location,Longitude,Latitude,Year,Hg,Cd,As,Pb,Se,Ni,Al,Cr,Cu,Mo,Ag,Mn,Fe,F,Zn,Hazen,NTU,TDS,NH3-N,MBAS,Ba,B,Ca,NH2Cl,Cl,Cl2,Mg,Oil,NO3,C6H5OH,SO4,H2S,CaCO3,CN,Pest,PCB,PAH,CHBr3,CHBr2Cl,CHBrCl2,CHCl3
+1,Tamil Nadu,Chennai,Sample Site 1,80.2707,13.0827,2024,0.5,1.0,5.0,3.0,2.0,5.0,25.0,10.0,50.0,20.0,10.0,80.0,150.0,0.8,1500.0,5.0,2.0,350.0,0.3,0.1,100.0,0.2,60.0,0.5,150.0,0.2,25.0,0.1,30.0,0.001,100.0,0.01,180.0,0.01,,,,,,,
+2,Maharashtra,Mumbai,Sample Site 2,72.8777,19.076,2024,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

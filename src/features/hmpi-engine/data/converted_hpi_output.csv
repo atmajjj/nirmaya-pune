@@ -1,0 +1,4 @@
+S.No,State,District,Location,Longitude,Latitude,Year,HPI,Classification
+1,Unknown,Unknown,Station 1,0.0,0.0,2024,146.32815955086716,Unsuitable - Critical pollution
+2,Unknown,Unknown,Station 2,0.0,0.0,2024,52.733633718747456,Poor - Medium pollution
+3,Unknown,Unknown,Station 3,0.0,0.0,2024,60.389755699151216,Poor - Medium pollution

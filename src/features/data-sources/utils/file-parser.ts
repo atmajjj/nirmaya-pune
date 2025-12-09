@@ -1,5 +1,4 @@
 import * as XLSX from 'xlsx';
-import Papa from 'papaparse';
 import { logger } from '../../../utils/logger';
 
 export interface ParsedFileMetadata {
@@ -21,76 +20,137 @@ export interface FileParseResult {
 }
 
 /**
- * Parse CSV file and extract metadata
+ * Parse CSV file using native approach (no external library dependency)
  */
 async function parseCSV(buffer: Buffer): Promise<ParsedFileMetadata> {
-  return new Promise((resolve, reject) => {
+  try {
+    logger.info('Starting CSV parse with native parser...');
     const csvString = buffer.toString('utf-8');
     
-    Papa.parse(csvString, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        try {
-          const data = results.data as any[];
-          const columns = results.meta.fields || [];
-          
-          // Extract stations if 'Station' or 'station' column exists
-          let stations: string[] | undefined;
-          const stationCol = columns.find(col => 
-            col.toLowerCase() === 'station' || col.toLowerCase() === 'station_name'
-          );
-          
-          if (stationCol && data.length > 0) {
-            const stationSet = new Set<string>();
-            data.forEach(row => {
-              if (row[stationCol]) {
-                stationSet.add(String(row[stationCol]).trim());
-              }
-            });
-            stations = Array.from(stationSet);
-          }
-          
-          // Extract date range if date column exists
-          let dateRange: { from?: string; to?: string } | undefined;
-          const dateCol = columns.find(col => 
-            col.toLowerCase().includes('date') || col.toLowerCase() === 'timestamp'
-          );
-          
-          if (dateCol && data.length > 0) {
-            const dates = data
-              .map(row => row[dateCol])
-              .filter(d => d)
-              .sort();
-            
-            if (dates.length > 0) {
-              dateRange = {
-                from: dates[0],
-                to: dates[dates.length - 1]
-              };
-            }
-          }
-          
-          // Get preview rows (first 5)
-          const preview_rows = data.slice(0, 5);
-          
-          resolve({
-            total_rows: data.length,
-            column_count: columns.length,
-            columns,
-            stations,
-            date_range: dateRange,
-            preview_rows
-          });
-        } catch (error) {
-          reject(new Error(`Failed to process CSV data: ${error}`));
-        }
-      },
-      error: (error: Error) => {
-        reject(new Error(`Failed to parse CSV: ${error.message}`));
+    // Split into lines and filter empty
+    const lines = csvString.split(/\r?\n/).filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      throw new Error('CSV file is empty');
+    }
+    
+    // Parse header (first line)
+    const headerLine = lines[0];
+    const columns = parseCSVLine(headerLine);
+    
+    if (columns.length === 0) {
+      throw new Error('CSV file has no columns');
+    }
+    
+    logger.info(`Parsed ${columns.length} columns from CSV header`);
+    
+    // Parse data rows
+    const dataRows: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      if (values.length > 0 && values.some(v => v)) {
+        const row: any = {};
+        columns.forEach((col, idx) => {
+          row[col] = values[idx] || '';
+        });
+        dataRows.push(row);
       }
-    });
-  });
+    }
+    
+    logger.info(`Parsed ${dataRows.length} data rows from CSV`);
+    
+    // Extract stations
+    let stations: string[] | undefined;
+    const stationCol = columns.find(col => 
+      col.toLowerCase() === 'station' || 
+      col.toLowerCase() === 'station_name' ||
+      col.toLowerCase() === 'station_id'
+    );
+    
+    if (stationCol && dataRows.length > 0) {
+      const stationSet = new Set<string>();
+      dataRows.forEach(row => {
+        if (row[stationCol]) {
+          stationSet.add(String(row[stationCol]).trim());
+        }
+      });
+      stations = Array.from(stationSet);
+      logger.info(`Extracted ${stations.length} unique stations`);
+    }
+    
+    // Extract date range
+    let dateRange: { from?: string; to?: string } | undefined;
+    const dateCol = columns.find(col => 
+      col.toLowerCase().includes('date') || 
+      col.toLowerCase() === 'timestamp'
+    );
+    
+    if (dateCol && dataRows.length > 0) {
+      const dates = dataRows
+        .map(row => row[dateCol])
+        .filter(d => d)
+        .sort();
+      
+      if (dates.length > 0) {
+        dateRange = {
+          from: dates[0],
+          to: dates[dates.length - 1]
+        };
+        logger.info(`Date range: ${dateRange.from} to ${dateRange.to}`);
+      }
+    }
+    
+    // Get preview rows (first 5)
+    const preview_rows = dataRows.slice(0, 5);
+    
+    return {
+      total_rows: dataRows.length,
+      column_count: columns.length,
+      columns,
+      stations,
+      date_range: dateRange,
+      preview_rows
+    };
+  } catch (error: any) {
+    logger.error('CSV parsing error:', error);
+    throw new Error(`Failed to parse CSV: ${error.message}`);
+  }
+}
+
+/**
+ * Parse a single CSV line handling quoted values
+ */
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote mode
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add last field
+  result.push(current.trim());
+  
+  return result;
 }
 
 /**

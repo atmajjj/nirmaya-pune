@@ -21,18 +21,18 @@ export default class DataSourcesRoute implements Route {
 
   private initializeRoutes() {
     // POST /api/data-sources/upload - Field technicians upload files
-    this.router.use(uploadRouter);
+    this.router.use(this.path, uploadRouter);
     
     // GET /api/data-sources - List all data sources (with filters)
-    this.router.use(listRouter);
+    this.router.use(this.path, listRouter);
     
     // GET /api/data-sources/:id - Get specific data source details
-    this.router.use(getRouter);
+    this.router.use(this.path, getRouter);
     
     // DELETE /api/data-sources/:id - Soft delete a data source
-    this.router.use(deleteRouter);
+    this.router.use(this.path, deleteRouter);
     
     // POST /api/data-sources/:id/reprocess - Reprocess file (admin/scientist)
-    this.router.use(reprocessRouter);
+    this.router.use(this.path, reprocessRouter);
   }
 }
