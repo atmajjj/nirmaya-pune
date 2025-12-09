@@ -13,7 +13,7 @@ import type { CreateReportInput } from '../shared/interface';
  */
 export class ReportGeneratorService {
   /**
-   * Generate complete HMPI report
+   * Generate complete water quality report
    * Orchestrates data aggregation, chart generation, PDF creation, and S3 upload
    *
    * @param uploadId - ID of the upload with calculations

@@ -1,5 +1,5 @@
 /**
- * Integration tests for POST /api/hmpi-engine/calculate-from-source
+ * Integration tests for POST /api/nirmaya-engine/calculate-from-source
  * 
  * Tests calculation from pre-uploaded data sources
  */
@@ -7,7 +7,7 @@
 import { Application } from 'express';
 import { sql } from 'drizzle-orm';
 import App from '../../../../app';
-import HMPIEngineRoute from '../../index';
+import NirmayaEngineRoute from '../../index';
 import AuthRoute from '../../../auth';
 import DataSourcesRoute from '../../../data-sources';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
@@ -17,7 +17,7 @@ import { db } from '../../../../database/drizzle';
 import { waterQualityCalculations } from '../../shared/schema';
 import { dataSources } from '../../../data-sources/shared/schema';
 
-describe('POST /api/hmpi-engine/calculate-from-source', () => {
+describe('POST /api/nirmaya-engine/calculate-from-source', () => {
   let app: Application;
   let apiHelper: ApiTestHelper;
   let adminToken: string;
@@ -26,10 +26,10 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
   let researcherToken: string;
 
   beforeAll(async () => {
-    const hmpiRoute = new HMPIEngineRoute();
+    const nirmayaRoute = new NirmayaEngineRoute();
     const authRoute = new AuthRoute();
     const dataSourcesRoute = new DataSourcesRoute();
-    const appInstance = new App([authRoute, hmpiRoute, dataSourcesRoute]);
+    const appInstance = new App([authRoute, nirmayaRoute, dataSourcesRoute]);
     app = appInstance.getServer();
     apiHelper = new ApiTestHelper(app as any);
   });
@@ -85,7 +85,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
 
   describe('Authentication & Authorization', () => {
     it('should return 401 without authentication', async () => {
-      const response = await apiHelper.post('/api/hmpi-engine/calculate-from-source', {
+      const response = await apiHelper.post('/api/nirmaya-engine/calculate-from-source', {
         data_source_id: 1,
       });
 
@@ -94,7 +94,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
 
     it('should return 403 for field_technician role', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 1 },
         fieldTechToken
       );
@@ -105,7 +105,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
 
     it('should return 403 for researcher role', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 1 },
         researcherToken
       );
@@ -117,7 +117,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
     it('should allow admin to access endpoint', async () => {
       // Will fail with 404 (data source not found) but should pass auth
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 999 },
         adminToken
       );
@@ -129,7 +129,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
     it('should allow scientist to access endpoint', async () => {
       // Will fail with 404 (data source not found) but should pass auth
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 999 },
         scientistToken
       );
@@ -142,7 +142,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
   describe('Input Validation', () => {
     it('should return 400 for missing data_source_id', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         {},
         scientistToken
       );
@@ -152,7 +152,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
 
     it('should return 400 for invalid data_source_id type', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 'invalid' },
         scientistToken
       );
@@ -162,7 +162,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
 
     it('should return 400 for negative data_source_id', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: -1 },
         scientistToken
       );
@@ -172,7 +172,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
 
     it('should return 400 for zero data_source_id', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 0 },
         scientistToken
       );
@@ -184,7 +184,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
   describe('Data Source Validation', () => {
     it('should return 404 for non-existent data source', async () => {
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: 999999 },
         scientistToken
       );
@@ -209,7 +209,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
       }).returning();
 
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: dataSource.id },
         scientistToken
       );
@@ -235,7 +235,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
       }).returning();
 
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: dataSource.id },
         scientistToken
       );
@@ -262,7 +262,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
       }).returning();
 
       const response = await apiHelper.post(
-        '/api/hmpi-engine/calculate-from-source',
+        '/api/nirmaya-engine/calculate-from-source',
         { data_source_id: dataSource.id },
         scientistToken
       );
@@ -294,7 +294,7 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
       //    - Can filter by file type, uploader, date range
       //
       // 4. Scientist selects data source for calculation
-      //    POST /api/hmpi-engine/calculate-from-source
+      //    POST /api/nirmaya-engine/calculate-from-source
       //    - Provides data_source_id
       //    - System fetches file from S3
       //    - Calculates HPI, MI, WQI indices
@@ -302,8 +302,8 @@ describe('POST /api/hmpi-engine/calculate-from-source', () => {
       //    - Creates upload record for tracking
       //
       // 5. Scientist views/downloads results
-      //    GET /api/hmpi-engine/calculations/:id
-      //    GET /api/hmpi-engine/uploads/:upload_id/download
+      //    GET /api/nirmaya-engine/calculations/:id
+      //    GET /api/nirmaya-engine/uploads/:upload_id/download
       //
       // Note: Full end-to-end test would require:
       // - Mock S3 service or real S3 bucket

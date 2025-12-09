@@ -73,7 +73,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 
 const router = Router();
 
-// GET /api/hmpi-engine/calculations/:id
+// GET /api/nirmaya-engine/calculations/:id
 router.get(
   '/calculations/:id',
   requireAuth,

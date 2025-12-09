@@ -9,7 +9,7 @@ Implemented automatic PDF report generation that triggers in the background imme
 
 ## Changes Made
 
-### 1. Updated `/api/hmpi-engine/calculate` endpoint
+### 1. Updated `/api/nirmaya-engine/calculate` endpoint
 **File**: `src/features/hmpi-engine/apis/calculate.ts`
 
 **Changes**:
@@ -20,7 +20,7 @@ Implemented automatic PDF report generation that triggers in the background imme
 - Added logging for successful report generation and error handling
 - Updated response messages to inform users that "Report generation started"
 
-### 2. Updated `/api/hmpi-engine/calculate-from-source` endpoint
+### 2. Updated `/api/nirmaya-engine/calculate-from-source` endpoint
 **File**: `src/features/hmpi-engine/apis/calculate-from-source.ts`
 
 **Changes**:
@@ -116,7 +116,7 @@ Admins can view all reports via:
 ## Testing
 
 ### Manual Testing
-1. Upload CSV file via `/api/hmpi-engine/calculate`
+1. Upload CSV file via `/api/nirmaya-engine/calculate`
 2. Check response includes "Report generation started"
 3. Wait a few seconds for report generation
 4. Verify report exists via `/api/hmpi-report/upload/:uploadId`

@@ -5,14 +5,14 @@ import AuthRoute from './features/auth';
 import UploadRoute from './features/upload';
 import AdminInviteRoute from './features/admin-invite';
 import ChatbotRoute from './features/chatbot';
-import HMPIEngineRoute from './features/hmpi-engine';
+import NirmayaEngineRoute from './features/hmpi-engine';
 import FormulaEditorRoute from './features/formula-editor';
 import { HMPIReportRoutes } from './features/hmpi-report';
 import ResearcherRoute from './features/researcher';
 import DataSourcesRoute from './features/data-sources';
 import AdminStatsRoute from './features/admin-stats';
 import { connectWithRetry, pool } from './database/drizzle';
-import { redisClient, testRedisConnection } from './utils/redis';
+// import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
 
 let server: import('http').Server;
@@ -29,7 +29,7 @@ async function bootstrap() {
     logger.info('✅ Database connected');
 
     // Initialize Redis connection
-    await testRedisConnection();
+    // await testRedisConnection();
 
     // Start Express app
     const app = new App([
@@ -39,7 +39,7 @@ async function bootstrap() {
       new AdminInviteRoute(),
       new AdminStatsRoute(),
       new ChatbotRoute(),
-      new HMPIEngineRoute(),
+      new NirmayaEngineRoute(),
       new FormulaEditorRoute(),
       new HMPIReportRoutes(),
       new ResearcherRoute(),
@@ -52,7 +52,7 @@ async function bootstrap() {
     setupGracefulShutdown({
       server,
       database: pool,
-      redis: redisClient,
+      // redis: redisClient, // Redis disabled
     });
 
     logger.info('✅ Nirmaya Backend started successfully!');

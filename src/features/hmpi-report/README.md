@@ -537,7 +537,7 @@ npm install puppeteer chartjs-node-canvas chart.js handlebars
 
 ### **Step 1: Upload CSV & Get Calculations**
 ```javascript
-const response = await fetch('/api/hmpi-engine/calculate', {
+const response = await fetch('/api/nirmaya-engine/calculate', {
   method: 'POST',
   headers: { 'Authorization': `Bearer ${token}` },
   body: formData

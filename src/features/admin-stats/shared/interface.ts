@@ -44,17 +44,11 @@ export interface AdminDashboardStats {
       hpi: number;
       mi: number;
       wqi: number;
-      cdeg: number;
-      hei: number;
-      pig: number;
     };
     by_classification: {
       hpi: Record<string, number>;
       mi: Record<string, number>;
       wqi: Record<string, number>;
-      cdeg: Record<string, number>;
-      hei: Record<string, number>;
-      pig: Record<string, number>;
     };
     recent_calculations: number; // Last 30 days
   };

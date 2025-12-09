@@ -39,7 +39,7 @@ const customMAC = {
 console.log('Input Data (Flutter Test Case):');
 console.log('-'.repeat(60));
 console.log('Metal\tCi (ppb)\tMAC (ppb)');
-for (const [symbol, Ci] of Object.entries(testMetals)) {
+for (const [symbol, Ci] of Object.entries(testMetals) as Array<[keyof typeof testMetals, number]>) {
   const MACi = customMAC[symbol];
   console.log(`${symbol}\t${Ci}\t\t${MACi}`);
 }

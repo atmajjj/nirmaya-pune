@@ -451,7 +451,7 @@ Authorization: Bearer <jwt_token>
 | Status | Description |
 |--------|-------------|
 | `pending` | File uploaded, waiting for processing |
-| `processing` | File is being processed (e.g., by HMPI Engine) |
+| `processing` | File is being processed (e.g., by Nirmaya Engine) |
 | `completed` | Processing completed successfully |
 | `failed` | Processing failed (check `error_message`) |
 
@@ -869,5 +869,5 @@ All error responses follow this format:
 
 ## Related Endpoints
 
-- **HMPI Engine**: `/api/hmpi-engine` - Uses uploads for CSV processing
+- **Nirmaya Engine**: `/api/nirmaya-engine` - Uses uploads for CSV processing
 - **Chatbot**: `/api/chatbot/documents` - Uses uploads for document training

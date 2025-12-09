@@ -1,12 +1,12 @@
 /**
- * Integration tests for POST /api/hmpi-engine/preview
+ * Integration tests for POST /api/nirmaya-engine/preview
  * 
  * Tests CSV preview functionality that detects available calculations
  */
 
 import { Application } from 'express';
 import App from '../../../../app';
-import HMPIEngineRoute from '../../index';
+import NirmayaEngineRoute from '../../index';
 import AuthRoute from '../../../auth';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
 import { ApiTestHelper } from '../../../../../tests/utils/api.helper';
@@ -21,7 +21,7 @@ import {
   API_PATHS,
 } from './fixtures';
 
-describe('POST /api/hmpi-engine/preview', () => {
+describe('POST /api/nirmaya-engine/preview', () => {
   let app: Application;
   let apiHelper: ApiTestHelper;
   let adminToken: string;
@@ -29,9 +29,9 @@ describe('POST /api/hmpi-engine/preview', () => {
   let researcherToken: string;
 
   beforeAll(async () => {
-    const hmpiRoute = new HMPIEngineRoute();
+    const nirmayaRoute = new NirmayaEngineRoute();
     const authRoute = new AuthRoute();
-    const appInstance = new App([authRoute, hmpiRoute]);
+    const appInstance = new App([authRoute, nirmayaRoute]);
     app = appInstance.getServer();
     apiHelper = new ApiTestHelper(app as any);
   });

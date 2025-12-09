@@ -1,5 +1,5 @@
 /**
- * Integration tests for GET /api/hmpi-engine/calculations
+ * Integration tests for GET /api/nirmaya-engine/calculations
  * 
  * Tests listing calculations with pagination and filtering
  */
@@ -7,7 +7,7 @@
 import { Application } from 'express';
 import { sql } from 'drizzle-orm';
 import App from '../../../../app';
-import HMPIEngineRoute from '../../index';
+import NirmayaEngineRoute from '../../index';
 import AuthRoute from '../../../auth';
 import UploadRoute from '../../../upload';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
@@ -22,7 +22,7 @@ import {
   API_PATHS,
 } from './fixtures';
 
-describe('GET /api/hmpi-engine/calculations', () => {
+describe('GET /api/nirmaya-engine/calculations', () => {
   let app: Application;
   let apiHelper: ApiTestHelper;
   let adminToken: string;
@@ -31,10 +31,10 @@ describe('GET /api/hmpi-engine/calculations', () => {
   let testUploadId: number;
 
   beforeAll(async () => {
-    const hmpiRoute = new HMPIEngineRoute();
+    const nirmayaRoute = new NirmayaEngineRoute();
     const authRoute = new AuthRoute();
     const uploadRoute = new UploadRoute();
-    const appInstance = new App([authRoute, hmpiRoute, uploadRoute]);
+    const appInstance = new App([authRoute, nirmayaRoute, uploadRoute]);
     app = appInstance.getServer();
     apiHelper = new ApiTestHelper(app as any);
   });

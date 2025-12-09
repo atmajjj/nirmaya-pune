@@ -305,7 +305,7 @@ export async function parseDataSourceFile(
 }
 
 /**
- * Validate that file has required columns for HMPI calculations
+ * Validate that file has required columns for Nirmaya calculations
  * This is optional validation - can be used before marking file as 'available'
  */
 export function validateHMPIColumns(columns: string[]): { valid: boolean; missing?: string[] } {

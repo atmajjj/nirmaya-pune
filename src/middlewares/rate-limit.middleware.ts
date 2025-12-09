@@ -1,16 +1,14 @@
 import rateLimit, { RateLimitExceededEventHandler } from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
+// import RedisStore from 'rate-limit-redis';
 import { Request, RequestHandler } from 'express';
 import { logger } from '../utils/logger';
-import { redisClient } from '../utils/redis';
+// import { redisClient } from '../utils/redis';
 import { RequestWithId } from '../interfaces/request.interface';
-import { isProduction, isDevelopment, isTest, config } from '../utils/validateEnv';
+import { isDevelopment, isTest } from '../utils/validateEnv';
 
 // Create Redis store for production, in-memory for development
-const createStore = () =>
-  isProduction && config.REDIS_URL
-    ? new RedisStore({ sendCommand: (...args: string[]) => redisClient.sendCommand(args) })
-    : undefined;
+// Redis disabled - using in-memory store for all environments
+const createStore = () => undefined;
 
 // Consistent error response matching error middleware structure
 const createRateLimitResponse = (message: string, retryAfter: string, requestId: string) => ({

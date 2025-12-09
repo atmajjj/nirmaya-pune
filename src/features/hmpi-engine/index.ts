@@ -1,6 +1,6 @@
 /**
- * HMPI Engine Routes
- * Heavy Metal Pollution Index calculation API endpoints
+ * Nirmaya Engine Routes
+ * Water Quality Index calculation API endpoints
  * Calculates HPI, MI, and WQI indices from water quality data
  *
  * Access: All roles except 'researcher'
@@ -18,7 +18,7 @@ import getCalculationRouter from './apis/get-calculation';
 import downloadResultsRouter from './apis/download-results';
 import getStatsRouter from './apis/get-stats';
 
-class HMPIEngineRoute implements Route {
+class NirmayaEngineRoute implements Route {
   public path = '/nirmaya-engine';
   public router = Router();
 
@@ -51,4 +51,4 @@ class HMPIEngineRoute implements Route {
   }
 }
 
-export default HMPIEngineRoute;
+export default NirmayaEngineRoute;

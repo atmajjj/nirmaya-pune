@@ -57,7 +57,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 
 const router = Router();
 
-// POST /api/hmpi-engine/preview
+// POST /api/nirmaya-engine/preview
 // Requires auth and role (admin, scientist, policymaker can preview)
 router.post(
   '/preview',

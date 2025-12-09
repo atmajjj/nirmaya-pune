@@ -1,5 +1,5 @@
 /**
- * Integration tests for GET /api/hmpi-engine/calculations/:id
+ * Integration tests for GET /api/nirmaya-engine/calculations/:id
  * 
  * Tests fetching a single calculation by ID
  */
@@ -7,7 +7,7 @@
 import { Application } from 'express';
 import { sql } from 'drizzle-orm';
 import App from '../../../../app';
-import HMPIEngineRoute from '../../index';
+import NirmayaEngineRoute from '../../index';
 import AuthRoute from '../../../auth';
 import UploadRoute from '../../../upload';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
@@ -18,7 +18,7 @@ import { waterQualityCalculations } from '../../shared/schema';
 import { uploads } from '../../../upload/shared/schema';
 import { API_PATHS } from './fixtures';
 
-describe('GET /api/hmpi-engine/calculations/:id', () => {
+describe('GET /api/nirmaya-engine/calculations/:id', () => {
   let app: Application;
   let apiHelper: ApiTestHelper;
   let adminToken: string;
@@ -26,10 +26,10 @@ describe('GET /api/hmpi-engine/calculations/:id', () => {
   let testCalculationId: number;
 
   beforeAll(async () => {
-    const hmpiRoute = new HMPIEngineRoute();
+    const nirmayaRoute = new NirmayaEngineRoute();
     const authRoute = new AuthRoute();
     const uploadRoute = new UploadRoute();
-    const appInstance = new App([authRoute, hmpiRoute, uploadRoute]);
+    const appInstance = new App([authRoute, nirmayaRoute, uploadRoute]);
     app = appInstance.getServer();
     apiHelper = new ApiTestHelper(app as any);
   });
@@ -191,7 +191,7 @@ describe('GET /api/hmpi-engine/calculations/:id', () => {
 
     it('should return 400 for invalid ID format', async () => {
       const response = await apiHelper.get(
-        '/api/hmpi-engine/calculations/invalid',
+        '/api/nirmaya-engine/calculations/invalid',
         adminToken
       );
 

@@ -192,7 +192,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 
 const router = Router();
 
-// POST /api/hmpi-engine/calculate-from-source
+// POST /api/nirmaya-engine/calculate-from-source
 // Requires auth and role (admin, scientist, policymaker can calculate)
 router.post(
   '/calculate-from-source',

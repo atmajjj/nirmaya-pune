@@ -27,7 +27,7 @@ export type FileType = (typeof fileTypes)[number];
 /**
  * Data Sources table schema
  * Stores CSV/Excel files uploaded by field technicians
- * Scientists can view and use these files for HMPI calculations
+ * Scientists can view and use these files for Nirmaya calculations
  *
  * Indexes:
  * - uploaded_by_is_deleted_idx: For field technician's uploads

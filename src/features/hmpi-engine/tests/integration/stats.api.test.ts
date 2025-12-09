@@ -1,5 +1,5 @@
 /**
- * Integration tests for GET /api/hmpi-engine/stats
+ * Integration tests for GET /api/nirmaya-engine/stats
  * 
  * Tests water quality calculation statistics
  */
@@ -7,7 +7,7 @@
 import { Application } from 'express';
 import { sql } from 'drizzle-orm';
 import App from '../../../../app';
-import HMPIEngineRoute from '../../index';
+import NirmayaEngineRoute from '../../index';
 import AuthRoute from '../../../auth';
 import UploadRoute from '../../../upload';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
@@ -18,7 +18,7 @@ import { waterQualityCalculations } from '../../shared/schema';
 import { uploads } from '../../../upload/shared/schema';
 import { API_PATHS } from './fixtures';
 
-describe('GET /api/hmpi-engine/stats', () => {
+describe('GET /api/nirmaya-engine/stats', () => {
   let app: Application;
   let apiHelper: ApiTestHelper;
   let adminToken: string;
@@ -26,10 +26,10 @@ describe('GET /api/hmpi-engine/stats', () => {
   let researcherToken: string;
 
   beforeAll(async () => {
-    const hmpiRoute = new HMPIEngineRoute();
+    const nirmayaRoute = new NirmayaEngineRoute();
     const authRoute = new AuthRoute();
     const uploadRoute = new UploadRoute();
-    const appInstance = new App([authRoute, hmpiRoute, uploadRoute]);
+    const appInstance = new App([authRoute, nirmayaRoute, uploadRoute]);
     app = appInstance.getServer();
     apiHelper = new ApiTestHelper(app as any);
   });

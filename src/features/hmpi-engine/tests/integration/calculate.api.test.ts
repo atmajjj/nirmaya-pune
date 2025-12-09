@@ -1,5 +1,5 @@
 /**
- * Integration tests for POST /api/hmpi-engine/calculate
+ * Integration tests for POST /api/nirmaya-engine/calculate
  * 
  * Tests CSV upload and index calculation with result validation
  * Uses dataset CSV files to verify calculation accuracy
@@ -8,7 +8,7 @@
 import { Application } from 'express';
 import { sql } from 'drizzle-orm';
 import App from '../../../../app';
-import HMPIEngineRoute from '../../index';
+import NirmayaEngineRoute from '../../index';
 import AuthRoute from '../../../auth';
 import UploadRoute from '../../../upload';
 import { dbHelper } from '../../../../../tests/utils/database.helper';
@@ -27,7 +27,7 @@ import {
   API_PATHS,
 } from './fixtures';
 
-describe('POST /api/hmpi-engine/calculate', () => {
+describe('POST /api/nirmaya-engine/calculate', () => {
   let app: Application;
   let apiHelper: ApiTestHelper;
   let adminToken: string;
@@ -36,10 +36,10 @@ describe('POST /api/hmpi-engine/calculate', () => {
   let researcherToken: string;
 
   beforeAll(async () => {
-    const hmpiRoute = new HMPIEngineRoute();
+    const nirmayaRoute = new NirmayaEngineRoute();
     const authRoute = new AuthRoute();
     const uploadRoute = new UploadRoute();
-    const appInstance = new App([authRoute, hmpiRoute, uploadRoute]);
+    const appInstance = new App([authRoute, nirmayaRoute, uploadRoute]);
     app = appInstance.getServer();
     apiHelper = new ApiTestHelper(app as any);
   });

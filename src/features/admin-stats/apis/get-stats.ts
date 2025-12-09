@@ -75,9 +75,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
       hpi_count: sql<number>`count(*) filter (where hpi is not null)::int`,
       mi_count: sql<number>`count(*) filter (where mi is not null)::int`,
       wqi_count: sql<number>`count(*) filter (where wqi is not null)::int`,
-      cdeg_count: sql<number>`count(*) filter (where cdeg is not null)::int`,
-      hei_count: sql<number>`count(*) filter (where hei is not null)::int`,
-      pig_count: sql<number>`count(*) filter (where pig is not null)::int`,
       recent: sql<number>`count(*) filter (where created_at >= ${thirtyDaysAgo})::int`,
     }).from(waterQualityCalculations).where(eq(waterQualityCalculations.is_deleted, false)),
 
@@ -247,9 +244,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
         hpi: calc.hpi_count || 0,
         mi: calc.mi_count || 0,
         wqi: calc.wqi_count || 0,
-        cdeg: calc.cdeg_count || 0,
-        hei: calc.hei_count || 0,
-        pig: calc.pig_count || 0,
       },
       by_classification: {
         hpi: hpiClassifications.reduce((acc, curr) => {
@@ -264,9 +258,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
           if (curr.classification) acc[curr.classification] = curr.count;
           return acc;
         }, {} as Record<string, number>),
-        cdeg: {}, // Classifications not grouped by default
-        hei: {},
-        pig: {},
       },
       recent_calculations: calc.recent || 0,
     },

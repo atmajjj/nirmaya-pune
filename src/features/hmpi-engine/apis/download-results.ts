@@ -114,7 +114,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
 
 const router = Router();
 
-// GET /api/hmpi-engine/uploads/:upload_id/download
+// GET /api/nirmaya-engine/uploads/:upload_id/download
 router.get(
   '/uploads/:upload_id/download',
   requireAuth,

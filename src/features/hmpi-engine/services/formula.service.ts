@@ -1,6 +1,6 @@
 /**
  * Formula Service
- * Provides methods to fetch formulas from database for HMPI calculations
+ * Provides methods to fetch formulas from database for Nirmaya calculations
  */
 
 import { findDefaultFormula, findFormulaById } from '../../formula-editor/shared/queries';

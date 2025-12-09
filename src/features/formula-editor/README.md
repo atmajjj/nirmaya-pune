@@ -205,7 +205,7 @@ Run seed to create defaults:
 npm run db:seed
 ```
 
-## Integration with HMPI Engine
+## Integration with Nirmaya Engine
 
 The Formula Service (`formula.service.ts`) provides methods to fetch formulas for calculations:
 

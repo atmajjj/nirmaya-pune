@@ -6,7 +6,7 @@ The Data Sources feature enables a collaborative workflow between Field Technici
 
 1. **Field Technicians** upload CSV/Excel files with water quality measurements
 2. System automatically **processes and validates** the files
-3. **Scientists** select processed files for HMPI calculations
+3. **Scientists** select processed files for Nirmaya calculations
 4. **Researchers and Policymakers** access calculation results
 
 ---
@@ -519,7 +519,7 @@ curl -X POST https://api.example.com/api/data-sources/5/reprocess \
 
 Calculate HMPI indices (HPI, MI, WQI) using a pre-uploaded data source.
 
-**Endpoint:** `POST /api/hmpi-engine/calculate-from-source`
+**Endpoint:** `POST /api/nirmaya-engine/calculate-from-source`
 
 **Authorization:** Admin, Scientist, Policymaker
 
@@ -534,7 +534,7 @@ Calculate HMPI indices (HPI, MI, WQI) using a pre-uploaded data source.
 
 **Example Request:**
 ```bash
-curl -X POST https://api.example.com/api/hmpi-engine/calculate-from-source \
+curl -X POST https://api.example.com/api/nirmaya-engine/calculate-from-source \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"data_source_id": 5}'
@@ -789,7 +789,7 @@ STN002,2024-01-15,6.9,17.8,6.5,4.1,18.7,280,15.6
 1. Scientist logs in
 2. Lists available data sources: GET /api/data-sources?status=available
 3. Reviews metadata to select appropriate file
-4. Initiates calculation: POST /api/hmpi-engine/calculate-from-source
+4. Initiates calculation: POST /api/nirmaya-engine/calculate-from-source
 5. Receives calculation results immediately
 6. Downloads results if needed
 ```

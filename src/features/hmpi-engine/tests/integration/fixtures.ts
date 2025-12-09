@@ -1,5 +1,5 @@
 /**
- * Shared test fixtures and helpers for HMPI Engine integration tests
+ * Shared test fixtures and helpers for Nirmaya Engine integration tests
  * 
  * Contains:
  * - Test CSV data matching the dataset folder structure
@@ -162,10 +162,10 @@ export function roundTo(value: number, decimals: number): number {
 // ============================================================================
 
 export const API_PATHS = {
-  preview: '/api/hmpi-engine/preview',
-  calculate: '/api/hmpi-engine/calculate',
-  calculations: '/api/hmpi-engine/calculations',
-  calculation: (id: number) => `/api/hmpi-engine/calculations/${id}`,
-  download: (uploadId: number) => `/api/hmpi-engine/uploads/${uploadId}/download`,
-  stats: '/api/hmpi-engine/stats',
+  preview: '/api/nirmaya-engine/preview',
+  calculate: '/api/nirmaya-engine/calculate',
+  calculations: '/api/nirmaya-engine/calculations',
+  calculation: (id: number) => `/api/nirmaya-engine/calculations/${id}`,
+  download: (uploadId: number) => `/api/nirmaya-engine/uploads/${uploadId}/download`,
+  stats: '/api/nirmaya-engine/stats',
 };
