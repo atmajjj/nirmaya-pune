@@ -36,10 +36,8 @@ const querySchema = z.object({
   hpi_max: z.coerce.number().optional(),
   mi_min: z.coerce.number().optional(),
   mi_max: z.coerce.number().optional(),
-  wqi_min: z.coerce.number().optional(),
-  wqi_max: z.coerce.number().optional(),
   classification: z.string().optional(),
-  sort_by: z.enum(['hpi', 'mi', 'wqi', 'created_at', 'station_id']).default('created_at'),
+  sort_by: z.enum(['hpi', 'mi', 'created_at', 'station_id', 'year']).default('created_at'),
   sort_order: z.enum(['asc', 'desc']).default('desc'),
 });
 
@@ -58,8 +56,6 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
     hpi_max: query.hpi_max,
     mi_min: query.mi_min,
     mi_max: query.mi_max,
-    wqi_min: query.wqi_min,
-    wqi_max: query.wqi_max,
     classification: query.classification,
     sort_by: query.sort_by,
     sort_order: query.sort_order,

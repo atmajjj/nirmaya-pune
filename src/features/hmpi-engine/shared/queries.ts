@@ -53,10 +53,8 @@ export interface CalculationQueryParams {
   hpi_max?: number;
   mi_min?: number;
   mi_max?: number;
-  wqi_min?: number;
-  wqi_max?: number;
   classification?: string;
-  sort_by?: 'hpi' | 'mi' | 'wqi' | 'created_at' | 'station_id' | 'year';
+  sort_by?: 'hpi' | 'mi' | 'created_at' | 'station_id' | 'year';
   sort_order?: 'asc' | 'desc';
 }
 
@@ -78,8 +76,6 @@ export const findCalculations = async (
     hpi_max,
     mi_min,
     mi_max,
-    wqi_min,
-    wqi_max,
     classification,
     sort_by = 'created_at',
     sort_order = 'desc',
@@ -126,20 +122,11 @@ export const findCalculations = async (
     conditions.push(lte(waterQualityCalculations.mi, mi_max.toString()));
   }
 
-  if (wqi_min !== undefined) {
-    conditions.push(gte(waterQualityCalculations.wqi, wqi_min.toString()));
-  }
-
-  if (wqi_max !== undefined) {
-    conditions.push(lte(waterQualityCalculations.wqi, wqi_max.toString()));
-  }
-
   if (classification) {
     conditions.push(
       or(
         ilike(waterQualityCalculations.hpi_classification, `%${classification}%`),
-        ilike(waterQualityCalculations.mi_classification, `%${classification}%`),
-        ilike(waterQualityCalculations.wqi_classification, `%${classification}%`)
+        ilike(waterQualityCalculations.mi_classification, `%${classification}%`)
       )!
     );
   }
@@ -148,7 +135,6 @@ export const findCalculations = async (
   const sortColumn = {
     hpi: waterQualityCalculations.hpi,
     mi: waterQualityCalculations.mi,
-    wqi: waterQualityCalculations.wqi,
     created_at: waterQualityCalculations.created_at,
     station_id: waterQualityCalculations.station_id,
     year: waterQualityCalculations.year,
@@ -213,7 +199,6 @@ export const getCalculationStats = async (params?: {
     .select({
       avg_hpi: sql<number>`avg(hpi::numeric)::float`,
       avg_mi: sql<number>`avg(mi::numeric)::float`,
-      avg_wqi: sql<number>`avg(wqi::numeric)::float`,
     })
     .from(waterQualityCalculations)
     .where(and(...conditions));
@@ -238,16 +223,6 @@ export const getCalculationStats = async (params?: {
     .where(and(...conditions, sql`${waterQualityCalculations.mi_classification} IS NOT NULL`))
     .groupBy(waterQualityCalculations.mi_classification);
 
-  // By WQI classification
-  const wqiClassifications = await db
-    .select({
-      classification: waterQualityCalculations.wqi_classification,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(waterQualityCalculations)
-    .where(and(...conditions, sql`${waterQualityCalculations.wqi_classification} IS NOT NULL`))
-    .groupBy(waterQualityCalculations.wqi_classification);
-
   // By state (top 10)
   const byState = await db
     .select({
@@ -269,14 +244,150 @@ export const getCalculationStats = async (params?: {
     by_mi_classification: Object.fromEntries(
       miClassifications.map(c => [c.classification, c.count])
     ),
-    by_wqi_classification: Object.fromEntries(
-      wqiClassifications.map(c => [c.classification, c.count])
-    ),
     by_state: Object.fromEntries(byState.map(s => [s.state, s.count])),
     averages: {
       hpi: avgResult.avg_hpi || 0,
       mi: avgResult.avg_mi || 0,
-      wqi: avgResult.avg_wqi || 0,
     },
   };
 };
+
+/**
+ * Get geomap data for frontend visualization
+ * Returns stations with coordinates, HPI scores, and risk levels
+ */
+export const getGeomapData = async (params?: {
+  state?: string;
+  uploadId?: number;
+  riskLevel?: 'safe' | 'moderate' | 'unsafe';
+  year?: number;
+  minHpi?: number;
+  maxHpi?: number;
+}): Promise<GeomapStation[]> => {
+  const conditions = [eq(waterQualityCalculations.is_deleted, false)];
+
+  // Apply filters
+  if (params?.state) {
+    conditions.push(ilike(waterQualityCalculations.state, `%${params.state}%`));
+  }
+
+  if (params?.uploadId) {
+    conditions.push(eq(waterQualityCalculations.upload_id, params.uploadId));
+  }
+
+  if (params?.year) {
+    conditions.push(eq(waterQualityCalculations.year, params.year));
+  }
+
+  if (params?.minHpi !== undefined) {
+    conditions.push(gte(waterQualityCalculations.hpi, params.minHpi.toString()));
+  }
+
+  if (params?.maxHpi !== undefined) {
+    conditions.push(lte(waterQualityCalculations.hpi, params.maxHpi.toString()));
+  }
+
+  // Risk level filter (based on HPI ranges)
+  if (params?.riskLevel) {
+    const riskRanges = {
+      safe: { min: 0, max: 50 },      // HPI < 50: Excellent to Good
+      moderate: { min: 50, max: 100 }, // HPI 50-100: Poor to Very Poor
+      unsafe: { min: 100, max: 9999 }, // HPI > 100: Unsuitable/Critical
+    };
+    const range = riskRanges[params.riskLevel];
+    conditions.push(
+      and(
+        gte(waterQualityCalculations.hpi, range.min.toString()),
+        lte(waterQualityCalculations.hpi, range.max.toString())
+      )!
+    );
+  }
+
+  // Query stations with coordinates only (filter out null lat/long)
+  const stations = await db
+    .select({
+      id: waterQualityCalculations.id,
+      station_id: waterQualityCalculations.station_id,
+      name: waterQualityCalculations.location,
+      state: waterQualityCalculations.state,
+      district: waterQualityCalculations.district,
+      city: waterQualityCalculations.city,
+      latitude: waterQualityCalculations.latitude,
+      longitude: waterQualityCalculations.longitude,
+      year: waterQualityCalculations.year,
+      hpi: waterQualityCalculations.hpi,
+      hpi_classification: waterQualityCalculations.hpi_classification,
+      mi: waterQualityCalculations.mi,
+      mi_classification: waterQualityCalculations.mi_classification,
+      metals_analyzed: waterQualityCalculations.metals_analyzed,
+    })
+    .from(waterQualityCalculations)
+    .where(
+      and(
+        ...conditions,
+        sql`${waterQualityCalculations.latitude} IS NOT NULL`,
+        sql`${waterQualityCalculations.longitude} IS NOT NULL`
+      )
+    )
+    .orderBy(desc(waterQualityCalculations.hpi));
+
+  // Transform to geomap format with risk levels
+  return stations.map((station) => {
+    const hpiValue = station.hpi ? parseFloat(station.hpi as string) : null;
+    
+    // Determine risk level based on HPI value
+    let riskLevel: 'safe' | 'moderate' | 'unsafe' = 'safe';
+    if (hpiValue !== null) {
+      if (hpiValue > 100) {
+        riskLevel = 'unsafe';
+      } else if (hpiValue >= 50) {
+        riskLevel = 'moderate';
+      }
+    }
+
+    return {
+      id: station.id,
+      station_id: station.station_id,
+      name: station.name || station.station_id,
+      location: {
+        latitude: parseFloat(station.latitude as string),
+        longitude: parseFloat(station.longitude as string),
+        state: station.state,
+        district: station.district,
+        city: station.city,
+      },
+      year: station.year,
+      hpi_score: hpiValue,
+      hpi_classification: station.hpi_classification,
+      mi_score: station.mi ? parseFloat(station.mi as string) : null,
+      mi_classification: station.mi_classification,
+      risk_level: riskLevel,
+      metals_analyzed: station.metals_analyzed?.split(',').map(m => m.trim()) || [],
+    };
+  });
+};
+
+// ============================================================================
+// Type Exports
+// ============================================================================
+
+export interface GeomapStation {
+  id: number;
+  station_id: string;
+  name: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    state: string | null;
+    district: string | null;
+    city: string | null;
+  };
+  year: number | null;
+  hpi_score: number | null;
+  hpi_classification: string | null;
+  mi_score: number | null;
+  mi_classification: string | null;
+  risk_level: 'safe' | 'moderate' | 'unsafe';
+  metals_analyzed: string[];
+}
+

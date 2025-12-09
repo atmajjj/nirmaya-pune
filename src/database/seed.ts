@@ -4,7 +4,7 @@ dotenv.config();
 import { db, closeDatabase } from './drizzle';
 import { users } from '../features/user/shared/schema';
 import { uploads } from '../features/upload/shared/schema';
-import { seedDefaultFormulas } from '../features/formula-editor/seed-formulas';
+import { seedMetalStandards } from '../features/standards/seed-standards';
 import { logger } from '../utils/logger';
 import bcrypt from 'bcrypt';
 
@@ -79,8 +79,8 @@ async function seed() {
 
     logger.info(`✅ Created ${2} test uploads`);
 
-    // Seed default formulas (HPI, MI, WQI)
-    await seedDefaultFormulas(testUser.id);
+    // Seed default metal standards
+    await seedMetalStandards(testUser.id);
 
     logger.info('🎉 Database seeding completed successfully!');
   } catch (error) {

@@ -6,11 +6,11 @@ import UploadRoute from './features/upload';
 import AdminInviteRoute from './features/admin-invite';
 import ChatbotRoute from './features/chatbot';
 import NirmayaEngineRoute from './features/hmpi-engine';
-import FormulaEditorRoute from './features/formula-editor';
 import { HMPIReportRoutes } from './features/hmpi-report';
 import ResearcherRoute from './features/researcher';
 import DataSourcesRoute from './features/data-sources';
 import AdminStatsRoute from './features/admin-stats';
+import StandardsRoute from './features/standards';
 import { connectWithRetry, pool } from './database/drizzle';
 // import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
@@ -40,10 +40,10 @@ async function bootstrap() {
       new AdminStatsRoute(),
       new ChatbotRoute(),
       new NirmayaEngineRoute(),
-      new FormulaEditorRoute(),
       new HMPIReportRoutes(),
       new ResearcherRoute(),
       new DataSourcesRoute(),
+      new StandardsRoute(),
     ]);
 
     server = app.listen();

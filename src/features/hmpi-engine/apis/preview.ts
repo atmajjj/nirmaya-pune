@@ -41,13 +41,12 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
   const availableIndices: string[] = [];
   if (result.available_calculations.hpi.available) availableIndices.push('HPI');
   if (result.available_calculations.mi.available) availableIndices.push('MI');
-  if (result.available_calculations.wqi.available) availableIndices.push('WQI');
 
   let message: string;
   if (availableIndices.length === 0) {
     message = 'No indices can be calculated. Please check your CSV columns.';
-  } else if (availableIndices.length === 3) {
-    message = 'All indices (HPI, MI, WQI) can be calculated from this file.';
+  } else if (availableIndices.length === 2) {
+    message = 'Both indices (HPI, MI) can be calculated from this file.';
   } else {
     message = `Available calculations: ${availableIndices.join(', ')}`;
   }

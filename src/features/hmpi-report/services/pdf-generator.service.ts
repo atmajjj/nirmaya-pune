@@ -34,7 +34,7 @@ export class PDFGeneratorService {
     reportData: ReportData,
     charts: ChartImages
   ): Record<string, any> {
-    const { hpiStats, miStats, wqiStats, geoData, totalStations } = reportData;
+    const { hpiStats, miStats, geoData, totalStations } = reportData;
 
     // Calculate percentages for classifications
     const hpiClassifications = Object.entries(hpiStats.classificationCounts).map(
@@ -46,14 +46,6 @@ export class PDFGeneratorService {
     );
 
     const miClassifications = Object.entries(miStats.classificationCounts).map(
-      ([classification, count]) => ({
-        classification,
-        count,
-        percentage: ((count / totalStations) * 100).toFixed(1),
-      })
-    );
-
-    const wqiClassifications = Object.entries(wqiStats.classificationCounts).map(
       ([classification, count]) => ({
         classification,
         count,
@@ -86,7 +78,6 @@ export class PDFGeneratorService {
       // Summary statistics
       avgHPI: reportData.avgHPI?.toFixed(2) || 'N/A',
       avgMI: reportData.avgMI?.toFixed(2) || 'N/A',
-      avgWQI: reportData.avgWQI?.toFixed(2) || 'N/A',
 
       // HPI data
       hpiClassifications,
@@ -99,11 +90,6 @@ export class PDFGeneratorService {
       miClassifications,
       miDistributionChart: charts.miDistribution,
       miClassificationChart: charts.miClassification,
-
-      // WQI data
-      wqiClassifications,
-      wqiDistributionChart: charts.wqiDistribution,
-      wqiClassificationChart: charts.wqiClassification,
 
       // Geographic data
       geoStates: geoData.states.map(s => ({

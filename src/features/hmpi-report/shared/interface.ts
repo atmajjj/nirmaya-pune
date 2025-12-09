@@ -120,7 +120,6 @@ export interface ReportData {
   totalStations: number;
   avgHPI: number | null;
   avgMI: number | null;
-  avgWQI: number | null;
   hpiStats: {
     classificationCounts: Record<string, number>;
     topPollutedStations: Array<{
@@ -133,10 +132,6 @@ export interface ReportData {
   miStats: {
     classificationCounts: Record<string, number>;
     classCounts: Record<string, number>;
-  };
-  wqiStats: {
-    classificationCounts: Record<string, number>;
-    parameterContributions?: Record<string, number>;
   };
   geoData: {
     states: Array<{ state: string; count: number }>;
@@ -153,10 +148,8 @@ export interface ReportData {
 export interface ChartImages {
   hpiDistribution: string;
   miDistribution: string;
-  wqiDistribution: string;
   hpiClassification: string;
   miClassification: string;
-  wqiClassification: string;
   topPollutedStations: string;
   geographicDistribution: string;
 }

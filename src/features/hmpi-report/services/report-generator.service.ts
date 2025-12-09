@@ -82,7 +82,6 @@ export class ReportGeneratorService {
         total_stations: reportData.totalStations,
         avg_hpi: stats.avg_hpi,
         avg_mi: stats.avg_mi,
-        avg_wqi: stats.avg_wqi,
         generated_at: new Date(),
         updated_by: userId,
       });
@@ -154,7 +153,6 @@ export class ReportGeneratorService {
         total_stations: reportData.totalStations,
         avg_hpi: stats.avg_hpi,
         avg_mi: stats.avg_mi,
-        avg_wqi: stats.avg_wqi,
         generated_at: new Date(),
         updated_by: userId,
       });

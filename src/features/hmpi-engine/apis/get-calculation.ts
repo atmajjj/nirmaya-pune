@@ -30,15 +30,13 @@ const querySchema = z.object({
  * Build detailed analysis for a calculation
  */
 function buildDetailedAnalysis(
-  metalsAnalyzed: string[] | null,
-  wqiParamsAnalyzed: string[] | null
+  metalsAnalyzed: string[] | null
 ) {
   // Note: We can't rebuild full analysis without original values
   // This provides structure information only
   return {
     hpi_metals: metalsAnalyzed || [],
     mi_metals: metalsAnalyzed || [],
-    wqi_params: wqiParamsAnalyzed || [],
     note: 'Detailed per-parameter analysis requires original input values',
   };
 }
@@ -61,8 +59,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
   // Include analysis if requested
   if (include_analysis === 'true') {
     const analysis = buildDetailedAnalysis(
-      data.metals_analyzed,
-      data.wqi_params_analyzed
+      data.metals_analyzed
     );
     
     ResponseFormatter.success(res, { ...data, analysis }, 'Calculation retrieved successfully');

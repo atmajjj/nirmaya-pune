@@ -2,7 +2,6 @@ import {
   HPIClassification,
   MIClassification,
   MIClass,
-  WQIClassification,
 } from './schema';
 
 // ============================================================================
@@ -74,53 +73,6 @@ export const METAL_COLUMN_ALIASES: Record<string, string[]> = {
 };
 
 // ============================================================================
-// WQI Parameters (BIS Standards)
-// ============================================================================
-
-/**
- * WQI parameter definition
- * Sn = Standard (permissible limit)
- * Vo = Ideal value
- */
-export interface WQIStandard {
-  symbol: string;
-  name: string;
-  Sn: number; // Standard (permissible limit)
-  Vo: number; // Ideal value
-  unit: string;
-}
-
-/**
- * WQI parameter standards based on BIS 10500:2012
- */
-export const WQI_STANDARDS: Record<string, WQIStandard> = {
-  pH: { symbol: 'pH', name: 'pH', Sn: 8.5, Vo: 7, unit: '' },
-  EC: { symbol: 'EC', name: 'Electrical Conductivity', Sn: 300, Vo: 0, unit: 'µS/cm' },
-  TDS: { symbol: 'TDS', name: 'Total Dissolved Solids', Sn: 500, Vo: 0, unit: 'mg/L' },
-  TH: { symbol: 'TH', name: 'Total Hardness', Sn: 300, Vo: 0, unit: 'mg/L' },
-  Ca: { symbol: 'Ca', name: 'Calcium', Sn: 75, Vo: 0, unit: 'mg/L' },
-  Mg: { symbol: 'Mg', name: 'Magnesium', Sn: 30, Vo: 0, unit: 'mg/L' },
-  Fe: { symbol: 'Fe', name: 'Iron', Sn: 0.3, Vo: 0, unit: 'mg/L' },
-  F: { symbol: 'F', name: 'Fluoride', Sn: 1, Vo: 0, unit: 'mg/L' },
-  Turbidity: { symbol: 'Turbidity', name: 'Turbidity', Sn: 5, Vo: 0, unit: 'NTU' },
-};
-
-/**
- * Column name aliases for WQI parameters (case-insensitive matching)
- */
-export const WQI_COLUMN_ALIASES: Record<string, string[]> = {
-  pH: ['ph'],
-  EC: ['ec', 'electrical_conductivity', 'electrical conductivity', 'conductivity'],
-  TDS: ['tds', 'total_dissolved_solids', 'total dissolved solids'],
-  TH: ['th', 'total_hardness', 'total hardness', 'hardness', 'caco3'], // ADD: CaCO3 alias
-  Ca: ['ca', 'calcium'],
-  Mg: ['mg', 'magnesium'],
-  Fe: ['fe', 'iron'], // Note: Also used for heavy metals, WQI uses mg/L
-  F: ['f', 'fluoride', 'flouride'], // Common misspelling included
-  Turbidity: ['turbidity', 'turb', 'ntu', 'hazen'], // ADD: Hazen alias
-};
-
-// ============================================================================
 // Location Column Aliases
 // ============================================================================
 
@@ -175,22 +127,6 @@ export function classifyMI(mi: number): { classification: MIClassification; miCl
   if (mi < 4) return { classification: 'Moderately Affected', miClass: 'Class IV' };
   if (mi < 6) return { classification: 'Strongly Affected', miClass: 'Class V' };
   return { classification: 'Seriously Affected', miClass: 'Class VI' };
-}
-
-/**
- * Classify WQI value
- * WQI 0-25: Excellent
- * WQI 26-50: Good
- * WQI 51-75: Poor
- * WQI 76-100: Very Poor
- * WQI > 100: Unfit for consumption
- */
-export function classifyWQI(wqi: number): WQIClassification {
-  if (wqi <= 25) return 'Excellent';
-  if (wqi <= 50) return 'Good';
-  if (wqi <= 75) return 'Poor';
-  if (wqi <= 100) return 'Very Poor';
-  return 'Unfit for consumption';
 }
 
 // ============================================================================

@@ -40,10 +40,7 @@ function generateCSV(calculations: WaterQualityCalculation[]): string {
     'MI',
     'MI Classification',
     'MI Class',
-    'WQI',
-    'WQI Classification',
     'Metals Analyzed',
-    'WQI Parameters Analyzed',
     'Calculated At',
   ];
 
@@ -59,10 +56,7 @@ function generateCSV(calculations: WaterQualityCalculation[]): string {
     calc.mi?.toFixed(4) || '',
     escapeCSV(calc.mi_classification || ''),
     escapeCSV(calc.mi_class || ''),
-    calc.wqi?.toFixed(2) || '',
-    escapeCSV(calc.wqi_classification || ''),
     escapeCSV(calc.metals_analyzed?.join('; ') || ''),
-    escapeCSV(calc.wqi_params_analyzed?.join('; ') || ''),
     calc.created_at,
   ]);
 

@@ -58,9 +58,6 @@ export class ReportDataService {
     const avgMI = this.calculateAverage(
       calculations.map(c => c.mi).filter(Boolean).map(v => parseFloat(v as string))
     );
-    const avgWQI = this.calculateAverage(
-      calculations.map(c => c.wqi).filter(Boolean).map(v => parseFloat(v as string))
-    );
 
     // 4. Aggregate HPI statistics
     const hpiStats = this.aggregateHPIStats(calculations);
@@ -68,23 +65,18 @@ export class ReportDataService {
     // 5. Aggregate MI statistics
     const miStats = this.aggregateMIStats(calculations);
 
-    // 6. Aggregate WQI statistics
-    const wqiStats = this.aggregateWQIStats(calculations);
-
     // 7. Aggregate geographic data
     const geoData = this.aggregateGeoData(calculations);
 
-    // 8. Build report data object
+    // 6. Build report data object
     const reportData: ReportData = {
       uploadId: upload.id,
       uploadFilename: upload.filename,
       totalStations: calculations.length,
       avgHPI,
       avgMI,
-      avgWQI,
       hpiStats,
       miStats,
-      wqiStats,
       geoData,
       calculationDate: upload.created_at,
       generatedBy: userId,
@@ -174,38 +166,7 @@ export class ReportDataService {
     };
   }
 
-  /**
-   * Aggregate WQI statistics
-   * - Classification counts
-   * - Parameter contributions (if available)
-   */
-  private static aggregateWQIStats(calculations: any[]) {
-    const classificationCounts: Record<string, number> = {};
-    const parameterContributions: Record<string, number> = {};
 
-    for (const calc of calculations) {
-      // Count WQI classifications
-      if (calc.wqi_classification) {
-        const classification = calc.wqi_classification;
-        classificationCounts[classification] = (classificationCounts[classification] || 0) + 1;
-      }
-
-      // Aggregate parameter contributions (if params_analyzed is available)
-      if (calc.wqi_params_analyzed) {
-        const params = calc.wqi_params_analyzed.split(',').map((p: string) => p.trim());
-        for (const param of params) {
-          parameterContributions[param] = (parameterContributions[param] || 0) + 1;
-        }
-      }
-    }
-
-    return {
-      classificationCounts,
-      parameterContributions: Object.keys(parameterContributions).length > 0 
-        ? parameterContributions 
-        : undefined,
-    };
-  }
 
   /**
    * Aggregate geographic data
@@ -271,8 +232,6 @@ export class ReportDataService {
         mi: waterQualityCalculations.mi,
         mi_classification: waterQualityCalculations.mi_classification,
         mi_class: waterQualityCalculations.mi_class,
-        wqi: waterQualityCalculations.wqi,
-        wqi_classification: waterQualityCalculations.wqi_classification,
         state: waterQualityCalculations.state,
         city: waterQualityCalculations.city,
         latitude: waterQualityCalculations.latitude,
@@ -294,8 +253,6 @@ export class ReportDataService {
       mi: calc.mi ? parseFloat(calc.mi as string) : null,
       miClassification: calc.mi_classification,
       miClass: calc.mi_class,
-      wqi: calc.wqi ? parseFloat(calc.wqi as string) : null,
-      wqiClassification: calc.wqi_classification,
       state: calc.state,
       city: calc.city,
       latitude: calc.latitude ? parseFloat(calc.latitude as string) : null,
@@ -334,13 +291,11 @@ export class ReportDataService {
   static async getCalculationStatistics(uploadId: number): Promise<{
     avg_hpi: number | null;
     avg_mi: number | null;
-    avg_wqi: number | null;
   }> {
     const calculations = await db
       .select({
         hpi: waterQualityCalculations.hpi,
         mi: waterQualityCalculations.mi,
-        wqi: waterQualityCalculations.wqi,
       })
       .from(waterQualityCalculations)
       .where(
@@ -356,14 +311,10 @@ export class ReportDataService {
     const avgMI = this.calculateAverage(
       calculations.map(c => c.mi).filter(Boolean).map(v => parseFloat(v as string))
     );
-    const avgWQI = this.calculateAverage(
-      calculations.map(c => c.wqi).filter(Boolean).map(v => parseFloat(v as string))
-    );
 
     return {
       avg_hpi: avgHPI,
       avg_mi: avgMI,
-      avg_wqi: avgWQI,
     };
   }
 }

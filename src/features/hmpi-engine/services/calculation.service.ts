@@ -1,7 +1,7 @@
 /**
  * Water Quality Calculation Orchestrator Service
  *
- * This service orchestrates the calculation of all three indices (HPI, MI, WQI)
+ * This service orchestrates the calculation of HPI and MI indices
  * by coordinating:
  * 1. CSV parsing
  * 2. Individual calculator invocations
@@ -20,7 +20,6 @@ import {
 } from '../shared/interface';
 import { HPICalculatorService } from './hpi-calculator.service';
 import { MICalculatorService } from './mi-calculator.service';
-import { WQICalculatorService } from './wqi-calculator.service';
 import { CSVParserService } from './csv-parser.service';
 
 /**
@@ -90,7 +89,7 @@ export class WaterQualityCalculationService {
   }
 
   /**
-   * Calculate all indices (HPI, MI, WQI) for parsed CSV rows
+   * Calculate all indices (HPI, MI) for parsed CSV rows
    *
    * @param rows - Parsed CSV rows
    * @returns Array of calculation results per station
@@ -136,20 +135,6 @@ export class WaterQualityCalculationService {
         }
       }
 
-      // Calculate WQI (if WQI params available)
-      if (Object.keys(row.wqiParams).length > 0) {
-        try {
-          const wqiResult = WQICalculatorService.calculate(row.wqiParams);
-          if (wqiResult) {
-            result.wqi = wqiResult;
-          } else {
-            result.errors.push('WQI: No valid parameters for calculation');
-          }
-        } catch (error) {
-          result.errors.push(`WQI calculation error: ${error}`);
-        }
-      }
-
       return result;
     });
   }
@@ -171,7 +156,7 @@ export class WaterQualityCalculationService {
 
     for (const result of results) {
       // Skip stations with no calculations
-      if (!result.hpi && !result.mi && !result.wqi) {
+      if (!result.hpi && !result.mi) {
         continue;
       }
 
@@ -207,13 +192,6 @@ export class WaterQualityCalculationService {
         }
       }
 
-      // Add WQI data
-      if (result.wqi) {
-        input.wqi = result.wqi.wqi;
-        input.wqi_classification = result.wqi.classification;
-        input.wqi_params_analyzed = result.wqi.paramsAnalyzed;
-      }
-
       // Save to database
       const [saved] = await db
         .insert(waterQualityCalculations)
@@ -233,10 +211,7 @@ export class WaterQualityCalculationService {
           mi: input.mi?.toString(),
           mi_classification: input.mi_classification,
           mi_class: input.mi_class,
-          wqi: input.wqi?.toString(),
-          wqi_classification: input.wqi_classification,
           metals_analyzed: input.metals_analyzed?.join(','),
-          wqi_params_analyzed: input.wqi_params_analyzed?.join(','),
           created_by: input.created_by,
           updated_by: input.created_by,
         })
@@ -253,14 +228,12 @@ export class WaterQualityCalculationService {
    *
    * @param stationId - Station identifier
    * @param metals - Metal concentrations in ppb
-   * @param wqiParams - WQI parameter values
    * @param location - Optional location data
    * @returns StationCalculationResult
    */
   static calculateSingle(
     stationId: string,
     metals: Record<string, number>,
-    wqiParams: Record<string, number>,
     location?: {
       latitude?: number;
       longitude?: number;
@@ -291,14 +264,6 @@ export class WaterQualityCalculationService {
       }
     }
 
-    // Calculate WQI
-    if (Object.keys(wqiParams).length > 0) {
-      const wqiResult = WQICalculatorService.calculate(wqiParams);
-      if (wqiResult) {
-        result.wqi = wqiResult;
-      }
-    }
-
     return result;
   }
 
@@ -306,31 +271,25 @@ export class WaterQualityCalculationService {
    * Validate input data before calculation
    *
    * @param metals - Metal concentrations
-   * @param wqiParams - WQI parameters
    * @returns Object containing all validation warnings
    */
   static validateInputData(
-    metals: Record<string, number>,
-    wqiParams: Record<string, number>
+    metals: Record<string, number>
   ): {
     metalWarnings: string[];
-    wqiWarnings: string[];
     isValid: boolean;
   } {
     const metalWarnings = [
       ...HPICalculatorService.validateMetals(metals),
       ...MICalculatorService.validateMetals(metals),
     ];
-    const wqiWarnings = WQICalculatorService.validateParams(wqiParams);
 
     // Remove duplicates
     const uniqueMetalWarnings = [...new Set(metalWarnings)];
 
     return {
       metalWarnings: uniqueMetalWarnings,
-      wqiWarnings,
-      isValid:
-        uniqueMetalWarnings.length === 0 && wqiWarnings.length === 0,
+      isValid: uniqueMetalWarnings.length === 0,
     };
   }
 
@@ -344,13 +303,10 @@ export class WaterQualityCalculationService {
     total: number;
     hpiCount: number;
     miCount: number;
-    wqiCount: number;
     hpiAvg: number | null;
     miAvg: number | null;
-    wqiAvg: number | null;
     hpiByClassification: Record<string, number>;
     miByClassification: Record<string, number>;
-    wqiByClassification: Record<string, number>;
   } {
     const hpiValues = calculations
       .filter((c) => c.hpi)
@@ -358,13 +314,9 @@ export class WaterQualityCalculationService {
     const miValues = calculations
       .filter((c) => c.mi)
       .map((c) => c.mi!.mi);
-    const wqiValues = calculations
-      .filter((c) => c.wqi)
-      .map((c) => c.wqi!.wqi);
 
     const hpiByClassification: Record<string, number> = {};
     const miByClassification: Record<string, number> = {};
-    const wqiByClassification: Record<string, number> = {};
 
     for (const calc of calculations) {
       if (calc.hpi) {
@@ -375,17 +327,12 @@ export class WaterQualityCalculationService {
         miByClassification[calc.mi.classification] =
           (miByClassification[calc.mi.classification] || 0) + 1;
       }
-      if (calc.wqi) {
-        wqiByClassification[calc.wqi.classification] =
-          (wqiByClassification[calc.wqi.classification] || 0) + 1;
-      }
     }
 
     return {
       total: calculations.length,
       hpiCount: hpiValues.length,
       miCount: miValues.length,
-      wqiCount: wqiValues.length,
       hpiAvg:
         hpiValues.length > 0
           ? Math.round(
@@ -398,15 +345,8 @@ export class WaterQualityCalculationService {
               (miValues.reduce((a, b) => a + b, 0) / miValues.length) * 10000
             ) / 10000
           : null,
-      wqiAvg:
-        wqiValues.length > 0
-          ? Math.round(
-              (wqiValues.reduce((a, b) => a + b, 0) / wqiValues.length) * 100
-            ) / 100
-          : null,
       hpiByClassification,
       miByClassification,
-      wqiByClassification,
     };
   }
 }

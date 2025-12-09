@@ -16,7 +16,6 @@ import { uploads } from '../../upload/shared/schema';
 import { waterQualityCalculations } from '../../hmpi-engine/shared/schema';
 import { dataSources } from '../../data-sources/shared/schema';
 import { hmpiReports } from '../../hmpi-report/shared/schema';
-import { formulas } from '../../formula-editor/shared/schema';
 import { eq, and, sql, gte } from 'drizzle-orm';
 import { AdminDashboardStats } from '../shared/interface';
 
@@ -36,7 +35,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
     calculationsData,
     dataSourcesData,
     reportsData,
-    formulasData,
   ] = await Promise.all([
     // Total users
     db.select({
@@ -74,7 +72,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
       total: sql<number>`count(*)::int`,
       hpi_count: sql<number>`count(*) filter (where hpi is not null)::int`,
       mi_count: sql<number>`count(*) filter (where mi is not null)::int`,
-      wqi_count: sql<number>`count(*) filter (where wqi is not null)::int`,
       recent: sql<number>`count(*) filter (where created_at >= ${thirtyDaysAgo})::int`,
     }).from(waterQualityCalculations).where(eq(waterQualityCalculations.is_deleted, false)),
 
@@ -96,15 +93,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
       recent: sql<number>`count(*) filter (where created_at >= ${thirtyDaysAgo})::int`,
     }).from(hmpiReports).where(eq(hmpiReports.is_deleted, false))
       .groupBy(sql`rollup(status, report_type)`),
-
-    // Formulas statistics
-    db.select({
-      total: sql<number>`count(*)::int`,
-      type: formulas.type,
-      active: sql<number>`count(*) filter (where is_active = true)::int`,
-      defaults: sql<number>`count(*) filter (where is_default = true)::int`,
-    }).from(formulas).where(eq(formulas.is_deleted, false))
-      .groupBy(sql`rollup(type)`),
   ]);
 
   // Process users data
@@ -158,20 +146,8 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
       return acc;
     }, {} as Record<string, number>);
 
-  // Process formulas
-  const totalFormulas = formulasData.find(r => !r.type)?.total || 0;
-  const activeFormulas = formulasData.find(r => !r.type)?.active || 0;
-  const defaultFormulas = formulasData.find(r => !r.type)?.defaults || 0;
-  
-  const formulasByType = formulasData
-    .filter(r => r.type)
-    .reduce((acc, curr) => {
-      if (curr.type) acc[curr.type] = curr.total;
-      return acc;
-    }, {} as Record<string, number>);
-
   // Get classification counts for calculations
-  const [hpiClassifications, miClassifications, wqiClassifications] = await Promise.all([
+  const [hpiClassifications, miClassifications] = await Promise.all([
     db.select({
       classification: waterQualityCalculations.hpi_classification,
       count: sql<number>`count(*)::int`,
@@ -191,16 +167,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
         sql`${waterQualityCalculations.mi_classification} is not null`
       ))
       .groupBy(waterQualityCalculations.mi_classification),
-
-    db.select({
-      classification: waterQualityCalculations.wqi_classification,
-      count: sql<number>`count(*)::int`,
-    }).from(waterQualityCalculations)
-      .where(and(
-        eq(waterQualityCalculations.is_deleted, false),
-        sql`${waterQualityCalculations.wqi_classification} is not null`
-      ))
-      .groupBy(waterQualityCalculations.wqi_classification),
   ]);
 
   const stats: AdminDashboardStats = {
@@ -210,7 +176,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
       total_calculations: calc.total || 0,
       total_reports: totalReports,
       total_data_sources: totalDataSources,
-      total_formulas: totalFormulas,
     },
     
     users: {
@@ -243,7 +208,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
       by_index: {
         hpi: calc.hpi_count || 0,
         mi: calc.mi_count || 0,
-        wqi: calc.wqi_count || 0,
       },
       by_classification: {
         hpi: hpiClassifications.reduce((acc, curr) => {
@@ -251,10 +215,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
           return acc;
         }, {} as Record<string, number>),
         mi: miClassifications.reduce((acc, curr) => {
-          if (curr.classification) acc[curr.classification] = curr.count;
-          return acc;
-        }, {} as Record<string, number>),
-        wqi: wqiClassifications.reduce((acc, curr) => {
           if (curr.classification) acc[curr.classification] = curr.count;
           return acc;
         }, {} as Record<string, number>),
@@ -293,17 +253,6 @@ async function getAdminStatistics(): Promise<AdminDashboardStats> {
         json: 0,
       },
       recent_reports: recentReports,
-    },
-    
-    formulas: {
-      total: totalFormulas,
-      by_type: {
-        hpi: formulasByType.hpi || 0,
-        mi: formulasByType.mi || 0,
-        wqi: formulasByType.wqi || 0,
-      },
-      active_formulas: activeFormulas,
-      default_formulas: defaultFormulas,
     },
     
     system: {

@@ -8,10 +8,8 @@
 import { parse } from 'csv-parse/sync';
 import {
   METAL_COLUMN_ALIASES,
-  WQI_COLUMN_ALIASES,
   LOCATION_COLUMN_ALIASES,
   METAL_STANDARDS,
-  WQI_STANDARDS,
   cleanColumnName,
 } from '../shared/constants';
 import { logger } from '../../../utils/logger';
@@ -56,7 +54,6 @@ export interface CSVPreviewResult {
   available_calculations: {
     hpi: IndexAvailability;
     mi: IndexAvailability;
-    wqi: IndexAvailability;
   };
   validation_warnings: ValidationWarning[];
   can_proceed: boolean;
@@ -70,7 +67,7 @@ export class CSVPreviewService {
   // Minimum parameters required for each index
   private static readonly MIN_METALS_FOR_HPI = 3;
   private static readonly MIN_METALS_FOR_MI = 3;
-  private static readonly MIN_PARAMS_FOR_WQI = 3;
+
 
   /**
    * Preview CSV file and detect available calculations
@@ -101,11 +98,8 @@ export class CSVPreviewService {
       // Detect metal columns (for HPI and MI)
       const metalDetection = this.detectMetalColumns(headers);
 
-      // Detect WQI columns
-      const wqiDetection = this.detectWQIColumns(headers);
-
       // Count valid rows (rows with at least some data)
-      const validRows = this.countValidRows(records, metalDetection, wqiDetection);
+      const validRows = this.countValidRows(records, metalDetection);
 
       // Build availability info
       const hpiAvailability = this.buildIndexAvailability(
@@ -122,20 +116,12 @@ export class CSVPreviewService {
         'MI'
       );
 
-      const wqiAvailability = this.buildIndexAvailability(
-        wqiDetection,
-        WQI_STANDARDS,
-        this.MIN_PARAMS_FOR_WQI,
-        'WQI'
-      );
-
       // Generate warnings
       this.generateWarnings(
         warnings,
         locationFields,
         hpiAvailability,
         miAvailability,
-        wqiAvailability,
         records.length,
         validRows
       );
@@ -143,7 +129,7 @@ export class CSVPreviewService {
       // Determine if calculation can proceed
       const canProceed =
         validRows > 0 &&
-        (hpiAvailability.available || miAvailability.available || wqiAvailability.available);
+        (hpiAvailability.available || miAvailability.available);
 
       return {
         filename,
@@ -154,7 +140,6 @@ export class CSVPreviewService {
         available_calculations: {
           hpi: hpiAvailability,
           mi: miAvailability,
-          wqi: wqiAvailability,
         },
         validation_warnings: warnings,
         can_proceed: canProceed,
@@ -224,38 +209,14 @@ export class CSVPreviewService {
     return detected;
   }
 
-  /**
-   * Detect WQI columns from headers
-   */
-  private static detectWQIColumns(
-    headers: string[]
-  ): Map<string, { column: string; name: string }> {
-    const detected = new Map<string, { column: string; name: string }>();
 
-    for (const [symbol, aliases] of Object.entries(WQI_COLUMN_ALIASES)) {
-      for (const header of headers) {
-        const cleanHeader = cleanColumnName(header).toLowerCase();
-        if (aliases.includes(cleanHeader)) {
-          const standard = WQI_STANDARDS[symbol];
-          detected.set(symbol, {
-            column: header,
-            name: standard?.name || symbol,
-          });
-          break;
-        }
-      }
-    }
-
-    return detected;
-  }
 
   /**
    * Count rows with valid data
    */
   private static countValidRows(
     records: Record<string, string>[],
-    metalDetection: Map<string, { column: string; name: string }>,
-    wqiDetection: Map<string, { column: string; name: string }>
+    metalDetection: Map<string, { column: string; name: string }>
   ): number {
     let validCount = 0;
 
@@ -268,17 +229,6 @@ export class CSVPreviewService {
         if (value && !isNaN(parseFloat(value))) {
           hasData = true;
           break;
-        }
-      }
-
-      // Check if row has any WQI data
-      if (!hasData) {
-        for (const { column } of wqiDetection.values()) {
-          const value = record[column];
-          if (value && !isNaN(parseFloat(value))) {
-            hasData = true;
-            break;
-          }
         }
       }
 
@@ -335,7 +285,6 @@ export class CSVPreviewService {
     locationFields: LocationFieldsDetected,
     hpi: IndexAvailability,
     mi: IndexAvailability,
-    wqi: IndexAvailability,
     totalRows: number,
     validRows: number
   ): void {
@@ -362,13 +311,6 @@ export class CSVPreviewService {
       });
     }
 
-    if (wqi.detected_count > 0 && wqi.detected_count < wqi.min_required) {
-      warnings.push({
-        type: 'few_parameters',
-        message: `Only ${wqi.detected_count} WQI parameter(s) detected. Minimum ${wqi.min_required} recommended for reliable results.`,
-      });
-    }
-
     // Check empty rows
     const emptyRows = totalRows - validRows;
     if (emptyRows > 0) {
@@ -379,11 +321,11 @@ export class CSVPreviewService {
     }
 
     // No calculations available
-    if (!hpi.available && !mi.available && !wqi.available) {
-      if (hpi.detected_count === 0 && wqi.detected_count === 0) {
+    if (!hpi.available && !mi.available) {
+      if (hpi.detected_count === 0) {
         warnings.push({
           type: 'few_parameters',
-          message: 'No recognized water quality parameters found. Please check column names match expected formats (e.g., "Arsenic", "As", "pH", "TDS").',
+          message: 'No recognized water quality parameters found. Please check column names match expected formats (e.g., "Arsenic", "As").',
         });
       }
     }
@@ -425,15 +367,6 @@ export class CSVPreviewService {
             (s) => `${s.name} (${s.symbol})`
           ),
           min_required: this.MIN_METALS_FOR_MI,
-          detected_count: 0,
-        },
-        wqi: {
-          available: false,
-          parameters_detected: [],
-          parameters_missing: Object.values(WQI_STANDARDS).map(
-            (s) => `${s.name} (${s.symbol})`
-          ),
-          min_required: this.MIN_PARAMS_FOR_WQI,
           detected_count: 0,
         },
       },

@@ -2,7 +2,6 @@ import {
   HPIClassification,
   MIClassification,
   MIClass,
-  WQIClassification,
   waterQualityCalculations,
 } from './schema';
 
@@ -31,10 +30,7 @@ export interface WaterQualityCalculation {
   mi: number | null;
   mi_classification: MIClassification | null;
   mi_class: MIClass | null;
-  wqi: number | null;
-  wqi_classification: WQIClassification | null;
   metals_analyzed: string[] | null;
-  wqi_params_analyzed: string[] | null;
   created_by: number | null;
   created_at: string;
   updated_by: number | null;
@@ -63,10 +59,7 @@ export interface NewCalculationInput {
   mi?: number | null;
   mi_classification?: MIClassification | null;
   mi_class?: MIClass | null;
-  wqi?: number | null;
-  wqi_classification?: WQIClassification | null;
   metals_analyzed?: string[];
-  wqi_params_analyzed?: string[];
   created_by: number;
 }
 
@@ -89,8 +82,6 @@ export interface ParsedCSVRow {
   city?: string;
   // Heavy metals (ppb)
   metals: Record<string, number>;
-  // WQI parameters
-  wqiParams: Record<string, number>;
   // Raw row data for reference
   rawRow: Record<string, string>;
   // Row number for error reporting
@@ -111,7 +102,6 @@ export interface ColumnMapping {
   yearColumn: string | null;
   cityColumn: string | null;
   metalColumns: Record<string, string>; // symbol -> column name
-  wqiColumns: Record<string, string>; // symbol -> column name
 }
 
 /**
@@ -169,22 +159,7 @@ export interface MIResult {
   macValues?: Record<string, number>;       // MACi values
 }
 
-/**
- * WQI calculation result for a single station
- */
-export interface WQIResult {
-  wqi: number;
-  classification: WQIClassification;
-  paramsAnalyzed: string[];
-  // Detailed breakdown for transparency
-  invSn?: Record<string, number>;      // 1/Sn for each parameter
-  weights?: Record<string, number>;    // Wi (relative weight) for each parameter
-  qi?: Record<string, number>;         // Qi (quality rating) for each parameter
-  wiQi?: Record<string, number>;       // WiQi (contribution) for each parameter
-  sumInvSn?: number;                   // Σ(1/Sn)
-  k?: number;                          // Constant K = 1/Σ(1/Sn)
-  sumWeights?: number;                 // Σ(Wi) - should equal 1
-}
+
 
 /**
  * Complete calculation result for a single station
@@ -201,7 +176,6 @@ export interface StationCalculationResult {
   city?: string;
   hpi?: HPIResult;
   mi?: MIResult;
-  wqi?: WQIResult;
   errors: string[];
 }
 
@@ -266,10 +240,7 @@ export function convertCalculation(
     mi: calc.mi ? parseFloat(calc.mi) : null,
     mi_classification: calc.mi_classification,
     mi_class: calc.mi_class,
-    wqi: calc.wqi ? parseFloat(calc.wqi) : null,
-    wqi_classification: calc.wqi_classification,
     metals_analyzed: calc.metals_analyzed ? calc.metals_analyzed.split(',') : null,
-    wqi_params_analyzed: calc.wqi_params_analyzed ? calc.wqi_params_analyzed.split(',') : null,
     created_by: calc.created_by,
     created_at: calc.created_at.toISOString(),
     updated_by: calc.updated_by,

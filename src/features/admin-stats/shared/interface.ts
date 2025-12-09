@@ -10,7 +10,6 @@ export interface AdminDashboardStats {
     total_calculations: number;
     total_reports: number;
     total_data_sources: number;
-    total_formulas: number;
   };
   
   users: {
@@ -43,12 +42,10 @@ export interface AdminDashboardStats {
     by_index: {
       hpi: number;
       mi: number;
-      wqi: number;
     };
     by_classification: {
       hpi: Record<string, number>;
       mi: Record<string, number>;
-      wqi: Record<string, number>;
     };
     recent_calculations: number; // Last 30 days
   };
@@ -84,17 +81,6 @@ export interface AdminDashboardStats {
       json: number;
     };
     recent_reports: number; // Last 30 days
-  };
-  
-  formulas: {
-    total: number;
-    by_type: {
-      hpi: number;
-      mi: number;
-      wqi: number;
-    };
-    active_formulas: number;
-    default_formulas: number;
   };
   
   system: {

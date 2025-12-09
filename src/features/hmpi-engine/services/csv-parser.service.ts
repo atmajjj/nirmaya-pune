@@ -7,7 +7,6 @@ import {
 } from '../shared/interface';
 import {
   METAL_COLUMN_ALIASES,
-  WQI_COLUMN_ALIASES,
   LOCATION_COLUMN_ALIASES,
   parseUnitFromHeader,
   cleanColumnName,
@@ -116,7 +115,6 @@ export class CSVParserService {
       yearColumn: null,
       cityColumn: null,
       metalColumns: {},
-      wqiColumns: {},
     };
 
     // Create a map of lowercase header to original header
@@ -201,17 +199,6 @@ export class CSVParserService {
       }
     }
 
-    // Map WQI columns
-    for (const [symbol, aliases] of Object.entries(WQI_COLUMN_ALIASES)) {
-      for (const header of headers) {
-        const cleanHeader = cleanColumnName(header).toLowerCase();
-        if (aliases.includes(cleanHeader)) {
-          mapping.wqiColumns[symbol] = header;
-          break;
-        }
-      }
-    }
-
     return mapping;
   }
 
@@ -275,18 +262,9 @@ export class CSVParserService {
       }
     }
 
-    // Parse WQI parameters
-    const wqiParams: Record<string, number> = {};
-    for (const [symbol, column] of Object.entries(mapping.wqiColumns)) {
-      const value = this.parseNumber(record[column]);
-      if (value !== undefined && !isNaN(value)) {
-        wqiParams[symbol] = value;
-      }
-    }
-
-    // Check if we have any data to calculate
-    if (Object.keys(metals).length === 0 && Object.keys(wqiParams).length === 0) {
-      throw new Error('No metal or WQI parameter values found in row');
+    // Check if we have any metal data to calculate
+    if (Object.keys(metals).length === 0) {
+      throw new Error('No metal values found in row');
     }
 
     return {
@@ -300,7 +278,6 @@ export class CSVParserService {
       year,
       city,
       metals,
-      wqiParams,
       rawRow: record,
       rowNumber,
     };
@@ -339,7 +316,6 @@ export class CSVParserService {
       yearColumn: null,
       cityColumn: null,
       metalColumns: {},
-      wqiColumns: {},
     };
   }
 
@@ -348,7 +324,6 @@ export class CSVParserService {
    */
   private static logColumnMapping(mapping: ColumnMapping, warnings: string[]): void {
     const metalCount = Object.keys(mapping.metalColumns).length;
-    const wqiCount = Object.keys(mapping.wqiColumns).length;
 
     logger.info(`Column mapping complete:
       - S.No: ${mapping.snoColumn || 'NOT FOUND'}
@@ -360,19 +335,12 @@ export class CSVParserService {
       - Latitude: ${mapping.latitudeColumn || 'NOT FOUND'}
       - Year: ${mapping.yearColumn || 'NOT FOUND'}
       - City: ${mapping.cityColumn || 'NOT FOUND'}
-      - Metals found: ${metalCount} (${Object.keys(mapping.metalColumns).join(', ')})
-      - WQI params found: ${wqiCount} (${Object.keys(mapping.wqiColumns).join(', ')})`);
+      - Metals found: ${metalCount} (${Object.keys(mapping.metalColumns).join(', ')})`);
 
     if (metalCount === 0) {
       warnings.push('No heavy metal columns found. HPI and MI cannot be calculated.');
     } else if (metalCount < 3) {
       warnings.push(`Only ${metalCount} metal columns found. Results may be less accurate.`);
-    }
-
-    if (wqiCount === 0) {
-      warnings.push('No WQI parameter columns found. WQI cannot be calculated.');
-    } else if (wqiCount < 5) {
-      warnings.push(`Only ${wqiCount} WQI parameter columns found. Results may be less accurate.`);
     }
 
     if (!mapping.stationIdColumn) {

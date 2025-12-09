@@ -13,10 +13,12 @@ import Route from '../../interfaces/route.interface';
 import previewRouter from './apis/preview';
 import calculateRouter from './apis/calculate';
 import calculateFromSourceRouter from './apis/calculate-from-source';
+import calculateManualRouter from './apis/calculate-manual';
 import listCalculationsRouter from './apis/list-calculations';
 import getCalculationRouter from './apis/get-calculation';
 import downloadResultsRouter from './apis/download-results';
 import getStatsRouter from './apis/get-stats';
+import getGeomapDataRouter from './apis/get-geomap-data';
 
 class NirmayaEngineRoute implements Route {
   public path = '/nirmaya-engine';
@@ -37,6 +39,9 @@ class NirmayaEngineRoute implements Route {
     // POST /api/nirmaya-engine/calculate-from-source - Calculate from pre-uploaded data source
     this.router.use(this.path, calculateFromSourceRouter);
     
+    // POST /api/nirmaya-engine/calculate-manual - Calculate from manually entered values
+    this.router.use(this.path, calculateManualRouter);
+    
     // GET /api/nirmaya-engine/calculations - List calculations with filters
     this.router.use(this.path, listCalculationsRouter);
     
@@ -48,6 +53,9 @@ class NirmayaEngineRoute implements Route {
     
     // GET /api/nirmaya-engine/stats - Get statistics
     this.router.use(this.path, getStatsRouter);
+    
+    // GET /api/nirmaya-engine/geomap - Get geomap data for visualization
+    this.router.use(this.path, getGeomapDataRouter);
   }
 }
 

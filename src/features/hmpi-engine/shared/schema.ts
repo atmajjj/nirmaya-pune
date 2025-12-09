@@ -44,18 +44,6 @@ export const miClasses = ['Class I', 'Class II', 'Class III', 'Class IV', 'Class
 export type MIClass = (typeof miClasses)[number];
 
 /**
- * WQI Classification enum values
- */
-export const wqiClassifications = [
-  'Excellent',
-  'Good',
-  'Poor',
-  'Very Poor',
-  'Unfit for consumption',
-] as const;
-export type WQIClassification = (typeof wqiClassifications)[number];
-
-/**
  * Calculation status enum values
  */
 export const calculationStatuses = ['pending', 'processing', 'completed', 'failed', 'partial'] as const;
@@ -63,7 +51,7 @@ export type CalculationStatus = (typeof calculationStatuses)[number];
 
 /**
  * Water Quality Calculations table schema
- * Stores calculated water quality indices (HPI, MI, WQI) per station/location
+ * Stores calculated water quality indices (HPI, MI) per station/location
  *
  * Indexes:
  * - upload_id_is_deleted_idx: For fetching calculations by upload
@@ -98,12 +86,9 @@ export const waterQualityCalculations = pgTable(
     mi: decimal('mi', { precision: 10, scale: 4 }),
     mi_classification: varchar('mi_classification', { length: 50 }).$type<MIClassification>(),
     mi_class: varchar('mi_class', { length: 15 }).$type<MIClass>(),
-    wqi: decimal('wqi', { precision: 10, scale: 4 }),
-    wqi_classification: varchar('wqi_classification', { length: 50 }).$type<WQIClassification>(),
 
     // Metadata - stored as comma-separated strings (simpler than arrays for Drizzle)
     metals_analyzed: text('metals_analyzed'), // e.g., "As,Cu,Zn,Hg,Cd,Ni,Pb"
-    wqi_params_analyzed: text('wqi_params_analyzed'), // e.g., "pH,EC,TDS,TH,Ca,Mg,Fe,F,Turbidity"
 
     // Audit fields
     created_by: integer('created_by').references(() => users.id),
