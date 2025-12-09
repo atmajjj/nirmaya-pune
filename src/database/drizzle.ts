@@ -15,6 +15,7 @@ import {
   chatbotSessions,
   chatbotMessages,
 } from '../features/chatbot/shared/schema';
+import { policymakerAlerts } from '../features/policymaker/shared/schema';
 
 /**
  * Database connection configuration
@@ -88,6 +89,7 @@ export const schema = {
   chatbotDocuments,
   chatbotSessions,
   chatbotMessages,
+  policymakerAlerts,
 };
 
 /**
