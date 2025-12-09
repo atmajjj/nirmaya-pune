@@ -106,10 +106,14 @@ export class CSVParserService {
    */
   private static mapColumns(headers: string[]): ColumnMapping {
     const mapping: ColumnMapping = {
+      snoColumn: null,
       stationIdColumn: null,
-      latitudeColumn: null,
-      longitudeColumn: null,
       stateColumn: null,
+      districtColumn: null,
+      locationColumn: null,
+      longitudeColumn: null,
+      latitudeColumn: null,
+      yearColumn: null,
       cityColumn: null,
       metalColumns: {},
       wqiColumns: {},
@@ -121,7 +125,15 @@ export class CSVParserService {
       headerMap.set(header.toLowerCase().trim(), header);
     }
 
-    // Map location columns
+    // Map S.No column
+    for (const alias of LOCATION_COLUMN_ALIASES.sno) {
+      if (headerMap.has(alias)) {
+        mapping.snoColumn = headerMap.get(alias)!;
+        break;
+      }
+    }
+
+    // Map station ID column
     for (const alias of LOCATION_COLUMN_ALIASES.station_id) {
       if (headerMap.has(alias)) {
         mapping.stationIdColumn = headerMap.get(alias)!;
@@ -150,9 +162,30 @@ export class CSVParserService {
       }
     }
 
+    for (const alias of LOCATION_COLUMN_ALIASES.district) {
+      if (headerMap.has(alias)) {
+        mapping.districtColumn = headerMap.get(alias)!;
+        break;
+      }
+    }
+
+    for (const alias of LOCATION_COLUMN_ALIASES.location) {
+      if (headerMap.has(alias)) {
+        mapping.locationColumn = headerMap.get(alias)!;
+        break;
+      }
+    }
+
     for (const alias of LOCATION_COLUMN_ALIASES.city) {
       if (headerMap.has(alias)) {
         mapping.cityColumn = headerMap.get(alias)!;
+        break;
+      }
+    }
+
+    for (const alias of LOCATION_COLUMN_ALIASES.year) {
+      if (headerMap.has(alias)) {
+        mapping.yearColumn = headerMap.get(alias)!;
         break;
       }
     }
@@ -190,6 +223,11 @@ export class CSVParserService {
     mapping: ColumnMapping,
     rowNumber: number
   ): ParsedCSVRow | null {
+    // Parse S.No
+    const sno = mapping.snoColumn
+      ? this.parseNumber(record[mapping.snoColumn])
+      : undefined;
+
     // Get station ID (required)
     let stationId: string;
     if (mapping.stationIdColumn && record[mapping.stationIdColumn]) {
@@ -213,8 +251,17 @@ export class CSVParserService {
     const state = mapping.stateColumn
       ? record[mapping.stateColumn]?.trim() || undefined
       : undefined;
+    const district = mapping.districtColumn
+      ? record[mapping.districtColumn]?.trim() || undefined
+      : undefined;
+    const location = mapping.locationColumn
+      ? record[mapping.locationColumn]?.trim() || undefined
+      : undefined;
     const city = mapping.cityColumn
       ? record[mapping.cityColumn]?.trim() || undefined
+      : undefined;
+    const year = mapping.yearColumn
+      ? this.parseNumber(record[mapping.yearColumn])
       : undefined;
 
     // Parse metal concentrations (convert to ppb)
@@ -243,10 +290,14 @@ export class CSVParserService {
     }
 
     return {
+      sno,
       station_id: stationId,
-      latitude,
-      longitude,
       state,
+      district,
+      location,
+      longitude,
+      latitude,
+      year,
       city,
       metals,
       wqiParams,
@@ -278,10 +329,14 @@ export class CSVParserService {
    */
   private static createEmptyMapping(): ColumnMapping {
     return {
+      snoColumn: null,
       stationIdColumn: null,
-      latitudeColumn: null,
-      longitudeColumn: null,
       stateColumn: null,
+      districtColumn: null,
+      locationColumn: null,
+      longitudeColumn: null,
+      latitudeColumn: null,
+      yearColumn: null,
       cityColumn: null,
       metalColumns: {},
       wqiColumns: {},
@@ -296,10 +351,14 @@ export class CSVParserService {
     const wqiCount = Object.keys(mapping.wqiColumns).length;
 
     logger.info(`Column mapping complete:
+      - S.No: ${mapping.snoColumn || 'NOT FOUND'}
       - Station ID: ${mapping.stationIdColumn || 'NOT FOUND (will auto-generate)'}
-      - Latitude: ${mapping.latitudeColumn || 'NOT FOUND'}
-      - Longitude: ${mapping.longitudeColumn || 'NOT FOUND'}
       - State: ${mapping.stateColumn || 'NOT FOUND'}
+      - District: ${mapping.districtColumn || 'NOT FOUND'}
+      - Location: ${mapping.locationColumn || 'NOT FOUND'}
+      - Longitude: ${mapping.longitudeColumn || 'NOT FOUND'}
+      - Latitude: ${mapping.latitudeColumn || 'NOT FOUND'}
+      - Year: ${mapping.yearColumn || 'NOT FOUND'}
       - City: ${mapping.cityColumn || 'NOT FOUND'}
       - Metals found: ${metalCount} (${Object.keys(mapping.metalColumns).join(', ')})
       - WQI params found: ${wqiCount} (${Object.keys(mapping.wqiColumns).join(', ')})`);

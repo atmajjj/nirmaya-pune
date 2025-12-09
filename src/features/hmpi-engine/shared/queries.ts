@@ -45,6 +45,8 @@ export interface CalculationQueryParams {
   page?: number;
   limit?: number;
   state?: string;
+  district?: string;
+  year?: number;
   city?: string;
   upload_id?: number;
   hpi_min?: number;
@@ -54,7 +56,7 @@ export interface CalculationQueryParams {
   wqi_min?: number;
   wqi_max?: number;
   classification?: string;
-  sort_by?: 'hpi' | 'mi' | 'wqi' | 'created_at' | 'station_id';
+  sort_by?: 'hpi' | 'mi' | 'wqi' | 'created_at' | 'station_id' | 'year';
   sort_order?: 'asc' | 'desc';
 }
 
@@ -68,6 +70,8 @@ export const findCalculations = async (
     page = 1,
     limit = 20,
     state,
+    district,
+    year,
     city,
     upload_id,
     hpi_min,
@@ -88,6 +92,14 @@ export const findCalculations = async (
 
   if (state) {
     conditions.push(ilike(waterQualityCalculations.state, `%${state}%`));
+  }
+
+  if (district) {
+    conditions.push(ilike(waterQualityCalculations.district, `%${district}%`));
+  }
+
+  if (year !== undefined) {
+    conditions.push(eq(waterQualityCalculations.year, year));
   }
 
   if (city) {
@@ -139,7 +151,8 @@ export const findCalculations = async (
     wqi: waterQualityCalculations.wqi,
     created_at: waterQualityCalculations.created_at,
     station_id: waterQualityCalculations.station_id,
-  }[sort_by];
+    year: waterQualityCalculations.year,
+  }[sort_by] || waterQualityCalculations.created_at;
 
   const orderFn = sort_order === 'asc' ? asc : desc;
 

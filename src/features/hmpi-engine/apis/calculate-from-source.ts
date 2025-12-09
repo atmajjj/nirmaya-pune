@@ -1,5 +1,5 @@
 /**
- * POST /api/hmpi-engine/calculate-from-source
+ * POST /api/nirmaya-engine/calculate-from-source
  * Calculate HPI, MI, WQI indices from a pre-uploaded data source
  * 
  * Requires: auth + role (admin, scientist, policymaker)

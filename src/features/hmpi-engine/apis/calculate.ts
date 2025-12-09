@@ -1,5 +1,5 @@
 /**
- * POST /api/hmpi-engine/calculate
+ * POST /api/nirmaya-engine/calculate
  * Upload CSV file and calculate HPI, MI, WQI indices
  * 
  * Requires: auth + role (admin, scientist, policymaker)

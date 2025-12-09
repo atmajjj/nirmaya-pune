@@ -19,7 +19,7 @@ import downloadResultsRouter from './apis/download-results';
 import getStatsRouter from './apis/get-stats';
 
 class HMPIEngineRoute implements Route {
-  public path = '/hmpi-engine';
+  public path = '/nirmaya-engine';
   public router = Router();
 
   constructor() {
@@ -27,26 +27,26 @@ class HMPIEngineRoute implements Route {
   }
 
   private initializeRoutes() {
-    // Mount all HMPI engine routes
-    // POST /api/hmpi-engine/preview - Preview CSV and detect available calculations
+    // Mount all Nirmaya engine routes
+    // POST /api/nirmaya-engine/preview - Preview CSV and detect available calculations
     this.router.use(this.path, previewRouter);
     
-    // POST /api/hmpi-engine/calculate - Upload CSV and calculate indices
+    // POST /api/nirmaya-engine/calculate - Upload CSV and calculate indices
     this.router.use(this.path, calculateRouter);
     
-    // POST /api/hmpi-engine/calculate-from-source - Calculate from pre-uploaded data source
+    // POST /api/nirmaya-engine/calculate-from-source - Calculate from pre-uploaded data source
     this.router.use(this.path, calculateFromSourceRouter);
     
-    // GET /api/hmpi-engine/calculations - List calculations with filters
+    // GET /api/nirmaya-engine/calculations - List calculations with filters
     this.router.use(this.path, listCalculationsRouter);
     
-    // GET /api/hmpi-engine/calculations/:id - Get single calculation
+    // GET /api/nirmaya-engine/calculations/:id - Get single calculation
     this.router.use(this.path, getCalculationRouter);
     
-    // GET /api/hmpi-engine/uploads/:upload_id/download - Download results as CSV
+    // GET /api/nirmaya-engine/uploads/:upload_id/download - Download results as CSV
     this.router.use(this.path, downloadResultsRouter);
     
-    // GET /api/hmpi-engine/stats - Get statistics
+    // GET /api/nirmaya-engine/stats - Get statistics
     this.router.use(this.path, getStatsRouter);
   }
 }

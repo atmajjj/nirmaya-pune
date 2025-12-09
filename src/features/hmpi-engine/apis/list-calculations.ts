@@ -1,5 +1,5 @@
 /**
- * GET /api/hmpi-engine/calculations
+ * GET /api/nirmaya-engine/calculations
  * List water quality calculations with pagination and filtering
  * 
  * Requires: auth + role (admin, scientist, policymaker)

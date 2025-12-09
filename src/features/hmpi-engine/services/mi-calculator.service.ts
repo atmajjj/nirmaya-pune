@@ -1,21 +1,38 @@
 /**
  * MI (Metal Index) Calculator Service
- *
- * Formula:
- * MI = Σ (Ci / MACi)
- *
+ * 
+ * EXACT implementation from Flutter reference code
+ * 
+ * ============================================================================
+ * FORMULA (Caeiro et al., 2005)
+ * ============================================================================
+ * 
+ * For each metal:
+ *     ratio_i = Ci / MACi
+ * 
+ * Metal Index (MI):
+ *     MI = Σ (Ci / MACi)  for i = 1...n
+ * 
  * Where:
- * - Ci = Measured concentration of metal (ppb)
- * - MACi = Maximum Allowable Concentration (ppb)
- *
- * Classification (Tamasi and Cini, 1976):
- * - MI < 0.3: Class I - Very Pure
- * - MI 0.3-1.0: Class II - Pure
- * - MI 1.0-2.0: Class III - Slightly Affected
- * - MI 2.0-4.0: Class IV - Moderately Affected
- * - MI 4.0-6.0: Class V - Strongly Affected
- * - MI ≥ 6.0: Class VI - Seriously Affected
- *
+ *   - Ci = Mean concentration of metal i in ppb (µg/L)
+ *   - MACi = Maximum Allowable Concentration of metal i in ppb (µg/L)
+ *   - MI is dimensionless
+ * 
+ * ============================================================================
+ * MI CLASSIFICATION (Caeiro et al., 2005)
+ * ============================================================================
+ * 
+ * Class I   → Very Pure            → MI < 0.3
+ * Class II  → Pure                 → 0.3 ≤ MI < 1
+ * Class III → Slightly Affected    → 1 ≤ MI < 2
+ * Class IV  → Moderately Affected  → 2 ≤ MI < 4
+ * Class V   → Strongly Affected    → 4 ≤ MI < 6
+ * Class VI  → Seriously Affected   → MI ≥ 6
+ * 
+ * Test Case: As=269.58, Cd=6.22, Cu=554.98, Pb=10.59, Hg=0.17, Ni=61.83, Zn=2587.05
+ *           MAC: As=50, Cd=3, Cu=1500, Pb=10, Hg=1, Ni=20, Zn=15000
+ * Expected MI: 12.3292525
+ * 
  * Reference: BIS 10500:2012, WHO Guidelines
  */
 
@@ -29,36 +46,52 @@ import { MIResult } from '../shared/interface';
 export class MICalculatorService {
   /**
    * Calculate MI for a single station
+   * 
+   * EXACT Flutter formula:
+   * - For each metal: ratio_i = Ci / MACi
+   * - MI = Σ(ratio_i)
    *
-   * @param metals - Record of metal symbol to concentration in ppb
+   * @param metals - Record of metal symbol to concentration in ppb (Ci values)
    * @param customMAC - Optional custom MAC values (defaults to BIS/WHO)
-   * @returns MIResult with MI value, classification, class, and metals analyzed
+   * @returns MIResult with MI value, classification, class, and detailed breakdown
    */
   static calculate(
     metals: Record<string, number>,
     customMAC?: Record<string, number>
   ): MIResult | null {
     const metalsAnalyzed: string[] = [];
-    let mi = 0;
+    const ratios: Record<string, number> = {};
+    const concentrations: Record<string, number> = {};
+    const macValues: Record<string, number> = {};
+    let miSum = 0.0;
 
-    for (const [symbol, concentration] of Object.entries(metals)) {
-      // Get MAC for this metal
-      let mac: number | undefined;
+    // Calculate MI = Σ(Ci / MACi)
+    for (const [symbol, Ci] of Object.entries(metals)) {
+      // Get MACi for this metal
+      let MACi: number | undefined;
 
       if (customMAC && customMAC[symbol] !== undefined) {
-        mac = customMAC[symbol];
+        MACi = customMAC[symbol];
       } else if (METAL_STANDARDS[symbol]) {
-        mac = METAL_STANDARDS[symbol].MAC;
+        MACi = METAL_STANDARDS[symbol].MAC;
       }
 
-      // Skip metals without MAC values
-      if (!mac || mac === 0) {
-        continue;
+      // Validate MACi (must be > 0)
+      if (!MACi || MACi <= 0) {
+        continue; // Skip metals without valid MAC values
       }
 
-      // Calculate contribution: Ci / MACi
-      mi += concentration / mac;
+      // EXACT Flutter formula: ratio = Ci / MACi
+      const ratio = Ci / MACi;
+
+      // Accumulate sum
+      miSum += ratio;
+
+      // Store for breakdown
       metalsAnalyzed.push(symbol);
+      ratios[symbol] = ratio;
+      concentrations[symbol] = Ci;
+      macValues[symbol] = MACi;
     }
 
     // Need at least one metal for calculation
@@ -66,16 +99,19 @@ export class MICalculatorService {
       return null;
     }
 
-    // Round to 4 decimal places for precision
-    const roundedMI = Math.round(mi * 10000) / 10000;
+    // MI is the sum (no averaging or weighting)
+    const mi = miSum;
 
-    const { classification, miClass } = classifyMI(roundedMI);
+    const { classification, miClass } = classifyMI(mi);
 
     return {
-      mi: roundedMI,
+      mi,
       classification,
       miClass,
       metalsAnalyzed,
+      ratios,
+      concentrations,
+      macValues,
     };
   }
 
@@ -128,51 +164,57 @@ export class MICalculatorService {
 
   /**
    * Get individual metal contributions for detailed analysis
+   * 
+   * EXACT Flutter formula: ratio = Ci / MACi
    *
-   * @param metals - Record of metal symbol to concentration in ppb
+   * @param metals - Record of metal symbol to concentration in ppb (Ci values)
    * @returns Array of detailed metal analysis sorted by contribution
    */
   static getDetailedAnalysis(metals: Record<string, number>): Array<{
     symbol: string;
     name: string;
-    concentration: number;
-    MAC: number;
-    ratio: number;
+    Ci: number;          // Concentration in ppb
+    MACi: number;        // Maximum Allowable Concentration in ppb
+    ratio: number;       // Ci / MACi
     percentOfTotal: number;
   }> {
     const analysis: Array<{
       symbol: string;
       name: string;
-      concentration: number;
-      MAC: number;
+      Ci: number;
+      MACi: number;
       ratio: number;
       percentOfTotal: number;
     }> = [];
 
-    let totalMI = 0;
+    let miSum = 0.0;
 
-    // First pass: calculate total MI
-    for (const [symbol, concentration] of Object.entries(metals)) {
+    // First pass: calculate total MI = Σ(Ci / MACi)
+    for (const [symbol, Ci] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
-      if (!standard || standard.MAC === 0) continue;
-      totalMI += concentration / standard.MAC;
+      if (!standard || standard.MAC <= 0) continue;
+      
+      const MACi = standard.MAC;
+      const ratio = Ci / MACi;
+      miSum += ratio;
     }
 
-    // Second pass: calculate individual contributions
-    for (const [symbol, concentration] of Object.entries(metals)) {
+    // Second pass: calculate individual contributions with percentages
+    for (const [symbol, Ci] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
-      if (!standard || standard.MAC === 0) continue;
+      if (!standard || standard.MAC <= 0) continue;
 
-      const ratio = concentration / standard.MAC;
-      const percentOfTotal = totalMI > 0 ? (ratio / totalMI) * 100 : 0;
+      const MACi = standard.MAC;
+      const ratio = Ci / MACi;  // EXACT Flutter formula
+      const percentOfTotal = miSum > 0 ? (ratio / miSum) * 100 : 0;
 
       analysis.push({
         symbol,
         name: standard.name,
-        concentration,
-        MAC: standard.MAC,
-        ratio: Math.round(ratio * 10000) / 10000,
-        percentOfTotal: Math.round(percentOfTotal * 100) / 100,
+        Ci,
+        MACi,
+        ratio,
+        percentOfTotal,
       });
     }
 
@@ -183,35 +225,39 @@ export class MICalculatorService {
   /**
    * Get threshold comparison for all metals
    * Useful for identifying which metals are above/below MAC
+   * 
+   * Formula: ratio = Ci / MACi
    *
-   * @param metals - Record of metal symbol to concentration in ppb
-   * @returns Categorized metals by status
+   * @param metals - Record of metal symbol to concentration in ppb (Ci values)
+   * @returns Categorized metals by status (safe/warning/exceeded)
    */
   static getThresholdComparison(metals: Record<string, number>): {
-    safe: Array<{ symbol: string; concentration: number; MAC: number; ratio: number }>;
-    warning: Array<{ symbol: string; concentration: number; MAC: number; ratio: number }>;
-    exceeded: Array<{ symbol: string; concentration: number; MAC: number; ratio: number }>;
+    safe: Array<{ symbol: string; Ci: number; MACi: number; ratio: number }>;
+    warning: Array<{ symbol: string; Ci: number; MACi: number; ratio: number }>;
+    exceeded: Array<{ symbol: string; Ci: number; MACi: number; ratio: number }>;
   } {
     const result: {
-      safe: Array<{ symbol: string; concentration: number; MAC: number; ratio: number }>;
-      warning: Array<{ symbol: string; concentration: number; MAC: number; ratio: number }>;
-      exceeded: Array<{ symbol: string; concentration: number; MAC: number; ratio: number }>;
+      safe: Array<{ symbol: string; Ci: number; MACi: number; ratio: number }>;
+      warning: Array<{ symbol: string; Ci: number; MACi: number; ratio: number }>;
+      exceeded: Array<{ symbol: string; Ci: number; MACi: number; ratio: number }>;
     } = {
-      safe: [], // ratio < 0.5 (less than 50% of MAC)
-      warning: [], // ratio 0.5-1.0 (50-100% of MAC)
+      safe: [],     // ratio < 0.5 (less than 50% of MAC)
+      warning: [],  // ratio 0.5-1.0 (50-100% of MAC)
       exceeded: [], // ratio > 1.0 (above MAC)
     };
 
-    for (const [symbol, concentration] of Object.entries(metals)) {
+    for (const [symbol, Ci] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
-      if (!standard || standard.MAC === 0) continue;
+      if (!standard || standard.MAC <= 0) continue;
 
-      const ratio = concentration / standard.MAC;
+      const MACi = standard.MAC;
+      const ratio = Ci / MACi;  // EXACT Flutter formula
+      
       const entry = {
         symbol,
-        concentration,
-        MAC: standard.MAC,
-        ratio: Math.round(ratio * 10000) / 10000,
+        Ci,
+        MACi,
+        ratio,
       };
 
       if (ratio < 0.5) {

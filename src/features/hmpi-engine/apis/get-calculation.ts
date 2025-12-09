@@ -1,5 +1,5 @@
 /**
- * GET /api/hmpi-engine/calculations/:id
+ * GET /api/nirmaya-engine/calculations/:id
  * Get a single water quality calculation by ID
  * 
  * Requires: auth + role (admin, scientist, policymaker)

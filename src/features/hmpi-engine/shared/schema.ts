@@ -81,12 +81,16 @@ export const waterQualityCalculations = pgTable(
       .notNull()
       .references(() => uploads.id, { onDelete: 'cascade' }),
 
-    // Station/Location identification
+    // Station/Location identification from CSV
+    sno: integer('sno'), // S.No from CSV
     station_id: varchar('station_id', { length: 255 }).notNull(),
-    latitude: decimal('latitude', { precision: 10, scale: 8 }),
-    longitude: decimal('longitude', { precision: 11, scale: 8 }),
     state: varchar('state', { length: 100 }),
-    city: varchar('city', { length: 100 }),
+    district: varchar('district', { length: 100 }),
+    location: varchar('location', { length: 255 }),
+    longitude: decimal('longitude', { precision: 11, scale: 8 }),
+    latitude: decimal('latitude', { precision: 10, scale: 8 }),
+    year: integer('year'),
+    city: varchar('city', { length: 100 }), // Kept for backward compatibility
 
     // Calculated indices (only final values, not breakdown)
     hpi: decimal('hpi', { precision: 10, scale: 4 }),
@@ -96,14 +100,6 @@ export const waterQualityCalculations = pgTable(
     mi_class: varchar('mi_class', { length: 15 }).$type<MIClass>(),
     wqi: decimal('wqi', { precision: 10, scale: 4 }),
     wqi_classification: varchar('wqi_classification', { length: 50 }).$type<WQIClassification>(),
-    
-    // Additional indices (CDEG, HEI, PIG)
-    cdeg: decimal('cdeg', { precision: 10, scale: 4 }),
-    cdeg_classification: varchar('cdeg_classification', { length: 50 }),
-    hei: decimal('hei', { precision: 10, scale: 4 }),
-    hei_classification: varchar('hei_classification', { length: 50 }),
-    pig: decimal('pig', { precision: 10, scale: 4 }),
-    pig_classification: varchar('pig_classification', { length: 50 }),
 
     // Metadata - stored as comma-separated strings (simpler than arrays for Drizzle)
     metals_analyzed: text('metals_analyzed'), // e.g., "As,Cu,Zn,Hg,Cd,Ni,Pb"

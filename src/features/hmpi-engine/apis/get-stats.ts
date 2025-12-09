@@ -1,5 +1,5 @@
 /**
- * GET /api/hmpi-engine/stats
+ * GET /api/nirmaya-engine/stats
  * Get water quality calculation statistics
  * 
  * Requires: auth + role (admin, scientist, policymaker)

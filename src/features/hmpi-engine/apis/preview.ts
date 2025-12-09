@@ -1,5 +1,5 @@
 /**
- * POST /api/hmpi-engine/preview
+ * POST /api/nirmaya-engine/preview
  * Preview CSV file and detect available calculations
  *
  * Requires: auth + role (admin, scientist, policymaker)

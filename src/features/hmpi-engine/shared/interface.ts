@@ -17,11 +17,15 @@ import {
 export interface WaterQualityCalculation {
   id: number;
   upload_id: number;
+  sno: number | null;
   station_id: string;
-  latitude: number | null;
-  longitude: number | null;
   state: string | null;
-  city: string | null;
+  district: string | null;
+  location: string | null;
+  longitude: number | null;
+  latitude: number | null;
+  year: number | null;
+  city: string | null; // Kept for backward compatibility
   hpi: number | null;
   hpi_classification: HPIClassification | null;
   mi: number | null;
@@ -29,12 +33,6 @@ export interface WaterQualityCalculation {
   mi_class: MIClass | null;
   wqi: number | null;
   wqi_classification: WQIClassification | null;
-  cdeg: number | null;
-  cdeg_classification: string | null;
-  hei: number | null;
-  hei_classification: string | null;
-  pig: number | null;
-  pig_classification: string | null;
   metals_analyzed: string[] | null;
   wqi_params_analyzed: string[] | null;
   created_by: number | null;
@@ -51,11 +49,15 @@ export interface WaterQualityCalculation {
  */
 export interface NewCalculationInput {
   upload_id: number;
+  sno?: number | null;
   station_id: string;
-  latitude?: number | null;
-  longitude?: number | null;
   state?: string | null;
-  city?: string | null;
+  district?: string | null;
+  location?: string | null;
+  longitude?: number | null;
+  latitude?: number | null;
+  year?: number | null;
+  city?: string | null; // Kept for backward compatibility
   hpi?: number | null;
   hpi_classification?: HPIClassification | null;
   mi?: number | null;
@@ -63,12 +65,6 @@ export interface NewCalculationInput {
   mi_class?: MIClass | null;
   wqi?: number | null;
   wqi_classification?: WQIClassification | null;
-  cdeg?: number | null;
-  cdeg_classification?: string | null;
-  hei?: number | null;
-  hei_classification?: string | null;
-  pig?: number | null;
-  pig_classification?: string | null;
   metals_analyzed?: string[];
   wqi_params_analyzed?: string[];
   created_by: number;
@@ -82,10 +78,14 @@ export interface NewCalculationInput {
  * Parsed row from CSV with mapped columns
  */
 export interface ParsedCSVRow {
+  sno?: number;
   station_id: string;
-  latitude?: number;
-  longitude?: number;
   state?: string;
+  district?: string;
+  location?: string;
+  longitude?: number;
+  latitude?: number;
+  year?: number;
   city?: string;
   // Heavy metals (ppb)
   metals: Record<string, number>;
@@ -101,10 +101,14 @@ export interface ParsedCSVRow {
  * CSV column mapping result
  */
 export interface ColumnMapping {
+  snoColumn: string | null;
   stationIdColumn: string | null;
-  latitudeColumn: string | null;
-  longitudeColumn: string | null;
   stateColumn: string | null;
+  districtColumn: string | null;
+  locationColumn: string | null;
+  longitudeColumn: string | null;
+  latitudeColumn: string | null;
+  yearColumn: string | null;
   cityColumn: string | null;
   metalColumns: Record<string, string>; // symbol -> column name
   wqiColumns: Record<string, string>; // symbol -> column name
@@ -143,6 +147,12 @@ export interface HPIResult {
   hpi: number;
   classification: HPIClassification;
   metalsAnalyzed: string[];
+  // Detailed breakdown for transparency (optional)
+  subIndices?: Record<string, number>;      // Qi values
+  unitWeights?: Record<string, number>;     // Wi values
+  contributions?: Record<string, number>;   // WiQi values
+  sumWi?: number;                           // Sum of Wi
+  sumWiQi?: number;                         // Sum of WiQi
 }
 
 /**
@@ -153,6 +163,10 @@ export interface MIResult {
   classification: MIClassification;
   miClass: MIClass;
   metalsAnalyzed: string[];
+  // Detailed breakdown for transparency
+  ratios?: Record<string, number>;          // Ci/MACi for each metal
+  concentrations?: Record<string, number>;  // Ci values
+  macValues?: Record<string, number>;       // MACi values
 }
 
 /**
@@ -162,51 +176,32 @@ export interface WQIResult {
   wqi: number;
   classification: WQIClassification;
   paramsAnalyzed: string[];
-}
-
-/**
- * CDEG calculation result for a single station
- */
-export interface CDEGResult {
-  cdeg: number;
-  classification: string;
-  metalsAnalyzed: string[];
-}
-
-/**
- * HEI calculation result for a single station
- */
-export interface HEIResult {
-  hei: number;
-  classification: string;
-  metalsAnalyzed: string[];
-}
-
-/**
- * PIG calculation result for a single station
- */
-export interface PIGResult {
-  pig: number;
-  classification: string;
-  hpi_used: number;
-  hei_used: number;
+  // Detailed breakdown for transparency
+  invSn?: Record<string, number>;      // 1/Sn for each parameter
+  weights?: Record<string, number>;    // Wi (relative weight) for each parameter
+  qi?: Record<string, number>;         // Qi (quality rating) for each parameter
+  wiQi?: Record<string, number>;       // WiQi (contribution) for each parameter
+  sumInvSn?: number;                   // Σ(1/Sn)
+  k?: number;                          // Constant K = 1/Σ(1/Sn)
+  sumWeights?: number;                 // Σ(Wi) - should equal 1
 }
 
 /**
  * Complete calculation result for a single station
  */
 export interface StationCalculationResult {
+  sno?: number;
   station_id: string;
-  latitude?: number;
-  longitude?: number;
   state?: string;
+  district?: string;
+  location?: string;
+  longitude?: number;
+  latitude?: number;
+  year?: number;
   city?: string;
   hpi?: HPIResult;
   mi?: MIResult;
   wqi?: WQIResult;
-  cdeg?: CDEGResult;
-  hei?: HEIResult;
-  pig?: PIGResult;
   errors: string[];
 }
 
@@ -257,10 +252,14 @@ export function convertCalculation(
   return {
     id: calc.id,
     upload_id: calc.upload_id,
+    sno: calc.sno,
     station_id: calc.station_id,
-    latitude: calc.latitude ? parseFloat(calc.latitude) : null,
-    longitude: calc.longitude ? parseFloat(calc.longitude) : null,
     state: calc.state,
+    district: calc.district,
+    location: calc.location,
+    longitude: calc.longitude ? parseFloat(calc.longitude) : null,
+    latitude: calc.latitude ? parseFloat(calc.latitude) : null,
+    year: calc.year,
     city: calc.city,
     hpi: calc.hpi ? parseFloat(calc.hpi) : null,
     hpi_classification: calc.hpi_classification,
@@ -269,12 +268,6 @@ export function convertCalculation(
     mi_class: calc.mi_class,
     wqi: calc.wqi ? parseFloat(calc.wqi) : null,
     wqi_classification: calc.wqi_classification,
-    cdeg: calc.cdeg ? parseFloat(calc.cdeg) : null,
-    cdeg_classification: calc.cdeg_classification,
-    hei: calc.hei ? parseFloat(calc.hei) : null,
-    hei_classification: calc.hei_classification,
-    pig: calc.pig ? parseFloat(calc.pig) : null,
-    pig_classification: calc.pig_classification,
     metals_analyzed: calc.metals_analyzed ? calc.metals_analyzed.split(',') : null,
     wqi_params_analyzed: calc.wqi_params_analyzed ? calc.wqi_params_analyzed.split(',') : null,
     created_by: calc.created_by,

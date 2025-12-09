@@ -1,5 +1,5 @@
 /**
- * GET /api/hmpi-engine/uploads/:upload_id/download
+ * GET /api/nirmaya-engine/uploads/:upload_id/download
  * Download calculation results as CSV
  * 
  * Requires: auth + role (admin, scientist, policymaker)

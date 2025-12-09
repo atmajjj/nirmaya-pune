@@ -112,12 +112,12 @@ export const WQI_COLUMN_ALIASES: Record<string, string[]> = {
   pH: ['ph'],
   EC: ['ec', 'electrical_conductivity', 'electrical conductivity', 'conductivity'],
   TDS: ['tds', 'total_dissolved_solids', 'total dissolved solids'],
-  TH: ['th', 'total_hardness', 'total hardness', 'hardness'],
+  TH: ['th', 'total_hardness', 'total hardness', 'hardness', 'caco3'], // ADD: CaCO3 alias
   Ca: ['ca', 'calcium'],
   Mg: ['mg', 'magnesium'],
   Fe: ['fe', 'iron'], // Note: Also used for heavy metals, WQI uses mg/L
   F: ['f', 'fluoride', 'flouride'], // Common misspelling included
-  Turbidity: ['turbidity', 'turb', 'ntu'],
+  Turbidity: ['turbidity', 'turb', 'ntu', 'hazen'], // ADD: Hazen alias
 };
 
 // ============================================================================
@@ -128,11 +128,15 @@ export const WQI_COLUMN_ALIASES: Record<string, string[]> = {
  * Column name aliases for location fields (case-insensitive matching)
  */
 export const LOCATION_COLUMN_ALIASES = {
-  station_id: ['station_id', 'station', 'location', 'site', 'sample_id', 'id', 'name', 'station name', 'site_id', 'sample'],
-  latitude: ['latitude', 'lat'],
-  longitude: ['longitude', 'lng', 'lon', 'long'],
+  sno: ['s.no', 'sno', 's no', 'serial', 'serial_no', 'sr_no', 'srno'],
+  station_id: ['station_id', 'station', 'site', 'sample_id', 'id', 'name', 'station name', 'site_id', 'sample'],
   state: ['state', 'province', 'region'],
-  city: ['city', 'district', 'town', 'village', 'area'],
+  district: ['district', 'dist'],
+  location: ['location', 'loc', 'place', 'area', 'locality'],
+  longitude: ['longitude', 'lng', 'lon', 'long'],
+  latitude: ['latitude', 'lat'],
+  year: ['year', 'sampling_year', 'sample_year', 'date'],
+  city: ['city', 'town', 'village'], // Kept separate from district
 };
 
 // ============================================================================

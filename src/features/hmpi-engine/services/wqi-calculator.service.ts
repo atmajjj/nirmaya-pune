@@ -1,25 +1,57 @@
 /**
  * WQI (Water Quality Index) Calculator Service
- *
- * Formula (Weighted Arithmetic Method):
- * K = 1 / Σ(1/Sn) (Proportionality constant)
- * Wi = K / Sn (Relative weight of each parameter)
- * Qi = ((Vn - Vo) / (Sn - Vo)) × 100 (Quality rating)
- * WQI = Σ(Wi × Qi)
- *
+ * 
+ * EXACT implementation from Flutter reference code
+ * 
+ * ============================================================================
+ * METHODOLOGY (Brown et al., 1972)
+ * ============================================================================
+ * 
+ * Step 1: Calculate 1/Sn for each parameter:
+ *     invSn_i = 1 / Sn_i
+ * 
+ * Step 2: Calculate sum of all invSn:
+ *     sumInvSn = Σ invSn_i
+ * 
+ * Step 3: Calculate constant K:
+ *     K = 1 / sumInvSn
+ * 
+ * Step 4: Calculate relative weight Wi for each parameter:
+ *     Wi_i = K × (1/Sn_i)
+ *     Note: Σ Wi = 1 (normalized)
+ * 
+ * Step 5: Calculate quality rating Qi for each parameter:
+ *     Qi_i = ((Vn_i - Vo_i) / (Sn_i - Vo_i)) × 100
+ *     Special: For pH, use absolute deviation |Vn - Vo| / |Sn - Vo| × 100
+ * 
+ * Step 6: Calculate contribution WiQi:
+ *     WiQi_i = Wi_i × Qi_i
+ * 
+ * Step 7: Calculate overall WQI:
+ *     WQI = Σ WiQi_i
+ * 
  * Where:
- * - Vn = Measured value of parameter
- * - Sn = Standard (permissible limit)
- * - Vo = Ideal value
- *
- * Classification:
- * - WQI 0-25: Excellent
- * - WQI 26-50: Good
- * - WQI 51-75: Poor
- * - WQI 76-100: Very Poor
- * - WQI > 100: Unfit for consumption
- *
- * Reference: BIS 10500:2012
+ *   - Sn = BIS standard (permissible/max value)
+ *   - Vo = Ideal value (7 for pH, 0 for others)
+ *   - Vn = Measured mean value
+ *   - Wi = Relative weight
+ *   - Qi = Quality rating
+ * 
+ * ============================================================================
+ * WQI CLASSIFICATION (Brown et al., 1972)
+ * ============================================================================
+ * 
+ * 0 – 25      → "Excellent"
+ * 26 – 50     → "Good"
+ * 51 – 75     → "Poor"
+ * 76 – 100    → "Very Poor"
+ * > 100       → "Unfit for consumption"
+ * 
+ * Test Case: pH=7.9, EC=100.33, TDS=67.22, TH=40.67, Ca=55.61, Mg=6.48, 
+ *            Fe=0.05, F=0.02, Turb=1.3
+ * Expected WQI: 15.24
+ * 
+ * Reference: BIS 10500:2012, WHO Guidelines
  */
 
 import { WQI_STANDARDS, classifyWQI } from '../shared/constants';
@@ -32,10 +64,19 @@ import { WQIResult } from '../shared/interface';
 export class WQICalculatorService {
   /**
    * Calculate WQI for a single station
+   * 
+   * EXACT Flutter formulas (Brown et al., 1972):
+   * 1. invSn = 1 / Sn for each parameter
+   * 2. sumInvSn = Σ(invSn)
+   * 3. K = 1 / sumInvSn
+   * 4. Wi = K × invSn for each parameter
+   * 5. Qi = ((Vn - Vo) / (Sn - Vo)) × 100
+   * 6. WiQi = Wi × Qi
+   * 7. WQI = Σ(WiQi)
    *
-   * @param params - Record of parameter symbol to measured value
+   * @param params - Record of parameter symbol to measured value (Vn)
    * @param customStandards - Optional custom standards (defaults to BIS)
-   * @returns WQIResult with WQI value, classification, and parameters analyzed
+   * @returns WQIResult with WQI value, classification, and detailed breakdown
    */
   static calculate(
     params: Record<string, number>,
@@ -43,13 +84,16 @@ export class WQICalculatorService {
   ): WQIResult | null {
     const standards = customStandards || WQI_STANDARDS;
     const paramsAnalyzed: string[] = [];
+    const invSn: Record<string, number> = {};
+    const weights: Record<string, number> = {};
+    const qi: Record<string, number> = {};
+    const wiQi: Record<string, number> = {};
 
-    // First pass: calculate K (proportionality constant)
-    // K = 1 / Σ(1/Sn)
-    let sumInverseSn = 0;
+    // Step 1 & 2: Calculate invSn = 1/Sn for each parameter and sum
+    let sumInvSn = 0.0;
     const validParams: Array<{ symbol: string; Vn: number; Sn: number; Vo: number }> = [];
 
-    for (const [symbol, value] of Object.entries(params)) {
+    for (const [symbol, Vn] of Object.entries(params)) {
       const standard = standards[symbol];
       if (!standard) continue;
 
@@ -57,41 +101,69 @@ export class WQICalculatorService {
       const Vo = standard.Vo;
 
       // Skip parameters with invalid standards
-      if (Sn === 0 || Sn === Vo) continue;
+      if (Sn <= 0) continue;
 
-      sumInverseSn += 1 / Sn;
-      validParams.push({ symbol, Vn: value, Sn, Vo });
+      // Step 1: Calculate invSn = 1 / Sn
+      const invSnValue = 1.0 / Sn;
+      invSn[symbol] = invSnValue;
+
+      // Step 2: Accumulate sum
+      sumInvSn += invSnValue;
+
+      validParams.push({ symbol, Vn, Sn, Vo });
       paramsAnalyzed.push(symbol);
     }
 
     // Need at least one parameter for calculation
-    if (validParams.length === 0 || sumInverseSn === 0) {
+    if (validParams.length === 0 || sumInvSn === 0) {
       return null;
     }
 
-    // Calculate K
-    const K = 1 / sumInverseSn;
+    // Step 3: Calculate constant K = 1 / sumInvSn
+    const k = 1.0 / sumInvSn;
 
-    // Second pass: calculate WQI = Σ(Wi × Qi)
-    let wqi = 0;
+    // Step 4-7: Calculate Wi, Qi, WiQi and accumulate WQI
+    let sumWiQi = 0.0;
+    let sumWeights = 0.0;
 
-    for (const { Vn, Sn, Vo } of validParams) {
-      // Wi = K / Sn (relative weight)
-      const Wi = K / Sn;
+    for (const { symbol, Vn, Sn, Vo } of validParams) {
+      // Step 4: Wi = K × invSn
+      const Wi = k * invSn[symbol];
+      weights[symbol] = Wi;
+      sumWeights += Wi;
 
-      // Qi = ((Vn - Vo) / (Sn - Vo)) × 100 (quality rating)
-      const Qi = ((Vn - Vo) / (Sn - Vo)) * 100;
+      // Step 5: Qi = ((Vn - Vo) / (Sn - Vo)) × 100
+      // Special handling for pH: use absolute deviation
+      let Qi: number;
+      if (symbol.toLowerCase() === 'ph') {
+        Qi = (Math.abs(Vn - Vo) / Math.abs(Sn - Vo)) * 100.0;
+      } else {
+        Qi = ((Vn - Vo) / (Sn - Vo)) * 100.0;
+      }
+      qi[symbol] = Qi;
 
-      wqi += Wi * Qi;
+      // Step 6: WiQi = Wi × Qi
+      const WiQiValue = Wi * Qi;
+      wiQi[symbol] = WiQiValue;
+
+      // Step 7: Accumulate WQI
+      sumWiQi += WiQiValue;
     }
 
-    // Round to 2 decimal places
-    const roundedWQI = Math.round(wqi * 100) / 100;
+    // WQI is the sum of WiQi
+    const wqi = sumWiQi;
 
     return {
-      wqi: roundedWQI,
-      classification: classifyWQI(roundedWQI),
+      wqi,
+      classification: classifyWQI(wqi),
       paramsAnalyzed,
+      invSn,
+      weights,
+      qi,
+      wiQi,
+      sumInvSn,
+      k,
+      sumWeights,
     };
   }
 
@@ -152,73 +224,100 @@ export class WQICalculatorService {
 
   /**
    * Get individual parameter contributions for detailed analysis
+   * 
+   * EXACT Flutter formulas:
+   * - invSn = 1 / Sn
+   * - K = 1 / Σ(invSn)
+   * - Wi = K × invSn
+   * - Qi = ((Vn - Vo) / (Sn - Vo)) × 100
+   * - WiQi = Wi × Qi
    *
-   * @param params - Record of parameter symbol to measured value
+   * @param params - Record of parameter symbol to measured value (Vn)
    * @returns Array of detailed parameter analysis sorted by contribution
    */
   static getDetailedAnalysis(params: Record<string, number>): Array<{
     symbol: string;
     name: string;
     unit: string;
-    value: number;
-    Sn: number;
-    Vo: number;
-    Wi: number;
-    Qi: number;
-    WiQi: number;
+    Vn: number;          // Measured value
+    Sn: number;          // Standard value
+    Vo: number;          // Ideal value
+    invSn: number;       // 1/Sn
+    Wi: number;          // Relative weight
+    Qi: number;          // Quality rating
+    WiQi: number;        // Contribution
     percentOfTotal: number;
   }> {
     const analysis: Array<{
       symbol: string;
       name: string;
       unit: string;
-      value: number;
+      Vn: number;
       Sn: number;
       Vo: number;
+      invSn: number;
       Wi: number;
       Qi: number;
       WiQi: number;
       percentOfTotal: number;
     }> = [];
 
-    // Calculate K first
-    let sumInverseSn = 0;
-    for (const [symbol] of Object.entries(params)) {
+    // Step 1 & 2: Calculate invSn and sumInvSn
+    let sumInvSn = 0.0;
+    const validParams: Array<{ symbol: string; Vn: number; Sn: number; Vo: number; invSn: number }> = [];
+
+    for (const [symbol, Vn] of Object.entries(params)) {
       const standard = WQI_STANDARDS[symbol];
-      if (!standard || standard.Sn === 0 || standard.Sn === standard.Vo) continue;
-      sumInverseSn += 1 / standard.Sn;
+      if (!standard || standard.Sn <= 0) continue;
+
+      const invSnValue = 1.0 / standard.Sn;
+      sumInvSn += invSnValue;
+      validParams.push({ 
+        symbol, 
+        Vn, 
+        Sn: standard.Sn, 
+        Vo: standard.Vo, 
+        invSn: invSnValue 
+      });
     }
 
-    if (sumInverseSn === 0) return analysis;
+    if (sumInvSn === 0) return analysis;
 
-    const K = 1 / sumInverseSn;
+    // Step 3: Calculate K
+    const k = 1.0 / sumInvSn;
 
-    // Calculate total WQI for percentage calculation
-    let totalWQI = 0;
-    const contributions: Array<{
-      symbol: string;
-      WiQi: number;
-    }> = [];
+    // Calculate total WQI for percentage
+    let totalWQI = 0.0;
 
-    for (const [symbol, value] of Object.entries(params)) {
-      const standard = WQI_STANDARDS[symbol];
-      if (!standard || standard.Sn === 0 || standard.Sn === standard.Vo) continue;
-
-      const Wi = K / standard.Sn;
-      const Qi = ((value - standard.Vo) / (standard.Sn - standard.Vo)) * 100;
+    for (const { symbol, Vn, Sn, Vo, invSn: invSnValue } of validParams) {
+      const Wi = k * invSnValue;
+      
+      // Special handling for pH
+      let Qi: number;
+      if (symbol.toLowerCase() === 'ph') {
+        Qi = (Math.abs(Vn - Vo) / Math.abs(Sn - Vo)) * 100.0;
+      } else {
+        Qi = ((Vn - Vo) / (Sn - Vo)) * 100.0;
+      }
+      
       const WiQi = Wi * Qi;
-
       totalWQI += WiQi;
-      contributions.push({ symbol, WiQi });
     }
 
     // Build detailed analysis
-    for (const [symbol, value] of Object.entries(params)) {
+    for (const { symbol, Vn, Sn, Vo, invSn: invSnValue } of validParams) {
       const standard = WQI_STANDARDS[symbol];
-      if (!standard || standard.Sn === 0 || standard.Sn === standard.Vo) continue;
+      if (!standard) continue;
 
-      const Wi = K / standard.Sn;
-      const Qi = ((value - standard.Vo) / (standard.Sn - standard.Vo)) * 100;
+      const Wi = k * invSnValue;
+      
+      let Qi: number;
+      if (symbol.toLowerCase() === 'ph') {
+        Qi = (Math.abs(Vn - Vo) / Math.abs(Sn - Vo)) * 100.0;
+      } else {
+        Qi = ((Vn - Vo) / (Sn - Vo)) * 100.0;
+      }
+      
       const WiQi = Wi * Qi;
       const percentOfTotal = totalWQI !== 0 ? (WiQi / totalWQI) * 100 : 0;
 
@@ -226,13 +325,14 @@ export class WQICalculatorService {
         symbol,
         name: standard.name,
         unit: standard.unit,
-        value,
-        Sn: standard.Sn,
-        Vo: standard.Vo,
-        Wi: Math.round(Wi * 10000) / 10000,
-        Qi: Math.round(Qi * 100) / 100,
-        WiQi: Math.round(WiQi * 100) / 100,
-        percentOfTotal: Math.round(percentOfTotal * 100) / 100,
+        Vn,
+        Sn,
+        Vo,
+        invSn: invSnValue,
+        Wi,
+        Qi,
+        WiQi,
+        percentOfTotal,
       });
     }
 

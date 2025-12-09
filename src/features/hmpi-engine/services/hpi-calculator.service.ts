@@ -1,17 +1,23 @@
 /**
  * HPI (Heavy Metal Pollution Index) Calculator Service
+ * 
+ * EXACT implementation from Flutter reference code
  *
- * Formula:
- * Wi = 1/Si (Weight of ith metal)
- * Qi = ((Mi - Ii) / (Si - Ii)) × 100 (Quality rating of ith metal)
- * HPI = Σ(Wi × Qi) / Σ(Wi)
+ * Formula (EXACT):
+ * 1. Wi = 1 / Si                               (Unit weight)
+ * 2. Di = |Mi - Ii|                            (Absolute difference)
+ * 3. Qi = (Di / (Si - Ii)) × 100              (Sub-index)
+ * 4. WiQi = Wi × Qi                           (Contribution)
+ * 5. HPI = Σ(WiQi) / Σ(Wi)                   (Final index)
  *
  * Where:
- * - Mi = Measured concentration of metal (ppb)
+ * - Mi = Measured concentration (ppb/µg/L)
  * - Si = Standard permissible limit (ppb)
  * - Ii = Ideal value (ppb)
  *
  * Reference: BIS 10500:2012, WHO Guidelines
+ * Test Case: As=0.048, Cu=2.54, Zn=43.89, Hg=2.83, Cd=0.06, Ni=0.095, Pb=0.215
+ * Expected HPI: 146.33519
  */
 
 import { METAL_STANDARDS, classifyHPI } from '../shared/constants';
@@ -24,47 +30,58 @@ import { HPIResult } from '../shared/interface';
 export class HPICalculatorService {
   /**
    * Calculate HPI for a single station
+   * EXACT Flutter implementation
    *
    * @param metals - Record of metal symbol to concentration in ppb
    * @param customStandards - Optional custom standards (defaults to BIS/WHO)
-   * @returns HPIResult with HPI value, classification, and metals analyzed
+   * @returns HPIResult with HPI value, classification, and detailed breakdown
    */
   static calculate(
     metals: Record<string, number>,
     customStandards?: Record<string, { Si: number; Ii: number }>
   ): HPIResult | null {
     const standards = customStandards || METAL_STANDARDS;
-    const metalsAnalyzed: string[] = [];
-
-    let sumWiQi = 0;
+    
     let sumWi = 0;
+    let sumWiQi = 0;
+    const metalsAnalyzed: string[] = [];
+    const subIndices: Record<string, number> = {};
+    const unitWeights: Record<string, number> = {};
+    const contributions: Record<string, number> = {};
 
-    for (const [symbol, concentration] of Object.entries(metals)) {
-      // Get standard for this metal
+    for (const [symbol, Mi] of Object.entries(metals)) {
       const standard = standards[symbol];
       if (!standard) {
         // Skip metals without standards
         continue;
       }
 
-      const Si = standard.Si;
-      const Ii = standard.Ii;
+      const { Si, Ii } = standard;
 
-      // Skip if Si equals Ii (would cause division by zero)
-      if (Si === Ii) {
+      // Skip if Si <= Ii (Flutter validation)
+      if (Si <= Ii) {
+        console.warn(`Skipping ${symbol}: Si (${Si}) must be > Ii (${Ii})`);
         continue;
       }
 
-      // Calculate weight Wi = 1/Si
-      const Wi = 1 / Si;
+      // Calculate Wi = 1 / Si (EXACT Flutter formula)
+      const Wi = 1.0 / Si;
 
-      // Calculate quality rating Qi = ((Mi - Ii) / (Si - Ii)) × 100
-      // Using absolute value as per standard HPI formula
-      const Qi = (Math.abs(concentration - Ii) / (Si - Ii)) * 100;
+      // Calculate Qi = (|Mi - Ii| / (Si - Ii)) × 100 (EXACT Flutter formula)
+      const Di = Math.abs(Mi - Ii);
+      const Qi = (Di / (Si - Ii)) * 100.0;
 
-      sumWiQi += Wi * Qi;
+      // Calculate WiQi = Wi × Qi
+      const WiQi = Wi * Qi;
+
       sumWi += Wi;
+      sumWiQi += WiQi;
       metalsAnalyzed.push(symbol);
+
+      // Store breakdown for transparency
+      unitWeights[symbol] = Wi;
+      subIndices[symbol] = Qi;
+      contributions[symbol] = WiQi;
     }
 
     // Need at least one metal for calculation
@@ -72,7 +89,7 @@ export class HPICalculatorService {
       return null;
     }
 
-    // Calculate HPI = Σ(Wi × Qi) / Σ(Wi)
+    // Calculate HPI = Σ(WiQi) / Σ(Wi)
     const hpi = sumWiQi / sumWi;
 
     // Round to 2 decimal places
@@ -82,6 +99,11 @@ export class HPICalculatorService {
       hpi: roundedHPI,
       classification: classifyHPI(roundedHPI),
       metalsAnalyzed,
+      subIndices,
+      unitWeights,
+      contributions,
+      sumWi,
+      sumWiQi,
     };
   }
 
@@ -134,6 +156,7 @@ export class HPICalculatorService {
 
   /**
    * Get individual metal quality ratings for detailed analysis
+   * Uses EXACT Flutter formulas
    *
    * @param metals - Record of metal symbol to concentration in ppb
    * @returns Array of detailed metal analysis
@@ -161,27 +184,33 @@ export class HPICalculatorService {
 
     let totalWi = 0;
 
-    // First pass: calculate total weight
+    // First pass: calculate total weight using EXACT Flutter formula
     for (const [symbol] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
-      if (!standard || standard.Si === standard.Ii) continue;
-      totalWi += 1 / standard.Si;
+      if (!standard || standard.Si <= standard.Ii) continue;
+      totalWi += 1.0 / standard.Si; // Wi = 1 / Si
     }
 
     // Second pass: calculate individual contributions
-    for (const [symbol, concentration] of Object.entries(metals)) {
+    for (const [symbol, Mi] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
-      if (!standard || standard.Si === standard.Ii) continue;
+      if (!standard || standard.Si <= standard.Ii) continue;
 
-      const Wi = 1 / standard.Si;
-      const Qi = (Math.abs(concentration - standard.Ii) / (standard.Si - standard.Ii)) * 100;
+      const { Si, Ii } = standard;
+
+      // Wi = 1 / Si (EXACT Flutter formula)
+      const Wi = 1.0 / Si;
+      
+      // Qi = (|Mi - Ii| / (Si - Ii)) × 100 (EXACT Flutter formula)
+      const Di = Math.abs(Mi - Ii);
+      const Qi = (Di / (Si - Ii)) * 100.0;
 
       analysis.push({
         symbol,
         name: standard.name,
-        concentration,
-        Si: standard.Si,
-        Ii: standard.Ii,
+        concentration: Mi,
+        Si,
+        Ii,
         Wi: Math.round(Wi * 10000) / 10000,
         Qi: Math.round(Qi * 100) / 100,
         contribution: totalWi > 0 ? Math.round(((Wi * Qi) / totalWi) * 100) / 100 : 0,
