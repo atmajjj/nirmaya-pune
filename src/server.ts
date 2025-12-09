@@ -11,6 +11,7 @@ import ResearcherRoute from './features/researcher';
 import DataSourcesRoute from './features/data-sources';
 import AdminStatsRoute from './features/admin-stats';
 import StandardsRoute from './features/standards';
+import PolicymakerRoute from './features/policymaker';
 import { connectWithRetry, pool } from './database/drizzle';
 // import { redisClient, testRedisConnection } from './utils/redis';
 import { setupGracefulShutdown } from './utils/gracefulShutdown';
@@ -44,6 +45,7 @@ async function bootstrap() {
       new ResearcherRoute(),
       new DataSourcesRoute(),
       new StandardsRoute(),
+      new PolicymakerRoute(),
     ]);
 
     server = app.listen();
