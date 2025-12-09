@@ -57,27 +57,27 @@ import { users } from '../src/features/user/shared/schema';
 
 const TEST_USERS = [
   {
-    name: 'Test Scientist',
-    email: 'scientist@nirmaya.test',
-    password: 'scientist123',
+    name: 'Scientist User',
+    email: 'scientist@gmail.com',
+    password: '12345678',
     role: 'scientist' as const,
   },
   {
-    name: 'Test Researcher',
-    email: 'researcher@nirmaya.test',
-    password: 'researcher123',
+    name: 'Researcher User',
+    email: 'researcher@gmail.com',
+    password: '12345678',
     role: 'researcher' as const,
   },
   {
-    name: 'Test Policymaker',
-    email: 'policymaker@nirmaya.test',
-    password: 'policymaker123',
+    name: 'Policymaker User',
+    email: 'policymaker@gmail.com',
+    password: '12345678',
     role: 'policymaker' as const,
   },
   {
-    name: 'Test Field Technician',
-    email: 'fieldtech@nirmaya.test',
-    password: 'fieldtech123',
+    name: 'Field Technician User',
+    email: 'fieldtech@gmail.com',
+    password: '12345678',
     role: 'field_technician' as const,
   },
 ];

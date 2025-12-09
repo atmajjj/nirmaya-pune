@@ -56,9 +56,9 @@ function getDatabaseUrl(): string {
 // Import schema after env is configured
 import { users } from '../src/features/user/shared/schema';
 
-const ADMIN_EMAIL = 'harshal@gmail.com';
+const ADMIN_EMAIL = 'admin@gmail.com';
 const ADMIN_PASSWORD = '12345678';
-const ADMIN_NAME = 'Harshal Admin';
+const ADMIN_NAME = 'Admin User';
 
 async function createAdminUser() {
   const dbUrl = getDatabaseUrl();
