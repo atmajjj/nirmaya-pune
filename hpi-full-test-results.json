@@ -1,0 +1,572 @@
+[
+  {
+    "sno": 1,
+    "name": "Kharagpur baze",
+    "expectedHPI": 21.5,
+    "calculatedHPI": 17980.43,
+    "difference": "17958.93",
+    "percentDiff": "83529.91",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 2,
+    "name": "Milak Kuttunwali",
+    "expectedHPI": 13.96,
+    "calculatedHPI": 12074.82,
+    "difference": "12060.86",
+    "percentDiff": "86395.85",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 3,
+    "name": "Badepur",
+    "expectedHPI": 19.84,
+    "calculatedHPI": 13340.02,
+    "difference": "13320.18",
+    "percentDiff": "67138.00",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 4,
+    "name": "Milak Rustampur",
+    "expectedHPI": 14.7,
+    "calculatedHPI": 14977.41,
+    "difference": "14962.71",
+    "percentDiff": "101787.14",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 5,
+    "name": "Kaliyanpur2",
+    "expectedHPI": 17.38,
+    "calculatedHPI": 16218.02,
+    "difference": "16200.64",
+    "percentDiff": "93214.27",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 6,
+    "name": "Near RamGanga Bridge",
+    "expectedHPI": 15.37,
+    "calculatedHPI": 17466.86,
+    "difference": "17451.49",
+    "percentDiff": "113542.55",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 7,
+    "name": "Bhamsiya",
+    "expectedHPI": 19.27,
+    "calculatedHPI": 15673.63,
+    "difference": "15654.36",
+    "percentDiff": "81236.95",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 8,
+    "name": "BarwalaMazra",
+    "expectedHPI": 12.21,
+    "calculatedHPI": 16167.5,
+    "difference": "16155.29",
+    "percentDiff": "132311.96",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 9,
+    "name": "Got",
+    "expectedHPI": 15.76,
+    "calculatedHPI": 14651.82,
+    "difference": "14636.06",
+    "percentDiff": "92868.40",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 10,
+    "name": "Laluwala",
+    "expectedHPI": 5.35,
+    "calculatedHPI": 16468.95,
+    "difference": "16463.60",
+    "percentDiff": "307730.84",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 11,
+    "name": "Pipalsana",
+    "expectedHPI": 17.21,
+    "calculatedHPI": 17027.75,
+    "difference": "17010.54",
+    "percentDiff": "98841.02",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 12,
+    "name": "BhojpurDharampur",
+    "expectedHPI": 8,
+    "calculatedHPI": 15104.27,
+    "difference": "15096.27",
+    "percentDiff": "188703.38",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 13,
+    "name": "Ahmadpur",
+    "expectedHPI": 7.49,
+    "calculatedHPI": 17352.81,
+    "difference": "17345.32",
+    "percentDiff": "231579.71",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 14,
+    "name": "Khaiya khaddar",
+    "expectedHPI": 7.49,
+    "calculatedHPI": 21451.72,
+    "difference": "21444.23",
+    "percentDiff": "286304.81",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 15,
+    "name": "Islam Nagar",
+    "expectedHPI": 18.42,
+    "calculatedHPI": 19384.81,
+    "difference": "19366.39",
+    "percentDiff": "105137.84",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 16,
+    "name": "Sheruachauraha",
+    "expectedHPI": 7.6,
+    "calculatedHPI": 12853.65,
+    "difference": "12846.05",
+    "percentDiff": "169026.97",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 17,
+    "name": "BarbalaMazra",
+    "expectedHPI": 8.33,
+    "calculatedHPI": 15595.17,
+    "difference": "15586.84",
+    "percentDiff": "187116.93",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 18,
+    "name": "GIC Faizganj",
+    "expectedHPI": 7.04,
+    "calculatedHPI": 13715.65,
+    "difference": "13708.61",
+    "percentDiff": "194724.57",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 19,
+    "name": "Shankar Nagar Deputyganj",
+    "expectedHPI": 4.65,
+    "calculatedHPI": 17196.87,
+    "difference": "17192.22",
+    "percentDiff": "369725.16",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 20,
+    "name": "Civil Lines",
+    "expectedHPI": 2.16,
+    "calculatedHPI": 15037.04,
+    "difference": "15034.88",
+    "percentDiff": "696059.26",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 21,
+    "name": "Harthala",
+    "expectedHPI": 3.51,
+    "calculatedHPI": 13448.39,
+    "difference": "13444.88",
+    "percentDiff": "383045.01",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 22,
+    "name": "Ramganga vihar phase2",
+    "expectedHPI": 4.85,
+    "calculatedHPI": 14351.72,
+    "difference": "14346.87",
+    "percentDiff": "295811.75",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 23,
+    "name": "ModhaMustakam",
+    "expectedHPI": 0.26,
+    "calculatedHPI": 15184.51,
+    "difference": "15184.25",
+    "percentDiff": "5840096.15",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 24,
+    "name": "Adarsh Colony",
+    "expectedHPI": 3.97,
+    "calculatedHPI": 16819.81,
+    "difference": "16815.84",
+    "percentDiff": "423572.80",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 25,
+    "name": "Majhaula Mandi",
+    "expectedHPI": 3.63,
+    "calculatedHPI": 13285.62,
+    "difference": "13281.99",
+    "percentDiff": "365895.04",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 26,
+    "name": "Transport Nagar",
+    "expectedHPI": 8.75,
+    "calculatedHPI": 16579.3,
+    "difference": "16570.55",
+    "percentDiff": "189377.71",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 27,
+    "name": "Hanuman Murti (Derhigaon)",
+    "expectedHPI": 28.02,
+    "calculatedHPI": 16374.17,
+    "difference": "16346.15",
+    "percentDiff": "58337.44",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 28,
+    "name": "HMIC Near Mandir",
+    "expectedHPI": 12.25,
+    "calculatedHPI": 16673.61,
+    "difference": "16661.36",
+    "percentDiff": "136011.10",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 29,
+    "name": "Barbalan",
+    "expectedHPI": 34.3,
+    "calculatedHPI": 15545.78,
+    "difference": "15511.48",
+    "percentDiff": "45222.97",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  },
+  {
+    "sno": 30,
+    "name": "Gulab bari Waste Site",
+    "expectedHPI": 48.5,
+    "calculatedHPI": 17000.3,
+    "difference": "16951.80",
+    "percentDiff": "34952.16",
+    "classification": "Unsuitable - Critical pollution",
+    "metalsAnalyzed": [
+      "Cd",
+      "Cr",
+      "Cu",
+      "Pb",
+      "Mn",
+      "Ni",
+      "Fe",
+      "Zn"
+    ]
+  }
+]

@@ -24,28 +24,39 @@ export interface MetalStandard {
 }
 
 /**
- * Heavy metal standards based on BIS 10500:2012 and WHO Guidelines
+ * Metals used for HPI calculation (based on BIS 1991 - Table 3)
+ * Only these 5 metals are included in the HPI calculation to match the reference methodology
+ */
+export const HPI_METALS = ['Fe', 'Zn', 'Cd', 'Cu', 'Pb'] as const;
+
+/**
+ * Heavy metal standards based on BIS 10500:2012 (Indian Standard)
+ * Si = Standard permissible limit (ppb)
+ * Ii = Ideal/desirable value (ppb) - from research papers
+ * 
+ * Reference: BIS 10500:2012, WHO Guidelines, and latest HPI research papers (2023-2025)
  */
 export const METAL_STANDARDS: Record<string, MetalStandard> = {
-  As: { symbol: 'As', name: 'Arsenic', Si: 50, Ii: 10, MAC: 50 },
-  Cu: { symbol: 'Cu', name: 'Copper', Si: 1500, Ii: 50, MAC: 1500 },
-  Zn: { symbol: 'Zn', name: 'Zinc', Si: 15000, Ii: 5000, MAC: 15000 },
-  Hg: { symbol: 'Hg', name: 'Mercury', Si: 2, Ii: 1, MAC: 1 },
-  Cd: { symbol: 'Cd', name: 'Cadmium', Si: 10, Ii: 0, MAC: 3 },
-  Ni: { symbol: 'Ni', name: 'Nickel', Si: 70, Ii: 20, MAC: 20 },
-  Pb: { symbol: 'Pb', name: 'Lead', Si: 50, Ii: 0, MAC: 10 },
-  Cr: { symbol: 'Cr', name: 'Chromium', Si: 50, Ii: 0, MAC: 50 },
-  Fe: { symbol: 'Fe', name: 'Iron', Si: 1000, Ii: 300, MAC: 300 },
-  Mn: { symbol: 'Mn', name: 'Manganese', Si: 300, Ii: 100, MAC: 100 },
-  Al: { symbol: 'Al', name: 'Aluminum', Si: 200, Ii: 0, MAC: 200 },
-  Ba: { symbol: 'Ba', name: 'Barium', Si: 700, Ii: 0, MAC: 700 },
-  Se: { symbol: 'Se', name: 'Selenium', Si: 10, Ii: 0, MAC: 10 },
-  Ag: { symbol: 'Ag', name: 'Silver', Si: 100, Ii: 0, MAC: 100 },
-  Mo: { symbol: 'Mo', name: 'Molybdenum', Si: 70, Ii: 0, MAC: 70 },
-  Sb: { symbol: 'Sb', name: 'Antimony', Si: 20, Ii: 0, MAC: 20 },
-  Co: { symbol: 'Co', name: 'Cobalt', Si: 50, Ii: 0, MAC: 50 },
-  V: { symbol: 'V', name: 'Vanadium', Si: 100, Ii: 0, MAC: 100 },
-  U: { symbol: 'U', name: 'Uranium', Si: 30, Ii: 0, MAC: 30 },
+  // BIS 10500:2012 Standards (ppb)
+  As: { symbol: 'As', name: 'Arsenic', Si: 10, Ii: 0, MAC: 50 },        // BIS: 10 ppb
+  Cu: { symbol: 'Cu', name: 'Copper', Si: 50, Ii: 0, MAC: 1500 },       // BIS: 50 ppb (acceptable)
+  Zn: { symbol: 'Zn', name: 'Zinc', Si: 5000, Ii: 3000, MAC: 15000 },   // BIS: 5000 ppb
+  Hg: { symbol: 'Hg', name: 'Mercury', Si: 1, Ii: 0, MAC: 1 },          // BIS: 1 ppb
+  Cd: { symbol: 'Cd', name: 'Cadmium', Si: 3, Ii: 0, MAC: 3 },          // BIS: 3 ppb
+  Ni: { symbol: 'Ni', name: 'Nickel', Si: 20, Ii: 0, MAC: 20 },         // BIS: 20 ppb
+  Pb: { symbol: 'Pb', name: 'Lead', Si: 10, Ii: 0, MAC: 10 },           // BIS: 10 ppb
+  Cr: { symbol: 'Cr', name: 'Chromium', Si: 50, Ii: 0, MAC: 50 },       // BIS: 50 ppb
+  Fe: { symbol: 'Fe', name: 'Iron', Si: 300, Ii: 0, MAC: 1000 },        // BIS: 300 ppb (acceptable)
+  Mn: { symbol: 'Mn', name: 'Manganese', Si: 100, Ii: 0, MAC: 300 },    // BIS: 100 ppb (acceptable)
+  Al: { symbol: 'Al', name: 'Aluminum', Si: 30, Ii: 0, MAC: 200 },      // BIS: 30 ppb (acceptable)
+  Ba: { symbol: 'Ba', name: 'Barium', Si: 700, Ii: 0, MAC: 700 },       // BIS: 700 ppb
+  Se: { symbol: 'Se', name: 'Selenium', Si: 10, Ii: 0, MAC: 10 },       // BIS: 10 ppb
+  Ag: { symbol: 'Ag', name: 'Silver', Si: 100, Ii: 0, MAC: 100 },       // BIS: 100 ppb
+  Mo: { symbol: 'Mo', name: 'Molybdenum', Si: 70, Ii: 0, MAC: 70 },     // BIS: 70 ppb
+  Sb: { symbol: 'Sb', name: 'Antimony', Si: 20, Ii: 0, MAC: 20 },       // BIS: 20 ppb (WHO)
+  Co: { symbol: 'Co', name: 'Cobalt', Si: 50, Ii: 0, MAC: 50 },         // WHO guideline
+  V: { symbol: 'V', name: 'Vanadium', Si: 100, Ii: 0, MAC: 100 },       // WHO guideline
+  U: { symbol: 'U', name: 'Uranium', Si: 30, Ii: 0, MAC: 30 },          // BIS: 30 ppb
 };
 
 /**
@@ -223,13 +234,13 @@ export const UNIT_CONVERSION: Record<string, number> = {
  */
 export function parseUnitFromHeader(header: string): number {
   const lowerHeader = header.toLowerCase();
-  
+
   for (const [unit, factor] of Object.entries(UNIT_CONVERSION)) {
     if (lowerHeader.includes(unit)) {
       return factor;
     }
   }
-  
+
   // Default to ppb (no conversion)
   return 1;
 }

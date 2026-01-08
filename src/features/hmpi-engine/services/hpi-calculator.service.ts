@@ -41,7 +41,7 @@ export class HPICalculatorService {
     customStandards?: Record<string, { Si: number; Ii: number }>
   ): HPIResult | null {
     const standards = customStandards || METAL_STANDARDS;
-    
+
     let sumWi = 0;
     let sumWiQi = 0;
     const metalsAnalyzed: string[] = [];
@@ -58,16 +58,16 @@ export class HPICalculatorService {
 
       const { Si, Ii } = standard;
 
-      // Skip if Si <= Ii (Flutter validation)
+      // Skip if Si <= Ii (validation)
       if (Si <= Ii) {
         console.warn(`Skipping ${symbol}: Si (${Si}) must be > Ii (${Ii})`);
         continue;
       }
 
-      // Calculate Wi = 1 / Si (EXACT Flutter formula)
+      // Calculate Wi = 1 / Si (weighted by standard - original HPI formula)
       const Wi = 1.0 / Si;
 
-      // Calculate Qi = (|Mi - Ii| / (Si - Ii)) × 100 (EXACT Flutter formula)
+      // Calculate Qi = (|Mi - Ii| / (Si - Ii)) × 100
       const Di = Math.abs(Mi - Ii);
       const Qi = (Di / (Si - Ii)) * 100.0;
 
@@ -146,7 +146,7 @@ export class HPICalculatorService {
       if (standard && concentration > standard.Si * 10) {
         warnings.push(
           `${symbol}: Very high concentration (${concentration} ppb) - ` +
-            `${Math.round((concentration / standard.Si) * 100) / 100}x above standard`
+          `${Math.round((concentration / standard.Si) * 100) / 100}x above standard`
         );
       }
     }
@@ -200,7 +200,7 @@ export class HPICalculatorService {
 
       // Wi = 1 / Si (EXACT Flutter formula)
       const Wi = 1.0 / Si;
-      
+
       // Qi = (|Mi - Ii| / (Si - Ii)) × 100 (EXACT Flutter formula)
       const Di = Math.abs(Mi - Ii);
       const Qi = (Di / (Si - Ii)) * 100.0;

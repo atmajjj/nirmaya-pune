@@ -26,19 +26,36 @@ import { ReportGeneratorService } from '../../hmpi-report/services/report-genera
 import { logger } from '../../../utils/logger';
 
 /**
- * Create upload record and upload to S3
+ * Create upload record and optionally upload to S3
+ * In development mode or if S3 fails, creates record without S3 upload
  */
 async function createUploadRecord(
   file: Express.Multer.File,
   userId: number
 ): Promise<number> {
-  // Upload to S3
-  const s3Result = await uploadToS3(
-    file.buffer,
-    file.originalname,
-    file.mimetype,
-    userId
-  );
+  let s3Key = '';
+  let s3Url = '';
+
+  // Try S3 upload, but don't fail if it's unavailable (especially in dev)
+  try {
+    const s3Result = await uploadToS3(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      userId
+    );
+    s3Key = s3Result.key;
+    s3Url = s3Result.url;
+  } catch (s3Error) {
+    // Log warning but continue - S3 is optional for calculation
+    logger.warn('S3 upload failed, continuing without file storage', {
+      error: s3Error instanceof Error ? s3Error.message : String(s3Error),
+      filename: file.originalname,
+    });
+    // Use placeholder values for development
+    s3Key = `local/${userId}/${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    s3Url = `file://${s3Key}`;
+  }
 
   // Create upload record
   const [upload] = await db
@@ -48,8 +65,8 @@ async function createUploadRecord(
       original_filename: file.originalname,
       mime_type: file.mimetype,
       file_size: file.size,
-      file_path: s3Result.key,
-      file_url: s3Result.url,
+      file_path: s3Key,
+      file_url: s3Url,
       user_id: userId,
       created_by: userId,
       updated_by: userId,
@@ -105,7 +122,7 @@ async function processCSVCalculation(
       await updateUploadStatus(uploadId, 'failed', 'All stations failed processing');
     } else {
       await updateUploadStatus(uploadId, 'completed');
-      
+
       // Automatically trigger report generation in the background (don't wait)
       // Only generate if at least some stations were processed successfully
       if (result.processed_stations > 0) {

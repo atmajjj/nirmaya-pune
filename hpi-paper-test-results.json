@@ -1,0 +1,272 @@
+[
+  {
+    "sno": 1,
+    "name": "Kharagpur baze",
+    "expectedHPI": 21.5,
+    "calculatedHPI": 13960.72,
+    "difference": "13939.22",
+    "percentDiff": "64833.58",
+    "pass": false
+  },
+  {
+    "sno": 2,
+    "name": "Milak Kuttunwali",
+    "expectedHPI": 13.96,
+    "calculatedHPI": 9541.35,
+    "difference": "9527.39",
+    "percentDiff": "68247.78",
+    "pass": false
+  },
+  {
+    "sno": 3,
+    "name": "Badepur",
+    "expectedHPI": 19.84,
+    "calculatedHPI": 10453.61,
+    "difference": "10433.77",
+    "percentDiff": "52589.57",
+    "pass": false
+  },
+  {
+    "sno": 4,
+    "name": "Milak Rustampur",
+    "expectedHPI": 14.7,
+    "calculatedHPI": 11703.12,
+    "difference": "11688.42",
+    "percentDiff": "79513.06",
+    "pass": false
+  },
+  {
+    "sno": 5,
+    "name": "Kaliyanpur2",
+    "expectedHPI": 17.38,
+    "calculatedHPI": 12504.14,
+    "difference": "12486.76",
+    "percentDiff": "71845.57",
+    "pass": false
+  },
+  {
+    "sno": 6,
+    "name": "Near RamGanga Bridge",
+    "expectedHPI": 15.37,
+    "calculatedHPI": 13250.92,
+    "difference": "13235.55",
+    "percentDiff": "86112.88",
+    "pass": false
+  },
+  {
+    "sno": 7,
+    "name": "Bhamsiya",
+    "expectedHPI": 19.27,
+    "calculatedHPI": 11914.13,
+    "difference": "11894.86",
+    "percentDiff": "61727.35",
+    "pass": false
+  },
+  {
+    "sno": 8,
+    "name": "BarwalaMazra",
+    "expectedHPI": 12.21,
+    "calculatedHPI": 12310.23,
+    "difference": "12298.02",
+    "percentDiff": "100720.88",
+    "pass": false
+  },
+  {
+    "sno": 9,
+    "name": "Got",
+    "expectedHPI": 15.76,
+    "calculatedHPI": 11290.27,
+    "difference": "11274.51",
+    "percentDiff": "71538.77",
+    "pass": false
+  },
+  {
+    "sno": 10,
+    "name": "Laluwala",
+    "expectedHPI": 5.35,
+    "calculatedHPI": 12663.79,
+    "difference": "12658.44",
+    "percentDiff": "236606.36",
+    "pass": false
+  },
+  {
+    "sno": 11,
+    "name": "Pipalsana",
+    "expectedHPI": 17.21,
+    "calculatedHPI": 12886.47,
+    "difference": "12869.26",
+    "percentDiff": "74777.80",
+    "pass": false
+  },
+  {
+    "sno": 12,
+    "name": "BhojpurDharampur",
+    "expectedHPI": 8,
+    "calculatedHPI": 11604.6,
+    "difference": "11596.60",
+    "percentDiff": "144957.50",
+    "pass": false
+  },
+  {
+    "sno": 13,
+    "name": "Ahmadpur",
+    "expectedHPI": 7.49,
+    "calculatedHPI": 13176.55,
+    "difference": "13169.06",
+    "percentDiff": "175821.90",
+    "pass": false
+  },
+  {
+    "sno": 14,
+    "name": "Khaiya khaddar",
+    "expectedHPI": 7.49,
+    "calculatedHPI": 16029.43,
+    "difference": "16021.94",
+    "percentDiff": "213911.08",
+    "pass": false
+  },
+  {
+    "sno": 15,
+    "name": "Islam Nagar",
+    "expectedHPI": 18.42,
+    "calculatedHPI": 14500.91,
+    "difference": "14482.49",
+    "percentDiff": "78623.72",
+    "pass": false
+  },
+  {
+    "sno": 16,
+    "name": "Sheruachauraha",
+    "expectedHPI": 7.6,
+    "calculatedHPI": 10153.6,
+    "difference": "10146.00",
+    "percentDiff": "133500.00",
+    "pass": false
+  },
+  {
+    "sno": 17,
+    "name": "BarbalaMazra",
+    "expectedHPI": 8.33,
+    "calculatedHPI": 12079.38,
+    "difference": "12071.05",
+    "percentDiff": "144910.56",
+    "pass": false
+  },
+  {
+    "sno": 18,
+    "name": "GIC Faizganj",
+    "expectedHPI": 7.04,
+    "calculatedHPI": 10723.64,
+    "difference": "10716.60",
+    "percentDiff": "152224.43",
+    "pass": false
+  },
+  {
+    "sno": 19,
+    "name": "Shankar Nagar Deputyganj",
+    "expectedHPI": 4.65,
+    "calculatedHPI": 13282.64,
+    "difference": "13277.99",
+    "percentDiff": "285548.17",
+    "pass": false
+  },
+  {
+    "sno": 20,
+    "name": "Civil Lines",
+    "expectedHPI": 2.16,
+    "calculatedHPI": 11808.3,
+    "difference": "11806.14",
+    "percentDiff": "546580.56",
+    "pass": false
+  },
+  {
+    "sno": 21,
+    "name": "Harthala",
+    "expectedHPI": 3.51,
+    "calculatedHPI": 10615.66,
+    "difference": "10612.15",
+    "percentDiff": "302340.46",
+    "pass": false
+  },
+  {
+    "sno": 22,
+    "name": "Ramganga vihar phase2",
+    "expectedHPI": 4.85,
+    "calculatedHPI": 11259.33,
+    "difference": "11254.48",
+    "percentDiff": "232051.13",
+    "pass": false
+  },
+  {
+    "sno": 23,
+    "name": "ModhaMustakam",
+    "expectedHPI": 0.26,
+    "calculatedHPI": 11874.57,
+    "difference": "11874.31",
+    "percentDiff": "4567042.31",
+    "pass": false
+  },
+  {
+    "sno": 24,
+    "name": "Adarsh Colony",
+    "expectedHPI": 3.97,
+    "calculatedHPI": 13023.83,
+    "difference": "13019.86",
+    "percentDiff": "327956.17",
+    "pass": false
+  },
+  {
+    "sno": 25,
+    "name": "Majhaula Mandi",
+    "expectedHPI": 3.63,
+    "calculatedHPI": 10501.17,
+    "difference": "10497.54",
+    "percentDiff": "289188.43",
+    "pass": false
+  },
+  {
+    "sno": 26,
+    "name": "Transport Nagar",
+    "expectedHPI": 8.75,
+    "calculatedHPI": 12716.08,
+    "difference": "12707.33",
+    "percentDiff": "145226.63",
+    "pass": false
+  },
+  {
+    "sno": 27,
+    "name": "Hanuman Murti (Derhigaon)",
+    "expectedHPI": 28.02,
+    "calculatedHPI": 12607.87,
+    "difference": "12579.85",
+    "percentDiff": "44895.97",
+    "pass": false
+  },
+  {
+    "sno": 28,
+    "name": "HMIC Near Mandir",
+    "expectedHPI": 12.25,
+    "calculatedHPI": 12891.82,
+    "difference": "12879.57",
+    "percentDiff": "105139.35",
+    "pass": false
+  },
+  {
+    "sno": 29,
+    "name": "Barbalan",
+    "expectedHPI": 34.3,
+    "calculatedHPI": 12078.78,
+    "difference": "12044.48",
+    "percentDiff": "35115.10",
+    "pass": false
+  },
+  {
+    "sno": 30,
+    "name": "Gulab bari Waste Site",
+    "expectedHPI": 48.5,
+    "calculatedHPI": 13076.6,
+    "difference": "13028.10",
+    "percentDiff": "26862.06",
+    "pass": false
+  }
+]
