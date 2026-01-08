@@ -67,6 +67,11 @@ export class MICalculatorService {
 
     // Calculate MI = Σ(Ci / MACi)
     for (const [symbol, Ci] of Object.entries(metals)) {
+      // Skip metals with zero or very small concentrations (not measured)
+      if (Ci === 0 || Ci === null || Ci === undefined || Ci < 0.001) {
+        continue;
+      }
+
       // Get MACi for this metal
       let MACi: number | undefined;
 
@@ -102,12 +107,14 @@ export class MICalculatorService {
     // MI is the sum (no averaging or weighting)
     const mi = miSum;
 
-    const { classification, miClass } = classifyMI(mi);
+    const { classification, miClass, status, color } = classifyMI(mi);
 
     return {
       mi,
       classification,
       miClass,
+      status,
+      color,
       metalsAnalyzed,
       ratios,
       concentrations,

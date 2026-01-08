@@ -28,5 +28,5 @@ const handler = asyncHandler(async (req: any, res: Response) => {
 });
 
 const router = Router();
-router.get('/metals/:id', requireAuth, requireRole(['admin', 'scientist']), handler);
+router.get('/standards/metals/:id', requireAuth, requireRole(['admin', 'scientist']), handler);
 export default router;

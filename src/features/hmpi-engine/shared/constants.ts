@@ -73,6 +73,84 @@ export const METAL_COLUMN_ALIASES: Record<string, string[]> = {
 };
 
 // ============================================================================
+// WQI Standards (Water Quality Index) - BIS 10500:2012
+// ============================================================================
+
+/**
+ * WQI parameter standard definition
+ * Sn = Standard permissible limit
+ * Vo = Ideal/Optimal value
+ */
+export interface WQIStandard {
+  symbol: string;
+  name: string;
+  Sn: number; // Standard permissible limit
+  Vo: number; // Ideal/Optimal value
+  unit: string; // Unit of measurement
+}
+
+/**
+ * WQI Standards based on BIS 10500:2012
+ * Matched to existing WQI calculation standards
+ */
+export const WQI_STANDARDS: Record<string, { Sn: number; Vo: number }> = {
+  pH: { Sn: 8.5, Vo: 0 }, // pH (Vo=0 for this formula)
+  EC: { Sn: 300, Vo: 0 }, // Electrical Conductivity (µS/cm)
+  TDS: { Sn: 500, Vo: 0 }, // Total Dissolved Solids (mg/L)
+  TH: { Sn: 300, Vo: 0 }, // Total Hardness (mg/L)
+  Ca: { Sn: 75, Vo: 0 }, // Calcium (mg/L)
+  Mg: { Sn: 30, Vo: 0 }, // Magnesium (mg/L)
+  Fe: { Sn: 0.3, Vo: 0 }, // Iron (mg/L)
+  Cl: { Sn: 250, Vo: 0 }, // Chloride (mg/L)
+  NO3: { Sn: 45, Vo: 0 }, // Nitrate (mg/L as NO3)
+  F: { Sn: 1.0, Vo: 0 }, // Fluoride (mg/L)
+  Turbidity: { Sn: 5, Vo: 0 }, // Turbidity (NTU)
+  Turb: { Sn: 5, Vo: 0 }, // Turbidity alias
+  AK: { Sn: 300, Vo: 0 }, // Alkalinity (mg/L as CaCO3)
+  TA: { Sn: 300, Vo: 0 }, // Total Alkalinity alias
+  SO4: { Sn: 200, Vo: 0 }, // Sulfate (mg/L)
+};
+
+/**
+ * Detailed WQI standards with metadata
+ */
+export const WQI_STANDARDS_DETAILED: Record<string, WQIStandard> = {
+  pH: { symbol: 'pH', name: 'pH', Sn: 8.5, Vo: 0, unit: 'unitless' },
+  EC: { symbol: 'EC', name: 'Electrical Conductivity', Sn: 300, Vo: 0, unit: 'µS/cm' },
+  TDS: { symbol: 'TDS', name: 'Total Dissolved Solids', Sn: 500, Vo: 0, unit: 'mg/L' },
+  TH: { symbol: 'TH', name: 'Total Hardness', Sn: 300, Vo: 0, unit: 'mg/L' },
+  Ca: { symbol: 'Ca', name: 'Calcium', Sn: 75, Vo: 0, unit: 'mg/L' },
+  Mg: { symbol: 'Mg', name: 'Magnesium', Sn: 30, Vo: 0, unit: 'mg/L' },
+  Fe: { symbol: 'Fe', name: 'Iron', Sn: 0.3, Vo: 0, unit: 'mg/L' },
+  Cl: { symbol: 'Cl', name: 'Chloride', Sn: 250, Vo: 0, unit: 'mg/L' },
+  NO3: { symbol: 'NO3', name: 'Nitrate', Sn: 45, Vo: 0, unit: 'mg/L' },
+  F: { symbol: 'F', name: 'Fluoride', Sn: 1.0, Vo: 0, unit: 'mg/L' },
+  Turbidity: { symbol: 'Turbidity', name: 'Turbidity', Sn: 5, Vo: 0, unit: 'NTU' },
+  AK: { symbol: 'AK', name: 'Alkalinity', Sn: 300, Vo: 0, unit: 'mg/L as CaCO3' },
+  SO4: { symbol: 'SO4', name: 'Sulfate', Sn: 200, Vo: 0, unit: 'mg/L' },
+};
+
+/**
+ * Column name aliases for WQI parameters (case-insensitive matching)
+ */
+export const WQI_COLUMN_ALIASES: Record<string, string[]> = {
+  pH: ['ph', 'p.h', 'p h'],
+  EC: ['ec', 'electrical_conductivity', 'conductivity', 'cond'],
+  TDS: ['tds', 'total_dissolved_solids', 'dissolved_solids'],
+  TH: ['th', 'total_hardness', 'hardness', 'hard'],
+  Ca: ['ca', 'calcium'],
+  Mg: ['mg', 'magnesium'],
+  Fe: ['fe', 'iron'],
+  Cl: ['cl', 'chloride'],
+  NO3: ['no3', 'nitrate', 'no3-n'],
+  F: ['f', 'fluoride'],
+  Turbidity: ['turbidity', 'turb', 'turbid'],
+  AK: ['ak', 'alkalinity', 'ta', 'total_alkalinity', 'total alkalinity'],
+  TA: ['ta', 'total_alkalinity', 'total alkalinity', 'ak', 'alkalinity'],
+  SO4: ['so4', 'sulfate', 'sulphate', 'so4-2'],
+};
+
+// ============================================================================
 // Location Column Aliases
 // ============================================================================
 
@@ -120,13 +198,13 @@ export function classifyHPI(hpi: number): HPIClassification {
  * MI 4-6: Class V - Strongly Affected
  * MI >= 6: Class VI - Seriously Affected
  */
-export function classifyMI(mi: number): { classification: MIClassification; miClass: MIClass } {
-  if (mi < 0.3) return { classification: 'Very Pure', miClass: 'Class I' };
-  if (mi < 1) return { classification: 'Pure', miClass: 'Class II' };
-  if (mi < 2) return { classification: 'Slightly Affected', miClass: 'Class III' };
-  if (mi < 4) return { classification: 'Moderately Affected', miClass: 'Class IV' };
-  if (mi < 6) return { classification: 'Strongly Affected', miClass: 'Class V' };
-  return { classification: 'Seriously Affected', miClass: 'Class VI' };
+export function classifyMI(mi: number): { classification: MIClassification; miClass: MIClass; status: 'Safe' | 'Moderate' | 'Critical'; color: string } {
+  if (mi < 0.3) return { classification: 'Very Pure', miClass: 'Class I', status: 'Safe', color: '#22c55e' };
+  if (mi < 1) return { classification: 'Pure', miClass: 'Class II', status: 'Safe', color: '#22c55e' };
+  if (mi < 2) return { classification: 'Slightly Affected', miClass: 'Class III', status: 'Safe', color: '#22c55e' };
+  if (mi < 4) return { classification: 'Moderately Affected', miClass: 'Class IV', status: 'Moderate', color: '#f59e0b' };
+  if (mi < 6) return { classification: 'Strongly Affected', miClass: 'Class V', status: 'Moderate', color: '#f59e0b' };
+  return { classification: 'Seriously Affected', miClass: 'Class VI', status: 'Critical', color: '#ef4444' };
 }
 
 // ============================================================================

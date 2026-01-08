@@ -86,9 +86,12 @@ export const waterQualityCalculations = pgTable(
     mi: decimal('mi', { precision: 10, scale: 4 }),
     mi_classification: varchar('mi_classification', { length: 50 }).$type<MIClassification>(),
     mi_class: varchar('mi_class', { length: 15 }).$type<MIClass>(),
+    wqi: decimal('wqi', { precision: 10, scale: 4 }),
+    wqi_classification: varchar('wqi_classification', { length: 50 }),
 
     // Metadata - stored as comma-separated strings (simpler than arrays for Drizzle)
     metals_analyzed: text('metals_analyzed'), // e.g., "As,Cu,Zn,Hg,Cd,Ni,Pb"
+    params_analyzed: text('params_analyzed'), // e.g., "pH,TDS,TH,EC,Ca,Mg"
 
     // Audit fields
     created_by: integer('created_by').references(() => users.id),

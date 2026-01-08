@@ -7,6 +7,7 @@ import {
 } from '../shared/interface';
 import {
   METAL_COLUMN_ALIASES,
+  WQI_COLUMN_ALIASES,
   LOCATION_COLUMN_ALIASES,
   parseUnitFromHeader,
   cleanColumnName,
@@ -248,7 +249,7 @@ export class CSVParserService {
       ? record[mapping.cityColumn]?.trim() || undefined
       : undefined;
     const year = mapping.yearColumn
-      ? this.parseNumber(record[mapping.yearColumn])
+      ? this.parseYear(record[mapping.yearColumn])
       : undefined;
 
     // Parse metal concentrations (convert to ppb)
@@ -262,9 +263,27 @@ export class CSVParserService {
       }
     }
 
-    // Check if we have any metal data to calculate
-    if (Object.keys(metals).length === 0) {
-      throw new Error('No metal values found in row');
+    // Parse WQI parameters (pH, TDS, TH, EC, etc.)
+    const wqiParams: Record<string, number> = {};
+    for (const header of Object.keys(record)) {
+      const cleanHeader = cleanColumnName(header);
+      const lowerHeader = cleanHeader.toLowerCase();
+      
+      // Check if this column matches any WQI parameter
+      for (const [symbol, aliases] of Object.entries(WQI_COLUMN_ALIASES)) {
+        if (lowerHeader === symbol.toLowerCase() || aliases.some(alias => lowerHeader === alias)) {
+          const value = this.parseNumber(record[header]);
+          if (value !== undefined && !isNaN(value) && value > 0) {
+            wqiParams[symbol] = value;
+          }
+          break;
+        }
+      }
+    }
+
+    // Check if we have any metal data or WQI data to calculate
+    if (Object.keys(metals).length === 0 && Object.keys(wqiParams).length === 0) {
+      throw new Error('No metal or WQI parameter values found in row');
     }
 
     return {
@@ -278,6 +297,7 @@ export class CSVParserService {
       year,
       city,
       metals,
+      wqiParams,
       rawRow: record,
       rowNumber,
     };
@@ -299,6 +319,33 @@ export class CSVParserService {
 
     const num = parseFloat(cleaned);
     return isNaN(num) ? undefined : num;
+  }
+
+  /**
+   * Extract year from date string (handles DD/MM/YYYY, YYYY-MM-DD, etc.)
+   */
+  private static parseYear(value: string | undefined): number | undefined {
+    if (value === undefined || value === null || value.trim() === '') {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    
+    // Check if it's already just a year (4 digits)
+    if (/^\d{4}$/.test(trimmed)) {
+      return parseInt(trimmed);
+    }
+
+    // Try to extract year from date formats like DD/MM/YYYY or YYYY-MM-DD
+    // Common patterns: 17/11/2021, 2021-11-17, 17-11-2021, etc.
+    const yearMatch = trimmed.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch) {
+      return parseInt(yearMatch[0]);
+    }
+
+    // If no valid year found, return undefined (don't parse as number)
+    // This prevents date strings like "17/11/2021 14:12" from becoming invalid integers
+    return undefined;
   }
 
   /**

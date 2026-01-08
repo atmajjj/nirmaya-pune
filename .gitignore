@@ -29,6 +29,7 @@ yarn-error.log*
 # Uploaded files
 src/uploads/
 uploads/
+local-uploads/
 
 # Coverage
 coverage/

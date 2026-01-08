@@ -56,6 +56,11 @@ export class HPICalculatorService {
         continue;
       }
 
+      // Skip metals with zero or very small concentrations (not measured)
+      if (Mi === 0 || Mi === null || Mi === undefined || Mi < 0.001) {
+        continue;
+      }
+
       const { Si, Ii } = standard;
 
       // Skip if Si <= Ii (Flutter validation)
@@ -185,9 +190,11 @@ export class HPICalculatorService {
     let totalWi = 0;
 
     // First pass: calculate total weight using EXACT Flutter formula
-    for (const [symbol] of Object.entries(metals)) {
+    for (const [symbol, Mi] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
       if (!standard || standard.Si <= standard.Ii) continue;
+      // Skip metals with zero or very small concentrations (not measured)
+      if (Mi === 0 || Mi === null || Mi === undefined || Mi < 0.001) continue;
       totalWi += 1.0 / standard.Si; // Wi = 1 / Si
     }
 
@@ -195,6 +202,8 @@ export class HPICalculatorService {
     for (const [symbol, Mi] of Object.entries(metals)) {
       const standard = METAL_STANDARDS[symbol];
       if (!standard || standard.Si <= standard.Ii) continue;
+      // Skip metals with zero or very small concentrations (not measured)
+      if (Mi === 0 || Mi === null || Mi === undefined || Mi < 0.001) continue;
 
       const { Si, Ii } = standard;
 

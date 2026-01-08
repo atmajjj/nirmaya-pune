@@ -12,7 +12,7 @@ import getMetalStandardRouter from './apis/get-metal-standard';
 import updateMetalStandardRouter from './apis/update-metal-standard';
 
 export default class StandardsRoute implements Route {
-  public path = '/api/standards';
+  public path = '/standards';
   public router = Router();
 
   constructor() {
@@ -21,13 +21,13 @@ export default class StandardsRoute implements Route {
 
   private initializeRoutes() {
     // List endpoints
-    this.router.use(this.path, listMetalStandardsRouter);
+    this.router.use(listMetalStandardsRouter);
     
     // Get single endpoints
-    this.router.use(this.path, getMetalStandardRouter);
+    this.router.use(getMetalStandardRouter);
     
     // Update endpoints
-    this.router.use(this.path, updateMetalStandardRouter);
+    this.router.use(updateMetalStandardRouter);
   }
 }
 

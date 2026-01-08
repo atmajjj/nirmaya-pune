@@ -69,7 +69,7 @@ const handler = asyncHandler(async (req: any, res: Response) => {
 
 const router = Router();
 router.put(
-  '/metals/:id',
+  '/standards/metals/:id',
   requireAuth,
   requireRole(['admin', 'scientist']),
   validationMiddleware(schema),

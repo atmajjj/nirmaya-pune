@@ -3,8 +3,11 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import HttpException from './httpException';
 import { logger } from './logger';
 import { config } from './validateEnv';
+import path from 'path';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
 
-// Initialize S3 client
+// Initialize S3 client with proper Supabase configuration
 export const s3Client = new S3Client({
   credentials: {
     accessKeyId: config.AWS_ACCESS_KEY,
@@ -12,7 +15,7 @@ export const s3Client = new S3Client({
   },
   region: config.AWS_REGION,
   endpoint: config.AWS_ENDPOINT,
-  forcePathStyle: true, // Required for some S3-compatible services
+  forcePathStyle: true, // Required for Supabase S3
 });
 
 /** Pre-signed URL expiration time in seconds (1 hour) */
@@ -82,22 +85,24 @@ export async function uploadToS3(
     const timestamp = Date.now();
     const key = `uploads/${userId}/${timestamp}_${sanitizedFilename}`;
 
-    // Upload to S3 (private by default - no ACL specified)
+    // Upload to S3 with Supabase-compatible settings
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
       Body: buffer,
       ContentType: mimetype,
-      // No ACL - files are private by default
-      // Use getPresignedDownloadUrl() for secure access
+      Metadata: {
+        'uploaded-by': userId.toString(),
+        'upload-timestamp': timestamp.toString(),
+      },
     });
 
     await s3Client.send(command);
 
-    // Generate initial pre-signed URL for immediate access
+    // Generate presigned URL for access
     const url = await getPresignedDownloadUrl(key);
 
-    logger.info(`File uploaded to S3 (private): ${key}`);
+    logger.info(`File uploaded to S3: ${key}`);
 
     return {
       key,
@@ -107,13 +112,83 @@ export async function uploadToS3(
       contentType: mimetype,
     };
   } catch (error) {
-    // Log full error internally for debugging
-    logger.error('S3 upload error', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+    // Log detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    logger.error('S3 upload failed', { 
+      error: errorMessage,
+      stack: errorStack,
+      bucket: config.AWS_BUCKET_NAME,
+      endpoint: config.AWS_ENDPOINT,
     });
-    // Return generic message to client - don't expose internal details
-    throw new HttpException(500, 'Failed to upload file. Please try again later.');
+    
+    // DEVELOPMENT FALLBACK: Use local file storage if S3 fails
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn('⚠️  S3 upload failed. Falling back to local file storage (DEVELOPMENT ONLY)');
+      logger.warn('📝 To use S3 properly, follow the guide in SUPABASE-S3-SETUP.md');
+      
+      try {
+        // Create local uploads directory structure
+        const localUploadDir = path.join(process.cwd(), 'local-uploads', 'uploads', userId.toString());
+        await fs.mkdir(localUploadDir, { recursive: true });
+        
+        // Sanitize filename
+        const sanitizedFilename = filename
+          .replace(/^\.+/, '')
+          .replace(/[^a-zA-Z0-9.-]/g, '_');
+        
+        const timestamp = Date.now();
+        const localFilename = `${timestamp}_${sanitizedFilename}`;
+        const localFilePath = path.join(localUploadDir, localFilename);
+        
+        // Save file locally
+        await fs.writeFile(localFilePath, buffer);
+        
+        const key = `uploads/${userId}/${localFilename}`;
+        const url = `/local-uploads/${key}`;
+        
+        logger.info(`✅ File saved locally (fallback): ${localFilePath}`);
+        
+        return {
+          key,
+          url,
+          bucket: 'local-fallback',
+          size: buffer.length,
+          contentType: mimetype,
+        };
+      } catch (localError) {
+        logger.error('Local fallback also failed', { error: localError });
+        throw new HttpException(500, 'Failed to upload file to storage');
+      }
+    }
+    
+    // Provide helpful error message based on error type
+    if (errorMessage.includes('Deserialization') || errorMessage.includes('char')) {
+      throw new HttpException(500, 
+        'S3 storage configuration error. Please verify:\n' +
+        '1. Bucket exists in Supabase Storage dashboard\n' +
+        '2. Bucket name is correct\n' +
+        '3. S3 credentials (Access Key & Secret) are valid\n' +
+        '4. Bucket has public or proper access policies'
+      );
+    }
+    
+    if (errorMessage.includes('NoSuchBucket')) {
+      throw new HttpException(500, 
+        `Bucket "${config.AWS_BUCKET_NAME}" does not exist. ` +
+        'Please create it in Supabase Storage dashboard.'
+      );
+    }
+    
+    if (errorMessage.includes('InvalidAccessKeyId') || errorMessage.includes('SignatureDoesNotMatch')) {
+      throw new HttpException(500, 
+        'Invalid S3 credentials. Please check AWS_ACCESS_KEY and AWS_SECRET_KEY in .env'
+      );
+    }
+    
+    // Generic error
+    throw new HttpException(500, 'Failed to upload file to storage. Please try again later.');
   }
 }
 

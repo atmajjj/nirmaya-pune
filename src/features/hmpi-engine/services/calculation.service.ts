@@ -20,6 +20,7 @@ import {
 } from '../shared/interface';
 import { HPICalculatorService } from './hpi-calculator.service';
 import { MICalculatorService } from './mi-calculator.service';
+import { WQICalculatorService } from './wqi-calculator.service';
 import { CSVParserService } from './csv-parser.service';
 
 /**
@@ -89,7 +90,7 @@ export class WaterQualityCalculationService {
   }
 
   /**
-   * Calculate all indices (HPI, MI) for parsed CSV rows
+   * Calculate all indices (HPI, MI, WQI) for parsed CSV rows
    *
    * @param rows - Parsed CSV rows
    * @returns Array of calculation results per station
@@ -135,6 +136,20 @@ export class WaterQualityCalculationService {
         }
       }
 
+      // Calculate WQI (if WQI parameters available)
+      if (Object.keys(row.wqiParams).length > 0) {
+        try {
+          const wqiResult = WQICalculatorService.calculate(row.wqiParams);
+          if (wqiResult) {
+            result.wqi = wqiResult;
+          } else {
+            result.errors.push('WQI: No valid parameters for calculation');
+          }
+        } catch (error) {
+          result.errors.push(`WQI calculation error: ${error}`);
+        }
+      }
+
       return result;
     });
   }
@@ -156,7 +171,7 @@ export class WaterQualityCalculationService {
 
     for (const result of results) {
       // Skip stations with no calculations
-      if (!result.hpi && !result.mi) {
+      if (!result.hpi && !result.mi && !result.wqi) {
         continue;
       }
 
@@ -192,6 +207,13 @@ export class WaterQualityCalculationService {
         }
       }
 
+      // Add WQI data
+      if (result.wqi) {
+        input.wqi = result.wqi.wqi;
+        input.wqi_classification = result.wqi.classification;
+        input.params_analyzed = result.wqi.paramsAnalyzed;
+      }
+
       // Save to database
       const [saved] = await db
         .insert(waterQualityCalculations)
@@ -211,7 +233,10 @@ export class WaterQualityCalculationService {
           mi: input.mi?.toString(),
           mi_classification: input.mi_classification,
           mi_class: input.mi_class,
+          wqi: input.wqi?.toString(),
+          wqi_classification: input.wqi_classification,
           metals_analyzed: input.metals_analyzed?.join(','),
+          params_analyzed: input.params_analyzed?.join(','),
           created_by: input.created_by,
           updated_by: input.created_by,
         })

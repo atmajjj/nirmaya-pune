@@ -31,6 +31,7 @@ const uploadQuerySchema = z.object({
 
 async function getUserUploadsWithPagination(
   userId: number,
+  userRole: string,
   filters: z.infer<typeof uploadQuerySchema>
 ) {
   const {
@@ -42,7 +43,13 @@ async function getUserUploadsWithPagination(
     sort_order = 'desc',
   } = filters;
 
-  const conditions = [eq(uploads.user_id, userId), eq(uploads.is_deleted, false)];
+  // Scientists and admins can see all uploads
+  // Field technicians and others only see their own uploads
+  const conditions = [eq(uploads.is_deleted, false)];
+  
+  if (userRole !== 'scientist' && userRole !== 'admin') {
+    conditions.push(eq(uploads.user_id, userId));
+  }
 
   if (status) {
     conditions.push(eq(uploads.status, status));
@@ -77,9 +84,10 @@ async function getUserUploadsWithPagination(
 
 const handleGetAllUploads = asyncHandler(async (req: RequestWithUser, res: Response) => {
   const userId = getUserId(req);
+  const userRole = req.userRole || 'field_technician'; // Default to field_technician if not specified
   const filters = req.query as z.infer<typeof uploadQuerySchema>;
 
-  const result = await getUserUploadsWithPagination(userId, filters);
+  const result = await getUserUploadsWithPagination(userId, userRole, filters);
 
   ResponseFormatter.paginated(
     res,

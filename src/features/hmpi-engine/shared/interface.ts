@@ -30,7 +30,10 @@ export interface WaterQualityCalculation {
   mi: number | null;
   mi_classification: MIClassification | null;
   mi_class: MIClass | null;
+  wqi: number | null;
+  wqi_classification: string | null;
   metals_analyzed: string[] | null;
+  params_analyzed: string[] | null;
   created_by: number | null;
   created_at: string;
   updated_by: number | null;
@@ -59,7 +62,10 @@ export interface NewCalculationInput {
   mi?: number | null;
   mi_classification?: MIClassification | null;
   mi_class?: MIClass | null;
+  wqi?: number | null;
+  wqi_classification?: string | null;
   metals_analyzed?: string[];
+  params_analyzed?: string[];
   created_by: number;
 }
 
@@ -82,6 +88,8 @@ export interface ParsedCSVRow {
   city?: string;
   // Heavy metals (ppb)
   metals: Record<string, number>;
+  // WQI parameters (pH, TDS, TH, etc.)
+  wqiParams: Record<string, number>;
   // Raw row data for reference
   rawRow: Record<string, string>;
   // Row number for error reporting
@@ -152,6 +160,8 @@ export interface MIResult {
   mi: number;
   classification: MIClassification;
   miClass: MIClass;
+  status: 'Safe' | 'Moderate' | 'Critical';
+  color: string;
   metalsAnalyzed: string[];
   // Detailed breakdown for transparency
   ratios?: Record<string, number>;          // Ci/MACi for each metal
@@ -159,6 +169,21 @@ export interface MIResult {
   macValues?: Record<string, number>;       // MACi values
 }
 
+/**
+ * WQI calculation result for a single station
+ */
+export interface WQIResult {
+  wqi: number;
+  classification: string;
+  paramsAnalyzed: string[];
+  // Detailed breakdown for transparency
+  weights?: Record<string, number>;         // Wi values
+  qualityRatings?: Record<string, number>;  // Qi values
+  contributions?: Record<string, number>;   // WiQi values
+  K?: number;                               // Proportionality constant
+  sumInvSn?: number;                        // Sum of 1/Sn
+  invSn?: Record<string, number>;           // 1/Sn for each parameter
+}
 
 
 /**
@@ -176,6 +201,7 @@ export interface StationCalculationResult {
   city?: string;
   hpi?: HPIResult;
   mi?: MIResult;
+  wqi?: WQIResult;
   errors: string[];
 }
 
@@ -240,7 +266,10 @@ export function convertCalculation(
     mi: calc.mi ? parseFloat(calc.mi) : null,
     mi_classification: calc.mi_classification,
     mi_class: calc.mi_class,
+    wqi: calc.wqi ? parseFloat(calc.wqi) : null,
+    wqi_classification: calc.wqi_classification,
     metals_analyzed: calc.metals_analyzed ? calc.metals_analyzed.split(',') : null,
+    params_analyzed: calc.params_analyzed ? calc.params_analyzed.split(',') : null,
     created_by: calc.created_by,
     created_at: calc.created_at.toISOString(),
     updated_by: calc.updated_by,
