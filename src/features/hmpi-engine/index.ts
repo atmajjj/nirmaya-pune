@@ -19,6 +19,7 @@ import getCalculationRouter from './apis/get-calculation';
 import downloadResultsRouter from './apis/download-results';
 import getStatsRouter from './apis/get-stats';
 import getGeomapDataRouter from './apis/get-geomap-data';
+import aiReportRouter from '../ai-reports/apis/generate-report';
 
 class NirmayaEngineRoute implements Route {
   public path = '/nirmaya-engine';
@@ -56,6 +57,9 @@ class NirmayaEngineRoute implements Route {
     
     // GET /api/nirmaya-engine/geomap - Get geomap data for visualization
     this.router.use(this.path, getGeomapDataRouter);
+    
+    // POST /api/nirmaya-engine/ai-report - Generate AI-powered report
+    this.router.use(this.path, aiReportRouter);
   }
 }
 
