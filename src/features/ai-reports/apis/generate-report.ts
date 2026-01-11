@@ -119,9 +119,9 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
           const wqiClass = station.wqiClassification?.toLowerCase() || '';
           
           const isCritical = 
-            (hpi !== null && hpi > 100) ||
-            (mi !== null && mi > 1) ||
-            (wqi !== null && wqi > 100) ||
+            (hpi !== null && hpi !== undefined && hpi > 100) ||
+            (mi !== null && mi !== undefined && mi > 1) ||
+            (wqi !== null && wqi !== undefined && wqi > 100) ||
             hpiClass.includes('critical') || hpiClass.includes('unsafe') ||
             miClass.includes('critical') || miClass.includes('unsafe') ||
             wqiClass.includes('unsuitable') || wqiClass.includes('poor');

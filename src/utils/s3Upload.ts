@@ -5,7 +5,6 @@ import { logger } from './logger';
 import { config } from './validateEnv';
 import path from 'path';
 import fs from 'fs/promises';
-import { existsSync } from 'fs';
 
 // Initialize S3 client with proper Supabase configuration
 export const s3Client = new S3Client({
