@@ -1,16 +1,6 @@
 import dotenv from 'dotenv';
 
-// Load environment-specific .env file FIRST based on NODE_ENV
-// This ensures correct values before any other imports
-const nodeEnv = process.env.NODE_ENV || 'development';
-if (nodeEnv === 'development') {
-  dotenv.config({ path: '.env.dev' });
-} else if (nodeEnv === 'production') {
-  dotenv.config({ path: '.env.prod' });
-} else if (nodeEnv === 'test') {
-  dotenv.config({ path: '.env.test' });
-}
-// Fallback to default .env only for missing values
+// Load .env file
 dotenv.config();
 
 import { cleanEnv, port, str, num } from 'envalid';
@@ -24,7 +14,7 @@ export const validateEnv = () => {
   const env = cleanEnv(process.env, {
     // Environment
     NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
-    
+
     // Server configuration
     JWT_SECRET: str(),
     PORT: port({ default: 8000 }),
@@ -53,19 +43,19 @@ export const validateEnv = () => {
     // Security configuration
     ALLOWED_ORIGINS: str(),
     FRONTEND_URL: str({ desc: 'Frontend URL for invitation links' }),
-    
+
     // File upload configuration
     ALLOWED_FILE_TYPES: str({ default: 'application/pdf,text/plain,text/markdown,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),
 
     // Chatbot - Groq LLM
-    GROQ_API_KEY: str({ desc: 'Groq API key for LLM' }),
+    GROQ_API_KEY: str({ desc: 'Groq API key for LLM', default: '' }),
 
     // Chatbot - Pinecone Vector DB
-    PINECONE_API_KEY: str({ desc: 'Pinecone API key for vector storage' }),
+    PINECONE_API_KEY: str({ desc: 'Pinecone API key for vector storage', default: '' }),
     PINECONE_INDEX_NAME: str({ default: 'nira', desc: 'Pinecone index name' }),
 
     // Chatbot - HuggingFace Embeddings
-    HUGGINGFACE_TOKEN: str({ desc: 'HuggingFace token for BGE-M3 embeddings' }),
+    HUGGINGFACE_TOKEN: str({ desc: 'HuggingFace token for BGE-M3 embeddings', default: '' }),
   });
 
   // Additional JWT secret validation
