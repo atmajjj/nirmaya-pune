@@ -105,17 +105,22 @@ async function processCSVCalculation(
       await updateUploadStatus(uploadId, 'failed', 'All stations failed processing');
     } else {
       await updateUploadStatus(uploadId, 'completed');
-      
+
       // Automatically trigger report generation in the background (don't wait)
       // Only generate if at least some stations were processed successfully
+      // Wrapped in try-catch to prevent crashes if Puppeteer/Chromium is unavailable in production
       if (result.processed_stations > 0) {
-        ReportGeneratorService.generateReport(uploadId, userId, 'comprehensive')
-          .then(() => {
-            logger.info(`Auto-generated report for upload ${uploadId}`);
-          })
-          .catch(error => {
-            logger.error(`Failed to auto-generate report for upload ${uploadId}:`, error);
-          });
+        try {
+          ReportGeneratorService.generateReport(uploadId, userId, 'comprehensive')
+            .then(() => {
+              logger.info(`Auto-generated report for upload ${uploadId}`);
+            })
+            .catch(error => {
+              logger.error(`Failed to auto-generate report for upload ${uploadId}:`, error);
+            });
+        } catch (error) {
+          logger.error(`Failed to initiate report generation for upload ${uploadId}:`, error);
+        }
       }
     }
 
