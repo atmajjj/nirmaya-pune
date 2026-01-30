@@ -34,12 +34,18 @@ export class WaterQualityCalculationService {
    * @param csvContent - Raw CSV file content (string or Buffer)
    * @param uploadId - ID of the upload record
    * @param userId - ID of the user performing the calculation
+   * @param options - Optional calculation flags to control which indices to calculate
    * @returns BatchCalculationResult with all calculations
    */
   static async processCSV(
     csvContent: string | Buffer,
     uploadId: number,
-    userId: number
+    userId: number,
+    options?: {
+      calculateWQI?: boolean;
+      calculateHPI?: boolean;
+      calculateMI?: boolean;
+    }
   ): Promise<BatchCalculationResult> {
     // Convert string to Buffer if necessary
     const buffer = typeof csvContent === 'string' 
@@ -64,7 +70,7 @@ export class WaterQualityCalculationService {
     }
 
     // Calculate indices for each station
-    const stationResults = this.calculateAllIndices(parseResult.rows);
+    const stationResults = this.calculateAllIndices(parseResult.rows, options);
 
     // Save to database
     const savedCalculations = await this.saveCalculations(
@@ -93,9 +99,17 @@ export class WaterQualityCalculationService {
    * Calculate all indices (HPI, MI, WQI) for parsed CSV rows
    *
    * @param rows - Parsed CSV rows
+   * @param options - Optional flags to control which indices to calculate
    * @returns Array of calculation results per station
    */
-  static calculateAllIndices(rows: ParsedCSVRow[]): StationCalculationResult[] {
+  static calculateAllIndices(
+    rows: ParsedCSVRow[],
+    options?: {
+      calculateWQI?: boolean;
+      calculateHPI?: boolean;
+      calculateMI?: boolean;
+    }
+  ): StationCalculationResult[] {
     return rows.map((row) => {
       const result: StationCalculationResult = {
         sno: row.sno,
@@ -110,8 +124,12 @@ export class WaterQualityCalculationService {
         errors: [],
       };
 
-      // Calculate HPI (if metals data available)
-      if (Object.keys(row.metals).length > 0) {
+      // Calculate HPI (if metals data available and calculation is enabled)
+      const shouldCalculateHPI = options?.calculateHPI !== false;
+      const shouldCalculateMI = options?.calculateMI !== false;
+      const shouldCalculateWQI = options?.calculateWQI !== false;
+
+      if (shouldCalculateHPI && Object.keys(row.metals).length > 0) {
         try {
           const hpiResult = HPICalculatorService.calculate(row.metals);
           if (hpiResult) {
@@ -122,8 +140,10 @@ export class WaterQualityCalculationService {
         } catch (error) {
           result.errors.push(`HPI calculation error: ${error}`);
         }
+      }
 
-        // Calculate MI (uses same metals data)
+      // Calculate MI (uses same metals data)
+      if (shouldCalculateMI && Object.keys(row.metals).length > 0) {
         try {
           const miResult = MICalculatorService.calculate(row.metals);
           if (miResult) {
@@ -136,8 +156,8 @@ export class WaterQualityCalculationService {
         }
       }
 
-      // Calculate WQI (if WQI parameters available)
-      if (Object.keys(row.wqiParams).length > 0) {
+      // Calculate WQI (if WQI parameters available and calculation is enabled)
+      if (shouldCalculateWQI && Object.keys(row.wqiParams).length > 0) {
         try {
           const wqiResult = WQICalculatorService.calculate(row.wqiParams);
           if (wqiResult) {

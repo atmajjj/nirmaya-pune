@@ -10,6 +10,7 @@
  * - upload_id: Filter by upload ID
  * - state: Filter by state
  * - city: Filter by city
+ * - station_id: Filter by station ID (partial match)
  * - hpi_classification: Filter by HPI classification
  * - mi_classification: Filter by MI classification
  * - wqi_classification: Filter by WQI classification
@@ -32,6 +33,7 @@ const querySchema = z.object({
   upload_id: z.coerce.number().int().positive().optional(),
   state: z.string().optional(),
   city: z.string().optional(),
+  station_id: z.string().optional(),
   hpi_min: z.coerce.number().optional(),
   hpi_max: z.coerce.number().optional(),
   mi_min: z.coerce.number().optional(),
@@ -52,6 +54,7 @@ const handler = asyncHandler(async (req: Request, res: Response) => {
     upload_id: query.upload_id,
     state: query.state,
     city: query.city,
+    station_id: query.station_id,
     hpi_min: query.hpi_min,
     hpi_max: query.hpi_max,
     mi_min: query.mi_min,

@@ -48,6 +48,9 @@ async function bootstrap() {
       new PolicymakerRoute(),
     ]);
 
+    // Initialize Telegram bot after app is created
+    await (app as any).initializeTelegramBot();
+
     server = app.listen();
 
     // Setup graceful shutdown with resources

@@ -50,8 +50,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
     const decoded = verificationResponse as DataStoredInToken;
 
-    // Validate required fields exist
-    if (!decoded.id || !decoded.role) {
+    // Validate required fields exist (check for undefined/null, not falsy - id can be 0)
+    if (decoded.id === undefined || decoded.id === null || !decoded.role) {
       logger.warn('Authentication failed: Missing required token fields', {
         ip: clientIP,
         userAgent,

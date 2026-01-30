@@ -81,6 +81,11 @@ export const dataSources = pgTable(
       .references(() => uploads.id, { onDelete: 'set null' }),
     calculation_error: text('calculation_error'),
     calculation_completed_at: timestamp('calculation_completed_at'),
+    calculated_indices: jsonb('calculated_indices').$type<{
+      wqi?: boolean;
+      hpi?: boolean;
+      mi?: boolean;
+    }>(),
     
     // Audit fields
     created_by: integer('created_by'),

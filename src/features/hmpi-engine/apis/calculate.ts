@@ -24,6 +24,8 @@ import { WaterQualityCalculationService } from '../services/calculation.service'
 import { BatchCalculationResult } from '../shared/interface';
 import { ReportGeneratorService } from '../../hmpi-report/services/report-generator.service';
 import { logger } from '../../../utils/logger';
+import { detectDatasetType, getCalculationDescription } from '../../data-sources/services/dataset-type-detector.service';
+import { CSVParserService } from '../services/csv-parser.service';
 
 /**
  * Create upload record and upload to S3
@@ -93,11 +95,45 @@ async function processCSVCalculation(
   const uploadId = await createUploadRecord(file, userId);
 
   try {
-    // Process CSV and calculate indices
+    // 🎯 DETECT DATASET TYPE - Determine which indices can be calculated
+    logger.info(`Analyzing dataset type for upload ${uploadId}...`);
+    const parseResult = CSVParserService.parseCSV(file.buffer);
+    
+    if (!parseResult.success || parseResult.rows.length === 0) {
+      throw new HttpException(400, 'Failed to parse CSV file or file is empty');
+    }
+
+    // Extract column names from first row
+    const columns = parseResult.rows.length > 0 
+      ? Object.keys(parseResult.rows[0].metals).concat(Object.keys(parseResult.rows[0].wqiParams))
+      : [];
+    
+    const detection = detectDatasetType(columns);
+    const detectionSummary = getCalculationDescription(detection);
+    
+    logger.info(`Dataset type detection: ${detectionSummary}`);
+    logger.info(`WQI parameters found: ${detection.wqiParametersFound.join(', ') || 'none'}`);
+    logger.info(`Metal parameters found: ${detection.metalParametersFound.join(', ') || 'none'}`);
+
+    // Check if at least one index can be calculated
+    if (!detection.canCalculateWQI && !detection.canCalculateHPI && !detection.canCalculateMI) {
+      throw new HttpException(
+        400,
+        `Insufficient parameters for calculation. Found ${detection.wqiParametersFound.length} WQI params and ${detection.metalParametersFound.length} metals. Need at least 3 WQI params OR 2 metals.`
+      );
+    }
+
+    // Process CSV and calculate indices (only the ones detected as possible)
+    logger.info(`Will calculate: WQI=${detection.canCalculateWQI}, HPI=${detection.canCalculateHPI}, MI=${detection.canCalculateMI}`);
     const result = await WaterQualityCalculationService.processCSV(
       file.buffer,
       uploadId,
-      userId
+      userId,
+      {
+        calculateWQI: detection.canCalculateWQI,
+        calculateHPI: detection.canCalculateHPI,
+        calculateMI: detection.canCalculateMI,
+      }
     );
 
     // Update upload status based on result

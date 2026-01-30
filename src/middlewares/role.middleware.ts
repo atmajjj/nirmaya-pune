@@ -14,7 +14,8 @@ export const requireRole = (allowedRoles: UserRole | UserRole[]) => {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.userId) {
+      // Check for undefined/null explicitly to allow userId: 0 (service accounts)
+      if (req.userId === undefined || req.userId === null) {
         return next(new HttpException(401, 'Authentication required'));
       }
 

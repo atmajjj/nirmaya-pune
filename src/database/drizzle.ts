@@ -16,6 +16,9 @@ import {
   chatbotMessages,
 } from '../features/chatbot/shared/schema';
 import { policymakerAlerts } from '../features/policymaker/shared/schema';
+import { dataSources } from '../features/data-sources/shared/schema';
+import { waterQualityCalculations } from '../features/hmpi-engine/shared/schema';
+import { hmpiReports } from '../features/hmpi-report/shared/schema';
 
 /**
  * Database connection configuration
@@ -90,6 +93,9 @@ export const schema = {
   chatbotSessions,
   chatbotMessages,
   policymakerAlerts,
+  dataSources,
+  waterQualityCalculations,
+  hmpiReports,
 };
 
 /**

@@ -6,6 +6,7 @@ import { requestIdMiddleware } from './middlewares/request-id.middleware';
 import { securityMiddleware } from './middlewares/security.middleware';
 import { corsMiddleware } from './middlewares/cors.middleware';
 import { requestLoggerMiddleware } from './middlewares/request-logger.middleware';
+import { TelegramBotService } from './features/telegram-bot/services/telegram-bot.service';
 import Routes from './interfaces/route.interface';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger } from './utils/logger';
@@ -27,6 +28,7 @@ class App {
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeErrorHandling();
+    // Telegram bot will be initialized after constructor via initializeTelegramBot()
 
     this.app.get('/', (req, res) => {
       res.send('Welcome to Nirmaya Backend API');
@@ -126,6 +128,17 @@ class App {
 
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
+  }
+
+  public async initializeTelegramBot() {
+    try {
+      const botService = TelegramBotService.getInstance();
+      await botService.initialize();
+      logger.info('✅ Telegram bot service initialized');
+    } catch (error) {
+      logger.warn('⚠️ Telegram bot service failed to initialize', error);
+      // Don't throw - allow app to run even if bot fails
+    }
   }
 }
 

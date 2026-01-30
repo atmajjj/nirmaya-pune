@@ -29,7 +29,8 @@ export function parseIdParam(req: Request, paramName: string = 'id'): number {
 export function getUserId(req: Request): number {
   const userId = req.userId;
 
-  if (!userId) {
+  // Check for undefined/null explicitly to allow userId: 0 (service accounts)
+  if (userId === undefined || userId === null) {
     throw new HttpException(401, 'User authentication required');
   }
 

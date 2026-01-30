@@ -20,17 +20,23 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024, // 50MB for CSV/Excel files
   },
   fileFilter: (req, file, cb) => {
-    // Allow CSV and Excel files
+    // Allow CSV and Excel files based on MIME type OR file extension
     const allowedMimeTypes = [
       'text/csv',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/octet-stream', // Generic binary - check extension
+      'text/plain', // Sometimes CSV files come as text/plain
     ];
     
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExtensions = ['.csv', '.xls', '.xlsx'];
+    
+    // Accept if MIME type matches OR file extension is valid
+    if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new HttpException(400, 'Invalid file type. Only CSV, XLS, and XLSX files are allowed.') as any, false);
+      cb(new HttpException(400, `Invalid file type. Only CSV, XLS, and XLSX files are allowed. Received: ${file.mimetype} with extension ${ext}`) as any, false);
     }
   },
 });

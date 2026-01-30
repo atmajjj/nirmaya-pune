@@ -26,6 +26,7 @@ import { WaterQualityCalculationService } from '../services/calculation.service'
 import { BatchCalculationResult } from '../shared/interface';
 import { ReportGeneratorService } from '../../hmpi-report/services/report-generator.service';
 import { logger } from '../../../utils/logger';
+import { detectDatasetType, getCalculationDescription } from '../../data-sources/services/dataset-type-detector.service';
 
 const bodySchema = z.object({
   data_source_id: z.number().int().positive(),
@@ -130,12 +131,39 @@ async function processDataSourceCalculation(
     // Download file from S3
     const fileBuffer = await downloadAsBuffer(dataSource.file_path);
 
-    // Process file and calculate indices
+    // 🎯 DETECT DATASET TYPE - Determine which indices can be calculated
+    const columns = dataSource.metadata?.columns || [];
+    if (columns.length === 0) {
+      throw new HttpException(400, 'No column metadata available for dataset type detection');
+    }
+
+    const detection = detectDatasetType(columns);
+    const detectionSummary = getCalculationDescription(detection);
+    
+    logger.info(`Dataset type detection for data source ${dataSourceId}: ${detectionSummary}`);
+    logger.info(`WQI parameters found: ${detection.wqiParametersFound.join(', ') || 'none'}`);
+    logger.info(`Metal parameters found: ${detection.metalParametersFound.join(', ') || 'none'}`);
+
+    // Check if at least one index can be calculated
+    if (!detection.canCalculateWQI && !detection.canCalculateHPI && !detection.canCalculateMI) {
+      throw new HttpException(
+        400,
+        `Insufficient parameters for calculation. Found ${detection.wqiParametersFound.length} WQI params and ${detection.metalParametersFound.length} metals. Need at least 3 WQI params OR 2 metals.`
+      );
+    }
+
+    // Process file and calculate indices (only the ones detected as possible)
     // The calculation service already supports both CSV and Excel
+    logger.info(`Will calculate: WQI=${detection.canCalculateWQI}, HPI=${detection.canCalculateHPI}, MI=${detection.canCalculateMI}`);
     const result = await WaterQualityCalculationService.processCSV(
       fileBuffer,
       uploadId,
-      userId
+      userId,
+      {
+        calculateWQI: detection.canCalculateWQI,
+        calculateHPI: detection.canCalculateHPI,
+        calculateMI: detection.canCalculateMI,
+      }
     );
 
     // Update upload status based on result

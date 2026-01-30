@@ -134,6 +134,13 @@
       "when": 1767892825336,
       "tag": "0018_thankful_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1769756688002,
+      "tag": "0019_material_skullbuster",
+      "breakpoints": true
     }
   ]
 }

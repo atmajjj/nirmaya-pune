@@ -48,6 +48,7 @@ export interface CalculationQueryParams {
   district?: string;
   year?: number;
   city?: string;
+  station_id?: string;
   upload_id?: number;
   hpi_min?: number;
   hpi_max?: number;
@@ -71,6 +72,7 @@ export const findCalculations = async (
     district,
     year,
     city,
+    station_id,
     upload_id,
     hpi_min,
     hpi_max,
@@ -100,6 +102,10 @@ export const findCalculations = async (
 
   if (city) {
     conditions.push(ilike(waterQualityCalculations.city, `%${city}%`));
+  }
+
+  if (station_id) {
+    conditions.push(ilike(waterQualityCalculations.station_id, `%${station_id}%`));
   }
 
   if (upload_id) {

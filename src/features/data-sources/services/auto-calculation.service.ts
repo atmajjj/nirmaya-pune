@@ -13,6 +13,7 @@ import { uploads } from '../../upload/shared/schema';
 import { eq } from 'drizzle-orm';
 import { uploadToS3 } from '../../../utils/s3Upload';
 import { ReportGeneratorService } from '../../hmpi-report/services/report-generator.service';
+import { detectDatasetType, getCalculationDescription } from './dataset-type-detector.service';
 
 /**
  * Update data source calculation status
@@ -135,6 +136,34 @@ export async function autoCalculateDataSource(
       return;
     }
 
+    // 🎯 DETECT DATASET TYPE - Determine which indices can be calculated
+    const columns = dataSource.metadata?.columns || [];
+    if (columns.length === 0) {
+      logger.warn(`Data source ${dataSourceId} has no column metadata, skipping auto-calculation`);
+      await updateCalculationStatus(dataSourceId, 'failed', undefined, 'No column metadata available');
+      return;
+    }
+
+    const detection = detectDatasetType(columns);
+    const detectionSummary = getCalculationDescription(detection);
+    
+    logger.info(`📊 Dataset type detection for data source ${dataSourceId}:`);
+    logger.info(`   ${detectionSummary}`);
+    logger.info(`   WQI parameters found: ${detection.wqiParametersFound.join(', ') || 'none'}`);
+    logger.info(`   Metal parameters found: ${detection.metalParametersFound.join(', ') || 'none'}`);
+
+    // Check if at least one index can be calculated
+    if (!detection.canCalculateWQI && !detection.canCalculateHPI && !detection.canCalculateMI) {
+      logger.info(`❌ No indices can be calculated for data source ${dataSourceId}`);
+      await updateCalculationStatus(
+        dataSourceId,
+        'failed',
+        undefined,
+        `Insufficient parameters. Found ${detection.wqiParametersFound.length} WQI params and ${detection.metalParametersFound.length} metals. Need at least 3 WQI params OR 2 metals.`
+      );
+      return;
+    }
+
     // Update status to calculating
     await updateCalculationStatus(dataSourceId, 'calculating');
 
@@ -154,12 +183,19 @@ export async function autoCalculateDataSource(
     logger.info(`Created calculation upload record: ${uploadId}`);
 
     try {
-      // Process file and calculate indices
+      // Process file and calculate indices (only the ones detected as possible)
       logger.info(`Processing CSV for calculation...`);
+      logger.info(`Will calculate: WQI=${detection.canCalculateWQI}, HPI=${detection.canCalculateHPI}, MI=${detection.canCalculateMI}`);
+      
       const result = await WaterQualityCalculationService.processCSV(
         fileBuffer,
         uploadId,
-        userId
+        userId,
+        {
+          calculateWQI: detection.canCalculateWQI,
+          calculateHPI: detection.canCalculateHPI,
+          calculateMI: detection.canCalculateMI,
+        }
       );
 
       // Check if calculation was successful
@@ -179,11 +215,28 @@ export async function autoCalculateDataSource(
       // Mark upload as completed
       await updateUploadStatus(uploadId, 'completed');
 
+      // Store which indices were calculated
+      const calculatedIndices = {
+        wqi: detection.canCalculateWQI && result.processed_stations > 0,
+        hpi: detection.canCalculateHPI && result.processed_stations > 0,
+        mi: detection.canCalculateMI && result.processed_stations > 0,
+      };
+
       // Update data source with success
-      await updateCalculationStatus(dataSourceId, 'completed', uploadId);
+      await db
+        .update(dataSources)
+        .set({
+          calculation_status: 'completed',
+          calculation_upload_id: uploadId,
+          calculated_indices: calculatedIndices,
+          calculation_completed_at: new Date(),
+          updated_at: new Date(),
+        })
+        .where(eq(dataSources.id, dataSourceId));
 
       logger.info(`✅ Auto-calculation completed for data source ${dataSourceId}`);
       logger.info(`Processed ${result.processed_stations} stations, ${result.failed_stations} failed`);
+      logger.info(`Calculated indices: WQI=${calculatedIndices.wqi}, HPI=${calculatedIndices.hpi}, MI=${calculatedIndices.mi}`);
 
       // Auto-generate comprehensive report in background
       if (result.processed_stations > 0) {

@@ -3,8 +3,6 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import HttpException from './httpException';
 import { logger } from './logger';
 import { config } from './validateEnv';
-import path from 'path';
-import fs from 'fs/promises';
 
 // Initialize S3 client with proper Supabase configuration
 export const s3Client = new S3Client({

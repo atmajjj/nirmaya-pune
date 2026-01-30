@@ -72,6 +72,11 @@ export interface DataSourceResponse {
   calculation_upload_id?: number | null;
   calculation_error?: string | null;
   calculation_completed_at?: Date | null;
+  calculated_indices?: {
+    wqi?: boolean;
+    hpi?: boolean;
+    mi?: boolean;
+  } | null;
   created_at: Date;
   updated_at: Date;
 }

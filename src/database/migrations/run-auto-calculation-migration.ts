@@ -16,7 +16,8 @@ async function runMigration() {
       ADD COLUMN IF NOT EXISTS calculation_status VARCHAR(20) DEFAULT 'not_started',
       ADD COLUMN IF NOT EXISTS calculation_upload_id INTEGER REFERENCES uploads(id) ON DELETE SET NULL,
       ADD COLUMN IF NOT EXISTS calculation_error TEXT,
-      ADD COLUMN IF NOT EXISTS calculation_completed_at TIMESTAMP;
+      ADD COLUMN IF NOT EXISTS calculation_completed_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS calculated_indices JSONB;
     `);
 
     // Create index
