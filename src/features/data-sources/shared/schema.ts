@@ -11,6 +11,7 @@ import {
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { users } from '../../user/shared/schema';
+import { uploads } from '../../upload/shared/schema';
 
 /**
  * Data source status enum values
@@ -71,6 +72,16 @@ export const dataSources = pgTable(
     // Description/notes from field technician
     description: text('description'),
     
+    // Auto-calculation tracking
+    calculation_status: text('calculation_status')
+      .$type<'not_started' | 'calculating' | 'completed' | 'failed'>()
+      .default('not_started')
+      .notNull(),
+    calculation_upload_id: integer('calculation_upload_id')
+      .references(() => uploads.id, { onDelete: 'set null' }),
+    calculation_error: text('calculation_error'),
+    calculation_completed_at: timestamp('calculation_completed_at'),
+    
     // Audit fields
     created_by: integer('created_by'),
     created_at: timestamp('created_at').defaultNow().notNull(),
@@ -95,6 +106,8 @@ export const dataSources = pgTable(
     fileTypeIdx: index('data_sources_file_type_idx').on(table.file_type),
     // For sorting/pagination
     createdAtIdx: index('data_sources_created_at_idx').on(table.created_at),
+    // For filtering by calculation status
+    calculationStatusIdx: index('data_sources_calculation_status_idx').on(table.calculation_status),
   })
 );
 

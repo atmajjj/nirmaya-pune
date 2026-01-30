@@ -2,6 +2,7 @@ import { parseDataSourceFile } from '../utils/file-parser';
 import { updateDataSourceStatus, findDataSourceById, updateDataSource } from '../shared/queries';
 import { logger } from '../../../utils/logger';
 import { downloadAsBuffer } from '../../../utils/s3Upload';
+import { autoCalculateDataSource } from './auto-calculation.service';
 
 /**
  * Process uploaded data source file
@@ -56,6 +57,21 @@ export async function processDataSourceFile(dataSourceId: number): Promise<void>
       
       logger.info(`Data source ${dataSourceId} processed successfully`);
       logger.info(`Extracted: ${parseResult.metadata?.total_rows} rows, ${parseResult.metadata?.column_count} columns`);
+      
+      // 🚀 AUTO-CALCULATION: Trigger automatic calculation for this data source
+      // Only if file has data rows
+      if (metadataToStore.total_rows && metadataToStore.total_rows > 0) {
+        logger.info(`🤖 Triggering auto-calculation for data source ${dataSourceId}...`);
+        
+        // Run in background - don't wait
+        setImmediate(() => {
+          autoCalculateDataSource(dataSourceId, dataSource.uploaded_by).catch(error => {
+            logger.error(`Auto-calculation background task failed for data source ${dataSourceId}:`, error);
+          });
+        });
+      } else {
+        logger.info(`Skipping auto-calculation for data source ${dataSourceId} (no data rows)`);
+      }
       
     } catch (error: any) {
       // Mark as failed

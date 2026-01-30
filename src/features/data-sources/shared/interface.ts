@@ -68,6 +68,10 @@ export interface DataSourceResponse {
     full_name: string;
     email: string;
   };
+  calculation_status?: 'not_started' | 'calculating' | 'completed' | 'failed';
+  calculation_upload_id?: number | null;
+  calculation_error?: string | null;
+  calculation_completed_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 }

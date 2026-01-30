@@ -122,46 +122,6 @@ export async function uploadToS3(
       endpoint: config.AWS_ENDPOINT,
     });
     
-    // DEVELOPMENT FALLBACK: Use local file storage if S3 fails
-    if (process.env.NODE_ENV === 'development') {
-      logger.warn('⚠️  S3 upload failed. Falling back to local file storage (DEVELOPMENT ONLY)');
-      logger.warn('📝 To use S3 properly, follow the guide in SUPABASE-S3-SETUP.md');
-      
-      try {
-        // Create local uploads directory structure
-        const localUploadDir = path.join(process.cwd(), 'local-uploads', 'uploads', userId.toString());
-        await fs.mkdir(localUploadDir, { recursive: true });
-        
-        // Sanitize filename
-        const sanitizedFilename = filename
-          .replace(/^\.+/, '')
-          .replace(/[^a-zA-Z0-9.-]/g, '_');
-        
-        const timestamp = Date.now();
-        const localFilename = `${timestamp}_${sanitizedFilename}`;
-        const localFilePath = path.join(localUploadDir, localFilename);
-        
-        // Save file locally
-        await fs.writeFile(localFilePath, buffer);
-        
-        const key = `uploads/${userId}/${localFilename}`;
-        const url = `/local-uploads/${key}`;
-        
-        logger.info(`✅ File saved locally (fallback): ${localFilePath}`);
-        
-        return {
-          key,
-          url,
-          bucket: 'local-fallback',
-          size: buffer.length,
-          contentType: mimetype,
-        };
-      } catch (localError) {
-        logger.error('Local fallback also failed', { error: localError });
-        throw new HttpException(500, 'Failed to upload file to storage');
-      }
-    }
-    
     // Provide helpful error message based on error type
     if (errorMessage.includes('Deserialization') || errorMessage.includes('char')) {
       throw new HttpException(500, 
