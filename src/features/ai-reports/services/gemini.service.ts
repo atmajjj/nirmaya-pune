@@ -9,11 +9,13 @@ class GeminiService {
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not configured in environment variables');
+      logger.error('GEMINI_API_KEY is not configured in environment variables');
+      throw new Error('GEMINI_API_KEY is not configured. Please add it to your environment variables.');
     }
     this.genAI = new GoogleGenerativeAI(apiKey);
     // Using gemini-2.0-flash - has higher daily quota than 2.5-flash (50 vs 20 per day)
     this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    logger.info('Gemini service initialized successfully');
   }
 
   /**

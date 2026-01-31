@@ -11,8 +11,8 @@ class PDFGeneratorService {
     try {
       logger.info('Launching Puppeteer for PDF generation');
 
-      // Launch browser
-      browser = await puppeteer.launch({
+      // Launch browser with production-ready configuration
+      const launchOptions: any = {
         headless: true,
         args: [
           '--no-sandbox',
@@ -20,8 +20,22 @@ class PDFGeneratorService {
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions',
         ],
-      });
+      };
+
+      // Use executablePath in production if PUPPETEER_EXECUTABLE_PATH is set
+      if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        logger.info(`Using custom Chromium path: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+      }
+
+      browser = await puppeteer.launch(launchOptions);
 
       const page = await browser.newPage();
 
@@ -49,7 +63,11 @@ class PDFGeneratorService {
 
       return Buffer.from(pdfBuffer);
     } catch (error: any) {
-      logger.error('Error generating PDF:', error);
+      logger.error('Error generating PDF:', {
+        message: error.message,
+        stack: error.stack,
+        env: process.env.NODE_ENV,
+      });
       throw new Error(`Failed to generate PDF: ${error.message}`);
     } finally {
       // Close browser
