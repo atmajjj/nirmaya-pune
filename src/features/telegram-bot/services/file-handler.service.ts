@@ -290,22 +290,4 @@ export class FileHandlerService {
     // Start polling after a short delay
     setTimeout(poll, interval);
   }
-
-  /**
-   * Get calculation upload ID from data source
-   */
-  private async getCalculationUploadId(uploadId: number): Promise<number> {
-    const dataSource = await db.query.dataSources.findFirst({
-      where: and(
-        eq(dataSources.id, uploadId),
-        eq(dataSources.is_deleted, false)
-      ),
-    });
-
-    if (!dataSource || !dataSource.calculation_upload_id) {
-      throw new Error('Calculation upload ID not found');
-    }
-
-    return dataSource.calculation_upload_id;
-  }
 }

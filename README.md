@@ -27,7 +27,7 @@ The platform automates the calculation of critical water quality parameters (Hea
 2. **Data Accessibility Gap**: Critical water quality information is trapped in spreadsheets and PDFs, difficult to query or analyze
 3. **Knowledge Barrier**: Field technicians and policymakers lack expertise to interpret complex water quality metrics
 4. **Lack of Contextual Insights**: Existing systems provide numbers but not actionable recommendations or historical context
-5. **Fragmented Communication**: No unified platform connecting data collection, analysis, reporting, and decision-making
+5. **Fragmented Communication**: No unified platform connecting data collection, analysis, reporting, and decision-makingnpm run dev
 
 ### Why Is This Important?
 

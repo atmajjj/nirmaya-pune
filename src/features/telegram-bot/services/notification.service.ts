@@ -1,5 +1,4 @@
 import TelegramBot from 'node-telegram-bot-api';
-import axios from 'axios';
 import { logger } from '../../../utils/logger';
 import { BOT_MESSAGES } from '../shared/constants';
 import { db } from '../../../database/drizzle';
@@ -85,15 +84,13 @@ export class NotificationService {
       }
 
       // Send completion message
-      const indices = calculation.calculated_indices || '[]';
+      const paramsAnalyzed = calculation.params_analyzed || '';
       let indicesList = 'None calculated';
-      try {
-        const parsedIndices = JSON.parse(indices);
-        if (Array.isArray(parsedIndices) && parsedIndices.length > 0) {
-          indicesList = parsedIndices.map((idx: string) => `✓ ${idx}`).join('\n');
+      if (paramsAnalyzed) {
+        const params = paramsAnalyzed.split(',').map((p: string) => p.trim());
+        if (params.length > 0) {
+          indicesList = params.map((param: string) => `✓ ${param}`).join('\n');
         }
-      } catch (e) {
-        logger.warn('Error parsing indices', e);
       }
 
       const message = BOT_MESSAGES.PROCESSING_COMPLETE.replace(
