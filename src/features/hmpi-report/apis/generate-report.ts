@@ -52,15 +52,15 @@ const handler = asyncHandler(async (req: RequestWithUser, res: Response) => {
     report_type
   );
 
-  // Estimate generation time for user feedback
-  const estimatedTime = ReportGeneratorService.estimateGenerationTime(upload_id);
+  // Estimate generation time for user feedback (based on a rough estimate of stations)
+  const estimatedSeconds = ReportGeneratorService.estimateGenerationTime(100);
+  const estimatedTime = `${estimatedSeconds} seconds`;
 
   ResponseFormatter.created(
     res,
     {
       report,
       estimatedTime,
-      message: 'Report generation started. Check status using the report ID.',
     },
     'Report generation initiated successfully'
   );

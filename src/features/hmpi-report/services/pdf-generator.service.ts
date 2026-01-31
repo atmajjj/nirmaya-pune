@@ -34,7 +34,7 @@ export class PDFGeneratorService {
     reportData: ReportData,
     charts: ChartImages
   ): Record<string, any> {
-    const { hpiStats, miStats, geoData, totalStations } = reportData;
+    const { hpiStats, miStats, wqiStats, geoData, totalStations } = reportData;
 
     // Calculate percentages for classifications
     const hpiClassifications = Object.entries(hpiStats.classificationCounts).map(
@@ -53,6 +53,14 @@ export class PDFGeneratorService {
       })
     );
 
+    const wqiClassifications = Object.entries(wqiStats?.classificationCounts || {}).map(
+      ([classification, count]) => ({
+        classification,
+        count,
+        percentage: ((count / totalStations) * 100).toFixed(1),
+      })
+    );
+
     // Prepare top polluted stations with ranks
     const topPollutedStations = hpiStats.topPollutedStations.map((station, index) => ({
       rank: index + 1,
@@ -61,8 +69,20 @@ export class PDFGeneratorService {
       location: station.location,
     }));
 
+    // Prepare top WQI stations with ranks
+    const topWQIStations = (wqiStats?.topStations || []).map((station, index) => ({
+      rank: index + 1,
+      stationId: station.stationId,
+      wqi: station.wqi.toFixed(2),
+      classification: station.classification,
+      location: station.location,
+    }));
+
     // Check if there's high pollution (HPI > 100 or critical classification)
     const hasHighPollution = hpiStats.topPollutedStations.some(s => s.hpi >= 100);
+    
+    // Check if there's poor water quality (WQI > 75)
+    const hasPoorWaterQuality = (wqiStats?.topStations || []).some(s => s.wqi >= 75);
 
     return {
       // Meta information
@@ -78,6 +98,7 @@ export class PDFGeneratorService {
       // Summary statistics
       avgHPI: reportData.avgHPI?.toFixed(2) || 'N/A',
       avgMI: reportData.avgMI?.toFixed(2) || 'N/A',
+      avgWQI: reportData.avgWQI?.toFixed(2) || 'N/A',
 
       // HPI data
       hpiClassifications,
@@ -91,6 +112,12 @@ export class PDFGeneratorService {
       miDistributionChart: charts.miDistribution,
       miClassificationChart: charts.miClassification,
 
+      // WQI data
+      wqiClassifications,
+      topWQIStations,
+      wqiDistributionChart: charts.wqiDistribution,
+      wqiClassificationChart: charts.wqiClassification,
+
       // Geographic data
       geoStates: geoData.states.map(s => ({
         state: s.state,
@@ -98,8 +125,9 @@ export class PDFGeneratorService {
       })),
       geographicChart: charts.geographicDistribution,
 
-      // Recommendations flag
+      // Recommendations flags
       hasHighPollution,
+      hasPoorWaterQuality,
     };
   }
 

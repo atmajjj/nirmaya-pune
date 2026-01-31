@@ -58,6 +58,9 @@ export class ReportDataService {
     const avgMI = this.calculateAverage(
       calculations.map(c => c.mi).filter(Boolean).map(v => parseFloat(v as string))
     );
+    const avgWQI = this.calculateAverage(
+      calculations.map(c => c.wqi).filter(Boolean).map(v => parseFloat(v as string))
+    );
 
     // 4. Aggregate HPI statistics
     const hpiStats = this.aggregateHPIStats(calculations);
@@ -65,18 +68,23 @@ export class ReportDataService {
     // 5. Aggregate MI statistics
     const miStats = this.aggregateMIStats(calculations);
 
+    // 6. Aggregate WQI statistics
+    const wqiStats = this.aggregateWQIStats(calculations);
+
     // 7. Aggregate geographic data
     const geoData = this.aggregateGeoData(calculations);
 
-    // 6. Build report data object
+    // 8. Build report data object
     const reportData: ReportData = {
       uploadId: upload.id,
       uploadFilename: upload.filename,
       totalStations: calculations.length,
       avgHPI,
       avgMI,
+      avgWQI,
       hpiStats,
       miStats,
+      wqiStats,
       geoData,
       calculationDate: upload.created_at,
       generatedBy: userId,
@@ -163,6 +171,48 @@ export class ReportDataService {
     return {
       classificationCounts,
       classCounts,
+    };
+  }
+
+  /**
+   * Aggregate WQI statistics
+   * - Classification counts (Excellent, Good, Poor, Very Poor, Unsuitable)
+   * - Top stations by WQI
+   */
+  private static aggregateWQIStats(calculations: any[]) {
+    const classificationCounts: Record<string, number> = {};
+    const topStations: Array<{
+      stationId: string;
+      wqi: number;
+      classification: string;
+      location?: string;
+    }> = [];
+
+    // Count WQI classifications
+    for (const calc of calculations) {
+      if (calc.wqi_classification) {
+        const classification = calc.wqi_classification;
+        classificationCounts[classification] = (classificationCounts[classification] || 0) + 1;
+      }
+    }
+
+    // Extract top 10 stations by WQI (higher WQI = worse quality)
+    const validWQIStations = calculations
+      .filter(c => c.wqi)
+      .map(c => ({
+        stationId: c.station_id,
+        wqi: parseFloat(c.wqi as string),
+        classification: c.wqi_classification || 'Unknown',
+        location: this.formatLocation(c.city, c.state),
+      }))
+      .sort((a, b) => b.wqi - a.wqi) // Higher WQI = worse quality
+      .slice(0, 10);
+
+    topStations.push(...validWQIStations);
+
+    return {
+      classificationCounts,
+      topStations,
     };
   }
 
@@ -291,11 +341,13 @@ export class ReportDataService {
   static async getCalculationStatistics(uploadId: number): Promise<{
     avg_hpi: number | null;
     avg_mi: number | null;
+    avg_wqi: number | null;
   }> {
     const calculations = await db
       .select({
         hpi: waterQualityCalculations.hpi,
         mi: waterQualityCalculations.mi,
+        wqi: waterQualityCalculations.wqi,
       })
       .from(waterQualityCalculations)
       .where(
@@ -311,10 +363,14 @@ export class ReportDataService {
     const avgMI = this.calculateAverage(
       calculations.map(c => c.mi).filter(Boolean).map(v => parseFloat(v as string))
     );
+    const avgWQI = this.calculateAverage(
+      calculations.map(c => c.wqi).filter(Boolean).map(v => parseFloat(v as string))
+    );
 
     return {
       avg_hpi: avgHPI,
       avg_mi: avgMI,
+      avg_wqi: avgWQI,
     };
   }
 }

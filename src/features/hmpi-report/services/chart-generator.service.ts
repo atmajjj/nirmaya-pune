@@ -50,6 +50,15 @@ export class ChartGeneratorService {
     'Seriously Affected': '#7f1d1d', // dark red
   };
 
+  private static readonly WQI_COLORS = {
+    'Excellent': '#059669', // green
+    'Good': '#10b981', // light green
+    'Poor': '#f59e0b', // amber
+    'Very Poor': '#ef4444', // red
+    'Unsuitable for drinking': '#7f1d1d', // dark red
+    'Unsuitable': '#7f1d1d', // dark red
+  };
+
   /**
    * Generate all charts for a report
    * Returns base64-encoded image buffers
@@ -58,15 +67,19 @@ export class ChartGeneratorService {
     const [
       hpiDistribution,
       miDistribution,
+      wqiDistribution,
       hpiClassification,
       miClassification,
+      wqiClassification,
       topPollutedStations,
       geographicDistribution,
     ] = await Promise.all([
       this.generateHPIDistributionChart(reportData),
       this.generateMIDistributionChart(reportData),
+      this.generateWQIDistributionChart(reportData),
       this.generateHPIClassificationPieChart(reportData),
       this.generateMIClassificationPieChart(reportData),
+      this.generateWQIClassificationPieChart(reportData),
       this.generateTopPollutedStationsChart(reportData),
       this.generateGeographicDistributionChart(reportData),
     ]);
@@ -74,8 +87,10 @@ export class ChartGeneratorService {
     return {
       hpiDistribution,
       miDistribution,
+      wqiDistribution,
       hpiClassification,
       miClassification,
+      wqiClassification,
       topPollutedStations,
       geographicDistribution,
     };
@@ -264,6 +279,104 @@ export class ChartGeneratorService {
           title: {
             display: true,
             text: 'MI Classification Breakdown',
+            font: { size: 18, weight: 'bold' },
+          },
+          legend: {
+            display: true,
+            position: 'bottom',
+          },
+        },
+      },
+    };
+
+    return this.renderChart(config);
+  }
+
+  /**
+   * Generate WQI distribution bar chart
+   */
+  private static async generateWQIDistributionChart(reportData: ReportData): Promise<string> {
+    const { classificationCounts } = reportData.wqiStats || { classificationCounts: {} };
+    
+    const labels = Object.keys(classificationCounts);
+    const data = Object.values(classificationCounts);
+    const colors = labels.map(label => this.WQI_COLORS[label as keyof typeof this.WQI_COLORS] || '#6b7280');
+
+    const config: ChartConfiguration = {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Number of Stations',
+          data,
+          backgroundColor: colors,
+          borderColor: colors,
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'WQI Classification Distribution',
+            font: { size: 18, weight: 'bold' },
+          },
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+            },
+            title: {
+              display: true,
+              text: 'Number of Stations',
+            },
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45,
+            },
+          },
+        },
+      },
+    };
+
+    return this.renderChart(config);
+  }
+
+  /**
+   * Generate WQI classification pie chart
+   */
+  private static async generateWQIClassificationPieChart(reportData: ReportData): Promise<string> {
+    const { classificationCounts } = reportData.wqiStats || { classificationCounts: {} };
+    
+    const labels = Object.keys(classificationCounts);
+    const data = Object.values(classificationCounts);
+    const colors = labels.map(label => this.WQI_COLORS[label as keyof typeof this.WQI_COLORS] || '#6b7280');
+
+    const config: ChartConfiguration = {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'WQI Classification Breakdown',
             font: { size: 18, weight: 'bold' },
           },
           legend: {
