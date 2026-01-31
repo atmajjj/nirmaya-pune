@@ -4,8 +4,8 @@ services:
     env: node
     region: singapore
     plan: free
-    buildCommand: npm ci && npx puppeteer browsers install chrome && npm run build
-    startCommand: node build/server.js
+    buildCommand: npm ci && npm run build && npx puppeteer browsers install chrome
+    startCommand: npm run start
     envVars:
       - key: NODE_ENV
         value: production
